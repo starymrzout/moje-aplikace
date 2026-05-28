@@ -181,15 +181,10 @@
             let balance = 0;
             expenses.forEach(item => {
                 if (item && item.date) {
-                    // Datum může přijít jako Date objekt z Google Sheets nebo jako string
-                    let dateStr = item.date;
-                    if (dateStr instanceof Date || (typeof dateStr === 'object')) {
-                        dateStr = new Date(dateStr).toLocaleDateString('cs-CZ');
-                    }
-                    let cleanDate = String(dateStr).replace(/\s/g, '');
-                    let parts = cleanDate.split('.');
-                    let m = parseInt(parts[1], 10);
-                    let y = parseInt(parts[2], 10);
+                    // Parsuj datum ať přijde v jakémkoliv formátu
+                    const d = new Date(item.date);
+                    const m = d.getUTCMonth() + 1;
+                    const y = d.getUTCFullYear();
                     if (m === currentMonth && y === currentYear) {
                         if (item.category === '💰 Příjem') {
                             balance += item.amount;
