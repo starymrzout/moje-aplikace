@@ -34,7 +34,7 @@
         .todo-list { display: flex; flex-direction: column; gap: 10px; }
         .todo-item {
             background-color: #121314; border: 1px solid #2a2d32; padding: 15px; border-radius: 8px;
-            display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: all 0.2s;
         }
         .todo-item:active { background-color: #1c1e20; }
         
@@ -43,6 +43,12 @@
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
         }
         .todo-text { font-size: 1.1rem; line-height: 1.4; color: #e2e2e2; }
+
+        /* Styl pro hotové úkoly */
+        .todo-item.done { border-color: #2a2d32; opacity: 0.4; }
+        .todo-item.done .checkbox { border-color: #4a4d52; background-color: #2a2d32; }
+        .todo-item.done .checkbox::after { content: "✓"; color: #8a8d92; font-size: 0.9rem; font-weight: bold; }
+        .todo-item.done .todo-text { text-decoration: line-through; color: #8a8d92; }
     </style>
 </head>
 <body>
@@ -56,14 +62,18 @@
         <input type="text" id="todo-input" class="input-box" placeholder="Co je třeba udělat? Napiš a stiskni Enter..." autofocus>
 
         <div class="section-title">Aktivní úkoly</div>
-        <div class="todo-list" id="todo-list"></div>
+        <div class="todo-list" id="active-list"></div>
+
+        <div class="section-title">Hotové úkoly</div>
+        <div class="todo-list" id="done-list"></div>
     </div>
 
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
         let todos = [];
         const todoInput = document.getElementById('todo-input');
-        const todoList = document.getElementById('todo-list');
+        const activeList = document.getElementById('active-list');
+        const doneList = document.getElementById('done-list');
         const syncStatus = document.getElementById('sync-status');
 
         function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
@@ -77,7 +87,7 @@
             try {
                 const response = await fetch(`${CLOUD_URL}?mode=ukoly`);
                 const cloudTodos = await response.json();
-                if (cloudTodos) {
+                if (Array.isArray(cloudTodos)) {
                     todos = cloudTodos;
                     localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
                     render();
@@ -90,7 +100,8 @@
             if (e.key === 'Enter' && todoInput.value.trim() !== '') {
                 const newItem = {
                     id: Date.now().toString(),
-                    text: todoInput.value.trim()
+                    text: todoInput.value.trim(),
+                    done: false
                 };
                 
                 todos.push(newItem);
@@ -106,39 +117,69 @@
             }
         });
 
-        async function completeTodo(id) {
-            // OKAMŽITĚ MAŽEME Z DISPLEJE (NEČEKÁ SE NA SÍŤ)
-            todos = todos.filter(t => t.id !== id);
+        async function toggleTodo(id) {
+            if (!id) return;
+
+            // Najdeme úkol a okamžitě mu otočíme stav (true/false) pro bleskovou odezvu
+            todos = todos.map(t => {
+                if (t.id === id) {
+                    return { ...t, done: !t.done };
+                }
+                return t;
+            });
+            
             render();
             localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
             
+            // Na pozadí pošleme aktualizaci do Google tabulky
             try {
                 setStatus('syncing');
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_delete', id: id }) });
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_toggle', id: id }) });
                 setStatus('online');
             } catch (err) { setStatus('error'); }
         }
 
         function render() {
-            todoList.innerHTML = '';
+            activeList.innerHTML = '';
+            doneList.innerHTML = '';
             if (!Array.isArray(todos)) todos = [];
             
-            if (todos.length === 0) {
-                todoList.innerHTML = '<div style="color: #4a4d52; font-style: italic; font-size: 0.95rem;">Žádné úkoly. Máš čistý stůl!</div>';
-                return;
+            todos = todos.filter(item => item && item.id && item.text);
+            
+            const activeTodos = todos.filter(t => !t.done);
+            const doneTodos = todos.filter(t => t.done);
+            
+            // Vykreslení aktivních
+            if (activeTodos.length === 0) {
+                activeList.innerHTML = '<div style="color: #4a4d52; font-style: italic; font-size: 0.95rem;">Žádné aktivní úkoly...</div>';
+            } else {
+                activeTodos.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'todo-item';
+                    el.onclick = () => toggleTodo(item.id);
+                    el.innerHTML = `
+                        <div class="checkbox"></div>
+                        <div class="todo-text">${item.text}</div>
+                    `;
+                    activeList.appendChild(el);
+                });
             }
             
-            todos.forEach(item => {
-                if (!item) return;
-                const el = document.createElement('div');
-                el.className = 'todo-item';
-                el.onclick = () => completeTodo(item.id);
-                el.innerHTML = `
-                    <div class="checkbox"></div>
-                    <div class="todo-text">${item.text}</div>
-                `;
-                todoList.appendChild(el);
-            });
+            // Vykreslení hotových dospod
+            if (doneTodos.length === 0) {
+                doneList.innerHTML = '<div style="color: #4a4d52; font-style: italic; font-size: 0.95rem;">Zatím nic hotového...</div>';
+            } else {
+                doneTodos.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'todo-item done';
+                    el.onclick = () => toggleTodo(item.id);
+                    el.innerHTML = `
+                        <div class="checkbox"></div>
+                        <div class="todo-text">${item.text}</div>
+                    `;
+                    doneList.appendChild(el);
+                });
+            }
         }
     </script>
 </body>
