@@ -113,18 +113,38 @@
 
         async function loadData() {
             setStatus('syncing');
+
+            // Nejdřív zobraz lokální data okamžitě
             const local = localStorage.getItem('simplenote_money_data');
-            if (local) { try { expenses = JSON.parse(local); render(); } catch(e) { expenses = []; } }
+            if (local) {
+                try { expenses = JSON.parse(local); render(); } catch(e) { expenses = []; }
+            }
+
+            // Pak zkus načíst z cloudu — ale nepřepisuj lokální data při chybě
             try {
                 const response = await fetch(`${CLOUD_URL}?mode=penize`);
-                const cloudExpenses = await response.json();
-                if (cloudExpenses) {
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                
+                const text = await response.text();
+                let cloudExpenses;
+                try {
+                    cloudExpenses = JSON.parse(text);
+                } catch(e) {
+                    // Google Script vrátil HTML chybovou stránku místo JSON — ignorujeme
+                    throw new Error('Odpověď není JSON');
+                }
+
+                if (Array.isArray(cloudExpenses) && cloudExpenses.length > 0) {
                     expenses = cloudExpenses;
                     localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
                     render();
-                    setStatus('online');
                 }
-            } catch (err) { console.error(err); setStatus('error'); }
+                setStatus('online');
+
+            } catch (err) {
+                // Chyba sítě nebo CORS — data z localStorage zůstanou zobrazená
+                setStatus('error');
+            }
         }
 
         async function addExpense(category) {
@@ -142,6 +162,101 @@
             expenses.unshift(newItem);
             amountInput.value = '';
             render();
-
             localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
+
             try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'penize_add', item: newItem })
+                });
+                setStatus('online');
+            } catch (err) {
+                // Záznam zůstane v localStorage i při chybě sítě
+                setStatus('error');
+            }
+        }
+
+        async function deleteExpense(id) {
+            expenses = expenses.filter(e => e.id !== id);
+            render();
+            localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
+
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'penize_delete', id: id })
+                });
+                setStatus('online');
+            } catch (err) {
+                setStatus('error');
+            }
+        }
+
+        function render() {
+            historyList.innerHTML = '';
+            if (!Array.isArray(expenses)) expenses = [];
+
+            const now = new Date();
+            const currentMonth = now.getMonth() + 1;
+            const currentYear = now.getFullYear();
+
+            let balance = 0;
+            expenses.forEach(item => {
+                if (item && item.date) {
+                    let cleanDate = String(item.date).replace(/\s/g, '');
+                    let parts = cleanDate.split('.');
+                    let m = parseInt(parts[1], 10);
+                    let y = parseInt(parts[2], 10);
+                    
+                    if (m === currentMonth && y === currentYear) {
+                        if (item.category === '💰 Příjem') {
+                            balance += item.amount;
+                        } else {
+                            balance -= item.amount;
+                        }
+                    }
+                }
+            });
+
+            if (balance < 0) {
+                totalBudget.className = 'budget-value minus';
+                totalBudget.innerText = balance.toLocaleString('cs-CZ') + ' Kč';
+            } else {
+                totalBudget.className = 'budget-value';
+                totalBudget.innerText = '+' + balance.toLocaleString('cs-CZ') + ' Kč';
+            }
+
+            if (expenses.length === 0) {
+                historyList.innerHTML = '<div style="color: #4a4d52; font-style: italic; text-align: center; font-size: 0.95rem;">Žádné záznamy...</div>';
+                return;
+            }
+
+            expenses.forEach(item => {
+                if (!item) return;
+                const isIncome = item.category === '💰 Příjem';
+                const el = document.createElement('div');
+                el.className = 'history-item';
+                el.innerHTML = `
+                    <div class="history-left">
+                        <div class="history-cat">${item.category}</div>
+                        <div class="history-date">${item.date}</div>
+                    </div>
+                    <div class="history-right">
+                        <div class="history-amt ${isIncome ? 'income' : 'expense'}">
+                            ${isIncome ? '+' : '-'}${item.amount} Kč
+                        </div>
+                        <button class="del-btn" onclick="deleteExpense('${item.id}')">✕</button>
+                    </div>
+                `;
+                historyList.appendChild(el);
+            });
+        }
+    </script>
+</body>
+</html>
