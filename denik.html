@@ -46,7 +46,7 @@
         .delete-btn:hover { color: #cf6679; }
 
         .archive-section {
-            border-top: 1px solid #2a2d32; padding-top: 20px; margin-top: 10px;
+            border-top: 1px solid #2a2d32; padding-top: 15px; margin-top: 10px;
             display: flex; flex-direction: column; gap: 15px;
         }
         .archive-grid { display: flex; flex-direction: column; gap: 15px; }
@@ -55,9 +55,9 @@
         .day-subitem { font-size: 0.95rem; margin-bottom: 4px; color: #c0c0c0; }
         .day-subitem span { color: #009688; font-size: 0.8rem; font-weight: bold; margin-right: 6px; }
 
-        .footer { display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px; }
+        .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
         .action-btn { border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
-        .btn-archive { background-color: #009688; color: white; width: 100%; }
+        .btn-archive { background-color: #009688; color: white; }
         .btn-archive:hover { background-color: #00bfa5; }
     </style>
 </head>
@@ -99,7 +99,9 @@
         async function loadData() {
             setStatus('syncing');
             const local = localStorage.getItem('simplenote_diary_data');
-            if (local) { try { items = JSON.parse(local); render(); } catch(e) { items = []; } }
+            if (local) {
+                try { items = JSON.parse(local); render(); } catch(e) { items = []; }
+            }
             try {
                 const response = await fetch(`${CLOUD_URL}?mode=denik`);
                 const cloudItems = await response.json();
@@ -137,11 +139,9 @@
         });
 
         async function deleteItem(id) {
-            // OKAMŽITĚ MAŽEME Z DISPLEJE (NEČEKÁ SE NA SÍŤ)
             items = items.filter(i => i.id !== id);
             render();
             localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
-            
             try {
                 setStatus('syncing');
                 await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'denik_delete', id: id }) });
@@ -150,9 +150,6 @@
         }
 
         async function archiveDay() {
-            const confirmArchive = confirm("Opravdu chceš uzavřít a archivovat dnešní den?");
-            if (!confirmArchive) return;
-
             items.forEach(i => { if (!i.archived) i.archived = true; });
             render();
             localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
@@ -165,25 +162,13 @@
 
         function cleanTime(t) {
             if (!t) return '';
-            let s = String(t).trim();
+            let s = String(t);
             if (s.includes('T')) {
                 let timePart = s.split('T')[1];
                 if (timePart) {
                     let parts = timePart.split(':');
                     return parts[0] + ':' + parts[1];
                 }
-            }
-            if (s.includes(' ')) {
-                let parts = s.split(' ');
-                let lastPart = parts[parts.length - 1];
-                if (lastPart.includes(':')) {
-                    let tParts = lastPart.split(':');
-                    return tParts[0] + ':' + tParts[1];
-                }
-            }
-            if (s.includes(':')) {
-                let parts = s.split(':');
-                return parts[0] + ':' + parts[1];
             }
             return s;
         }
@@ -233,9 +218,11 @@
                     const block = document.createElement('div');
                     block.className = 'day-block';
                     let html = `<div class="day-title">${date}</div>`;
+                    
                     groups[date].forEach(item => {
                         html += `<div class="day-subitem"><span>[${cleanTime(item.time)}]</span>${item.text}</div>`;
                     });
+                    
                     block.innerHTML = html;
                     archiveGrid.appendChild(block);
                 });
