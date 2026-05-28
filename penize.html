@@ -102,52 +102,29 @@
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
         let expenses = [];
-        
         const amountInput = document.getElementById('amount-input');
         const totalBudget = document.getElementById('total-budget');
         const historyList = document.getElementById('history-list');
         const syncStatus = document.getElementById('sync-status');
 
-        function setStatus(status) { 
-            syncStatus.className = 'sync-status ' + status; 
-        }
+        function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
 
-        // Spustí se hned při otevření aplikace
+        window.addEventListener('DOMContentLoaded', loadData);
+
         async function loadData() {
             setStatus('syncing');
-            
-            // Nejdřív okamžitě vykreslíme to, co máme uloženo v paměti telefonu/PC
             const local = localStorage.getItem('simplenote_money_data');
-            if (local) { 
-                try { 
-                    expenses = JSON.parse(local); 
-                    render(); 
-                } catch(e) { 
-                    console.error("Lokální data poškozena", e);
-                } 
-            }
-            
-            // Pak se pokusíme stáhnout čerstvá data z tabulky Google
+            if (local) { try { expenses = JSON.parse(local); render(); } catch(e) { expenses = []; } }
             try {
-                const response = await fetch(CLOUD_URL + "?mode=penize");
+                const response = await fetch(`${CLOUD_URL}?mode=penize`);
                 const cloudExpenses = await response.json();
-                
-                if (cloudExpenses && Array.isArray(cloudExpenses)) {
+                if (cloudExpenses) {
                     expenses = cloudExpenses;
                     localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
                     render();
                     setStatus('online');
-                } else {
-                    setStatus('online');
                 }
-            } catch (err) { 
-                console.error("Chyba synchronizace", err); 
-                // V případě výpadku nebo zablokování požadavku NESMAŽEME data, ale necháme svítit lokální kopii
-                setStatus('error');
-                if (expenses && expenses.length > 0) {
-                    render();
-                }
-            }
+            } catch (err) { console.error(err); setStatus('error'); }
         }
 
         async function addExpense(category) {
@@ -162,128 +139,9 @@
                 category: category
             };
 
-            // Přidáme hned na displej, aby uživatel nečekal na síť
             expenses.unshift(newItem);
             amountInput.value = '';
             render();
 
             localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
-            
             try {
-                setStatus('syncing');
-                await fetch(CLOUD_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ type: 'penize_add', item: newItem }) 
-                });
-                setStatus('online');
-            } catch (err) { 
-                setStatus('error'); 
-            }
-        }
-
-        async function deleteExpense(id) {
-            expenses = expenses.filter(e => e.id !== id);
-            render();
-            localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
-            
-            try {
-                setStatus('syncing');
-                await fetch(CLOUD_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ type: 'penize_delete', id: id }) 
-                });
-                setStatus('online');
-            } catch (err) { 
-                setStatus('error'); 
-            }
-        }
-
-        function render() {
-            historyList.innerHTML = '';
-            if (!Array.isArray(expenses)) expenses = [];
-
-            const now = new Date();
-            const currentMonth = now.getMonth() + 1;
-            const currentYear = now.getFullYear();
-
-            let balance = 0;
-            
-            expenses.forEach(item => {
-                if (!item || !item.date) return;
-                
-                let m, y;
-                let dateStr = String(item.date);
-
-                // Bezpečné parsování ISO formátu (obsahuje T) i českého formátu z tabulky
-                if (dateStr.indexOf('T') !== -1) {
-                    const dObj = new Date(dateStr);
-                    m = dObj.getMonth() + 1;
-                    y = dObj.getFullYear();
-                } else {
-                    let cleanDate = dateStr.replace(/\s/g, '');
-                    let parts = cleanDate.split('.');
-                    m = parseInt(parts[1], 10);
-                    y = parseInt(parts[2], 10);
-                }
-
-                let amt = parseFloat(item.amount);
-                if (isNaN(amt)) amt = 0;
-
-                if (m === currentMonth && y === currentYear) {
-                    if (item.category === '💰 Příjem') {
-                        balance += amt;
-                    } else {
-                        balance -= amt;
-                    }
-                }
-            });
-
-            if (balance < 0) {
-                totalBudget.className = 'budget-value minus';
-                totalBudget.innerText = balance.toLocaleString('cs-CZ') + ' Kč';
-            } else {
-                totalBudget.className = 'budget-value';
-                totalBudget.innerText = '+' + balance.toLocaleString('cs-CZ') + ' Kč';
-            }
-
-            if (expenses.length === 0) {
-                historyList.innerHTML = '<div style="color: #4a4d52; font-style: italic; text-align: center; font-size: 0.95rem;">Žádné záznamy...</div>';
-                return;
-            }
-
-            expenses.forEach(item => {
-                if (!item) return;
-                const isIncome = item.category === '💰 Příjem';
-                
-                let displayDate = item.date;
-                if (typeof item.date === 'string' && item.date.indexOf('T') !== -1) {
-                    displayDate = new Date(item.date).toLocaleDateString('cs-CZ');
-                }
-
-                const el = document.createElement('div');
-                el.className = 'history-item';
-                el.innerHTML = `
-                    <div class="history-left">
-                        <div class="history-cat">${item.category}</div>
-                        <div class="history-date">${displayDate}</div>
-                    </div>
-                    <div class="history-right">
-                        <div class="history-amt ${isIncome ? 'income' : 'expense'}">
-                            ${isIncome ? '+' : '-'}${item.amount} Kč
-                        </div>
-                        <button class="del-btn" onclick="deleteExpense('${item.id}')">✕</button>
-                    </div>
-                `;
-                historyList.appendChild(el);
-            });
-        }
-
-        // Spuštění kódu na pozadí ihned po načtení prvků stránky
-        window.onload = loadData;
-    </script>
-</body>
-</html>
