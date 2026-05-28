@@ -138,7 +138,6 @@
             }
         });
 
-        // OPRAVENÁ FUNKCE MAZÁNÍ
         async function deleteItem(id) {
             items = items.filter(i => i.id !== id);
             render();
@@ -164,9 +163,12 @@
             } catch (err) { setStatus('error'); }
         }
 
+        // KOMPLETNĚ PŘEDĚLANÉ ČIŠTĚNÍ ČASU
         function cleanTime(t) {
             if (!t) return '';
-            let s = String(t);
+            let s = String(t).trim();
+            
+            // Pokud obsahuje 'T' (ISO formát), vytáhneme část za ním
             if (s.includes('T')) {
                 let timePart = s.split('T')[1];
                 if (timePart) {
@@ -174,6 +176,23 @@
                     return parts[0] + ':' + parts[1];
                 }
             }
+            
+            // Pokud obsahuje mezeru (např. '30. 12. 1899 11:09:00'), vezmeme poslední část
+            if (s.includes(' ')) {
+                let parts = s.split(' ');
+                let lastPart = parts[parts.length - 1];
+                if (lastPart.includes(':')) {
+                    let tParts = lastPart.split(':');
+                    return tParts[0] + ':' + tParts[1];
+                }
+            }
+            
+            // Pokud už je to čistý čas '11:09:00' nebo '11:09'
+            if (s.includes(':')) {
+                let parts = s.split(':');
+                return parts[0] + ':' + parts[1];
+            }
+            
             return s;
         }
 
@@ -191,4 +210,47 @@
             } else {
                 todayActive.forEach(item => {
                     const el = document.createElement('div');
-                    el.className = '
+                    el.className = 'timeline-item';
+                    el.innerHTML = `
+                        <div class="item-meta">${cleanTime(item.time)}</div>
+                        <div class="item-text">${item.text}</div>
+                        <button class="delete-btn" onclick="deleteItem('${item.id}')">✕</button>
+                    `;
+                    todayTimeline.appendChild(el);
+                });
+            }
+            
+            const groups = {};
+            archived.forEach(item => {
+                if (item && item.date) {
+                    if (!groups[item.date]) groups[item.date] = [];
+                    groups[item.date].push(item);
+                }
+            });
+            
+            const sortedDates = Object.keys(groups).sort((a,b) => {
+                const partsA = a.split('.').map(Number);
+                const partsB = b.split('.').map(Number);
+                return new Date(partsB[2], partsB[1]-1, partsB[0]) - new Date(partsA[2], partsA[1]-1, partsA[0]);
+            });
+            
+            if (sortedDates.length === 0) {
+                archiveGrid.innerHTML = '<div style="color: #4a4d52; font-style: italic; font-size: 0.95rem;">Archiv je prázdný...</div>';
+            } else {
+                sortedDates.forEach(date => {
+                    const block = document.createElement('div');
+                    block.className = 'day-block';
+                    let html = `<div class="day-title">${date}</div>`;
+                    
+                    groups[date].forEach(item => {
+                        html += `<div class="day-subitem"><span>[${cleanTime(item.time)}]</span>${item.text}</div>`;
+                    });
+                    
+                    block.innerHTML = html;
+                    archiveGrid.appendChild(block);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
