@@ -183,8 +183,8 @@
                 if (item && item.date) {
                     // Parsuj datum ať přijde v jakémkoliv formátu
                     const d = new Date(item.date);
-                    const m = d.getUTCMonth() + 1;
-                    const y = d.getUTCFullYear();
+                    const m = d.getMonth() + 1;
+                    const y = d.getFullYear();
                     if (m === currentMonth && y === currentYear) {
                         if (item.category === '💰 Příjem') {
                             balance += item.amount;
