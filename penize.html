@@ -186,7 +186,7 @@
                     const m = d.getMonth() + 1;
                     const y = d.getFullYear();
                     if (m === currentMonth && y === currentYear) {
-                        if (item.category === '💰 Příjem') {
+                        if (item.category.trim() === '💰 Příjem') {
                             balance += item.amount;
                         } else {
                             balance -= item.amount;
@@ -210,7 +210,7 @@
 
             expenses.forEach(item => {
                 if (!item) return;
-                const isIncome = item.category === '💰 Příjem';
+                const isIncome = item.category.trim() === '💰 Příjem';
                 const el = document.createElement('div');
                 el.className = 'history-item';
                 const displayDate = new Date(item.date).toLocaleDateString('cs-CZ');
