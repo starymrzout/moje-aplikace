@@ -144,9 +144,26 @@
                 return;
             }
             
+            // Rozdělení na aktivní a dokončené (aby dokončené padaly dolů)
+            const activeItems = [];
+            const doneItems = [];
+            
             todos.forEach(item => {
                 if (!item) return;
                 const isDone = item.text && item.text.includes('#hotovo');
+                if (isDone) {
+                    doneItems.push(item);
+                } else {
+                    activeItems.push(item);
+                }
+            });
+            
+            // Spojíme je dohromady – nejdřív aktivní, potom hotové na konci
+            const sortedTodos = [...activeItems, ...doneItems];
+            
+            sortedTodos.forEach(item => {
+                const isDone = item.text && item.text.includes('#hotovo');
+                // Odstraníme pouze tag #hotovo, ostatní tagy pro třídění zůstanou zachovány
                 const cleanText = item.text ? item.text.replace('#hotovo', '').trim() : '';
                 
                 const el = document.createElement('div');
