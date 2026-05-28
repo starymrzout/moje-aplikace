@@ -80,9 +80,10 @@
             const local = localStorage.getItem('simplenote_todo_data');
             if (local) { try { todos = JSON.parse(local); render(); } catch(e) {} }
             try {
-                const response = await fetch(`${CLOUD_URL}?mode=ukoly`);
+                // OPRAVENO: Správný parametr mode=todo, který vyžaduje tvůj doGet
+                const response = await fetch(`${CLOUD_URL}?mode=todo`);
                 const cloudTodos = await response.json();
-                if (cloudTodos) {
+                if (cloudTodos && Array.isArray(cloudTodos)) {
                     todos = cloudTodos;
                     localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
                     render();
@@ -95,7 +96,8 @@
             if (e.key === 'Enter' && todoInput.value.trim() !== '') {
                 const newItem = {
                     id: Date.now().toString(),
-                    text: todoInput.value.trim()
+                    text: todoInput.value.trim(),
+                    done: false
                 };
                 
                 todos.push(newItem);
@@ -105,33 +107,35 @@
                 localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
                 try {
                     setStatus('syncing');
-                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_add', item: newItem }) });
+                    // OPRAVENO: Posíláme typ 'todo' a balík 'items' přesně pro tvůj doPost
+                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo', items: todos }) });
                     setStatus('online');
                 } catch (err) { setStatus('error'); }
             }
         });
 
         async function toggleTodo(id) {
-            setStatus('syncing');
-            try {
-                // Posíláme standardní POST požadavek na toggle
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_toggle', id: id }) });
-                
-                // Opravujeme lokální paměť tak, jak to dělal tvůj původní skript
-                todos = todos.map(t => {
-                    if (t.id === id) {
-                        let isDone = t.text && t.text.includes('#hotovo');
-                        if (isDone) {
-                            return { ...t, text: t.text.replace('#hotovo', '').trim() };
-                        } else {
-                            return { ...t, text: t.text + ' #hotovo' };
-                        }
+            // Změna stavu proběhne okamžitě na displeji
+            todos = todos.map(t => {
+                if (t.id === id) {
+                    let txt = t.text || '';
+                    if (txt.includes('#hotovo')) {
+                        txt = txt.replace('#hotovo', '').trim();
+                    } else {
+                        txt = txt + ' #hotovo';
                     }
-                    return t;
-                });
-                
-                localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
-                render();
+                    return { ...t, text: txt };
+                }
+                return t;
+            });
+            
+            localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
+            render();
+            
+            try {
+                setStatus('syncing');
+                // OPRAVENO: Uložíme aktualizovaný balík do buňky A2
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo', items: todos }) });
                 setStatus('online');
             } catch (err) { setStatus('error'); }
         }
