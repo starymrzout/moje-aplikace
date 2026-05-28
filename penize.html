@@ -127,7 +127,7 @@
             const now = new Date();
             const newItem = {
                 id: Date.now().toString(),
-                date: now.toLocaleDateString('cs-CZ'),
+                date: now.toISOString(),
                 amount: val,
                 category: category
             };
@@ -213,10 +213,11 @@
                 const isIncome = item.category === '💰 Příjem';
                 const el = document.createElement('div');
                 el.className = 'history-item';
+                const displayDate = new Date(item.date).toLocaleDateString('cs-CZ');
                 el.innerHTML = `
                     <div class="history-left">
                         <div class="history-cat">${item.category}</div>
-                        <div class="history-date">${item.date}</div>
+                        <div class="history-date">${displayDate}</div>
                     </div>
                     <div class="history-right">
                         <div class="history-amt ${isIncome ? 'income' : 'expense'}">
