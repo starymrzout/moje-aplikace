@@ -100,3 +100,67 @@
                 
                 todos.push(newItem);
                 todoInput.value = '';
+                render();
+                
+                localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
+                try {
+                    setStatus('syncing');
+                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_add', item: newItem }) });
+                    setStatus('online');
+                } catch (err) { setStatus('error'); }
+            }
+        });
+
+        async function toggleTodo(id) {
+            setStatus('syncing');
+            try {
+                // Tady to posílá přesně to, co tvá tabulka potřebuje pro přepnutí #hotovo
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_toggle', id: id }) });
+                
+                // Lokální přepnutí v mobilu, aby to reagovalo správně
+                todos = todos.map(t => {
+                    if (t.id === id) {
+                        let txt = t.text || '';
+                        if (txt.includes('#hotovo')) {
+                            txt = txt.replace('#hotovo', '').trim();
+                        } else {
+                            txt = txt + ' #hotovo';
+                        }
+                        return { ...t, text: txt };
+                    }
+                    return t;
+                });
+                
+                localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
+                render();
+                setStatus('online');
+            } catch (err) { setStatus('error'); }
+        }
+
+        function render() {
+            todoList.innerHTML = '';
+            if (!Array.isArray(todos)) todos = [];
+            
+            if (todos.length === 0) {
+                todoList.innerHTML = '<div style="color: #4a4d52; font-style: italic; text-align: center; font-size: 0.95rem;">Žádné záznamy...</div>';
+                return;
+            }
+            
+            todos.forEach(item => {
+                if (!item) return;
+                const isDone = item.text && item.text.includes('#hotovo');
+                const cleanText = item.text ? item.text.replace('#hotovo', '').trim() : '';
+                
+                const el = document.createElement('div');
+                el.className = 'todo-item' + (isDone ? ' done' : '');
+                el.onclick = () => toggleTodo(item.id);
+                el.innerHTML = `
+                    <div class="checkbox"></div>
+                    <div class="todo-text">${cleanText}</div>
+                `;
+                todoList.appendChild(el);
+            });
+        }
+    </script>
+</body>
+</html>
