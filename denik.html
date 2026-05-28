@@ -99,9 +99,7 @@
         async function loadData() {
             setStatus('syncing');
             const local = localStorage.getItem('simplenote_diary_data');
-            if (local) {
-                try { items = JSON.parse(local); render(); } catch(e) { items = []; }
-            }
+            if (local) { try { items = JSON.parse(local); render(); } catch(e) { items = []; } }
             try {
                 const response = await fetch(`${CLOUD_URL}?mode=denik`);
                 const cloudItems = await response.json();
@@ -139,9 +137,11 @@
         });
 
         async function deleteItem(id) {
+            // OKAMŽITĚ MAŽEME Z DISPLEJE (NEČEKÁ SE NA SÍŤ)
             items = items.filter(i => i.id !== id);
             render();
             localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
+            
             try {
                 setStatus('syncing');
                 await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'denik_delete', id: id }) });
@@ -163,12 +163,9 @@
             } catch (err) { setStatus('error'); }
         }
 
-        // KOMPLETNĚ PŘEDĚLANÉ ČIŠTĚNÍ ČASU
         function cleanTime(t) {
             if (!t) return '';
             let s = String(t).trim();
-            
-            // Pokud obsahuje 'T' (ISO formát), vytáhneme část za ním
             if (s.includes('T')) {
                 let timePart = s.split('T')[1];
                 if (timePart) {
@@ -176,8 +173,6 @@
                     return parts[0] + ':' + parts[1];
                 }
             }
-            
-            // Pokud obsahuje mezeru (např. '30. 12. 1899 11:09:00'), vezmeme poslední část
             if (s.includes(' ')) {
                 let parts = s.split(' ');
                 let lastPart = parts[parts.length - 1];
@@ -186,13 +181,10 @@
                     return tParts[0] + ':' + tParts[1];
                 }
             }
-            
-            // Pokud už je to čistý čas '11:09:00' nebo '11:09'
             if (s.includes(':')) {
                 let parts = s.split(':');
                 return parts[0] + ':' + parts[1];
             }
-            
             return s;
         }
 
@@ -241,11 +233,9 @@
                     const block = document.createElement('div');
                     block.className = 'day-block';
                     let html = `<div class="day-title">${date}</div>`;
-                    
                     groups[date].forEach(item => {
                         html += `<div class="day-subitem"><span>[${cleanTime(item.time)}]</span>${item.text}</div>`;
                     });
-                    
                     block.innerHTML = html;
                     archiveGrid.appendChild(block);
                 });

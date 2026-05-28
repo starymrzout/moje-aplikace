@@ -3,272 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Můj Cloudový To-Do</title>
+    <title>Úkoly a Rychlé nápady</title>
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✅</text></svg>">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4436/4436481.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✔️</text></svg>">
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #1a1c1e;
-            color: #e2e2e2;
+            background-color: #1a1c1e; color: #e2e2e2;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-            min-height: 100vh;
+            display: flex; justify-content: center; padding: 40px 20px; min-height: 100vh;
         }
-        .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
+        .container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2d32; padding-bottom: 15px; }
-        h1 { font-size: 1.5rem; font-weight: 400; color: #f0f0f0; }
+        h1 { font-size: 1.4rem; font-weight: 400; color: #f0f0f0; }
         
         .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; }
         .sync-status.syncing { background-color: #ffb74d; }
         .sync-status.online { background-color: #4caf50; }
         .sync-status.error { background-color: #cf6679; }
 
-        .input-group { width: 100%; }
-        .todo-input {
-            width: 100%;
-            background-color: #121314;
-            border: 1px solid #2a2d32;
-            color: #f0f0f0;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            outline: none;
-            transition: border 0.2s;
+        .input-box {
+            width: 100%; background-color: #121314; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 15px; border-radius: 8px; font-size: 1.1rem; outline: none; transition: border 0.2s;
         }
-        .todo-input:focus { border-color: #009688; }
+        .input-box:focus { border-color: #009688; }
 
-        .tags-section { display: flex; flex-wrap: wrap; gap: 6px; padding: 5px 0; }
-        .tag-badge {
-            background-color: #121314;
-            color: #8a8d92;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            font-weight: 600;
-            border: 1px solid #2a2d32;
-        }
-        .tag-badge.active { background-color: #009688; color: white; border-color: #009688; }
-
-        .todo-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .section-title { font-size: 0.9rem; color: #8a8d92; font-weight: bold; text-transform: uppercase; margin-top: 10px; }
+        
+        .todo-list { display: flex; flex-direction: column; gap: 10px; }
         .todo-item {
-            background-color: #121314;
-            border: 1px solid #2a2d32;
-            padding: 15px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
+            background-color: #121314; border: 1px solid #2a2d32; padding: 15px; border-radius: 8px;
+            display: flex; align-items: flex-start; gap: 12px; cursor: pointer; transition: background 0.2s;
         }
-        .todo-item:hover { border-color: #3a3f45; }
+        .todo-item:active { background-color: #1c1e20; }
         
         .checkbox {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #4a4d52;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: transparent;
-            font-size: 0.8rem;
-            font-weight: bold;
-            transition: all 0.2s;
+            width: 20px; height: 20px; border: 2px solid #009688; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
         }
-        
-        .todo-text { flex: 1; font-size: 1.05rem; line-height: 1.4; color: #e2e2e2; }
-
-        /* Styly pro hotové úkoly (přeškrtnutí a zašednutí) */
-        .todo-item.done { opacity: 0.4; }
-        .todo-item.done .checkbox { background-color: #009688; border-color: #009688; color: white; }
-        .todo-item.done .todo-text { text-decoration: line-through; }
-
-        .footer { display: flex; justify-content: flex-end; margin-top: 15px; }
-        .clean-btn {
-            background-color: #cf6679;
-            color: #121314;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-        }
-        .clean-btn:hover { background-color: #ff79c6; }
+        .todo-text { font-size: 1.1rem; line-height: 1.4; color: #e2e2e2; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="header">
-            <h1>Sběrna úkolů a nápadů</h1>
+            <h1>Úkoly a Rychlé nápady</h1>
             <div class="sync-status" id="sync-status"></div>
         </div>
 
-        <div class="input-group">
-            <input type="text" id="todo-input" class="todo-input" placeholder="Co je potřeba udělat? (použij #štítky)..." autofocus>
-        </div>
+        <input type="text" id="todo-input" class="input-box" placeholder="Co je třeba udělat? Napiš a stiskni Enter..." autofocus>
 
-        <div class="tags-section" id="tags-section"></div>
-
+        <div class="section-title">Aktivní úkoly</div>
         <div class="todo-list" id="todo-list"></div>
-
-        <div class="footer">
-            <button class="clean-btn" onclick="purgeDone()">Smazat hotové</button>
-        </div>
     </div>
 
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
-
         let todos = [];
-        let selectedTag = null;
-
         const todoInput = document.getElementById('todo-input');
         const todoList = document.getElementById('todo-list');
-        const tagsSection = document.getElementById('tags-section');
         const syncStatus = document.getElementById('sync-status');
 
         function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
 
-        window.addEventListener('DOMContentLoaded', async () => {
+        window.addEventListener('DOMContentLoaded', loadData);
+
+        async function loadData() {
             setStatus('syncing');
             const local = localStorage.getItem('simplenote_todo_data');
-            if (local) {
-                todos = JSON.parse(local);
-                renderTags();
-                renderTodoList();
-            }
-
+            if (local) { try { todos = JSON.parse(local); render(); } catch(e) { todos = []; } }
             try {
-                const response = await fetch(`${CLOUD_URL}?mode=todo`);
+                const response = await fetch(`${CLOUD_URL}?mode=ukoly`);
                 const cloudTodos = await response.json();
                 if (cloudTodos) {
                     todos = cloudTodos;
                     localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
-                    renderTags();
-                    renderTodoList();
+                    render();
                     setStatus('online');
                 }
-            } catch (err) {
-                console.error(err);
-                setStatus('error');
-            }
-        });
-
-        todoInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && todoInput.value.trim() !== '') {
-                const newTodo = {
-                    id: Date.now().toString(),
-                    text: todoInput.value.trim(),
-                    done: false,
-                    updatedAt: new Date().toLocaleDateString('cs-CZ')
-                };
-                todos.unshift(newTodo); // Nový úkol skočí nahoru
-                todoInput.value = '';
-                renderTags();
-                renderTodoList();
-                saveAndSync();
-            }
-        });
-
-        function toggleTodo(id) {
-            const todo = todos.find(t => t.id === id);
-            if (todo) {
-                todo.done = !todo.done;
-                todo.updatedAt = new Date().toLocaleDateString('cs-CZ');
-                renderTodoList();
-                saveAndSync();
-            }
+            } catch (err) { console.error(err); setStatus('error'); }
         }
 
-        async function saveAndSync() {
+        todoInput.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter' && todoInput.value.trim() !== '') {
+                const newItem = {
+                    id: Date.now().toString(),
+                    text: todoInput.value.trim()
+                };
+                
+                todos.push(newItem);
+                todoInput.value = '';
+                render();
+                
+                localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
+                try {
+                    setStatus('syncing');
+                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_add', item: newItem }) });
+                    setStatus('online');
+                } catch (err) { setStatus('error'); }
+            }
+        });
+
+        async function completeTodo(id) {
+            // OKAMŽITĚ MAŽEME Z DISPLEJE (NEČEKÁ SE NA SÍŤ)
+            todos = todos.filter(t => t.id !== id);
+            render();
             localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
+            
             try {
                 setStatus('syncing');
-                await fetch(CLOUD_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'todo', items: todos })
-                });
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_delete', id: id }) });
                 setStatus('online');
-            } catch (err) {
-                console.error(err);
-                setStatus('error');
-            }
+            } catch (err) { setStatus('error'); }
         }
 
-        function purgeDone() {
-            todos = todos.filter(t => !t.done);
-            renderTags();
-            renderTodoList();
-            saveAndSync();
-        }
-
-        function getAllTags() {
-            const tags = new Set();
-            todos.forEach(t => {
-                const matches = t.text.match(/#[\wáéíóúýčďěňřšťžůú]+/g);
-                if (matches) matches.forEach(tag => tags.add(tag.toLowerCase()));
-            });
-            return Array.from(tags).sort();
-        }
-
-        function renderTags() {
-            const tags = getAllTags();
-            tagsSection.innerHTML = '';
-            if (tags.length === 0) return;
-
-            const allBtn = document.createElement('span');
-            allBtn.className = 'tag-badge' + (!selectedTag ? ' active' : '');
-            allBtn.innerText = '🏷️ Vše';
-            allBtn.onclick = () => { selectedTag = null; renderTags(); renderTodoList(); };
-            tagsSection.appendChild(allBtn);
-
-            tags.forEach(tag => {
-                const badge = document.createElement('span');
-                badge.className = 'tag-badge' + (selectedTag === tag ? ' active' : '');
-                badge.innerText = tag;
-                badge.onclick = () => {
-                    selectedTag = (selectedTag === tag) ? null : tag;
-                    renderTags();
-                    renderTodoList();
-                };
-                tagsSection.appendChild(badge);
-            });
-        }
-
-        function renderTodoList() {
+        function render() {
             todoList.innerHTML = '';
+            if (!Array.isArray(todos)) todos = [];
             
-            // TADY JE TO ŘAZENÍ: Rozdělíme úkoly na aktivní a splněné
-            const activeTodos = todos.filter(t => !t.done);
-            const doneTodos = todos.filter(t => t.done);
+            if (todos.length === 0) {
+                todoList.innerHTML = '<div style="color: #4a4d52; font-style: italic; font-size: 0.95rem;">Žádné úkoly. Máš čistý stůl!</div>';
+                return;
+            }
             
-            // Spojíme je tak, aby splněné byly VŽDY na konci
-            const sortedTodos = [...activeTodos, ...doneTodos];
-
-            sortedTodos.forEach(todo => {
-                if (selectedTag && !todo.text.toLowerCase().includes(selectedTag)) return;
-
-                const item = document.createElement('div');
-                item.className = 'todo-item' + (todo.done ? ' done' : '');
-                item.onclick = () => toggleTodo(todo.id);
-
-                item.innerHTML = `
-                    <div class="checkbox">✓</div>
-                    <div class="todo-text">${todo.text}</div>
+            todos.forEach(item => {
+                if (!item) return;
+                const el = document.createElement('div');
+                el.className = 'todo-item';
+                el.onclick = () => completeTodo(item.id);
+                el.innerHTML = `
+                    <div class="checkbox"></div>
+                    <div class="todo-text">${item.text}</div>
                 `;
-                todoList.appendChild(item);
+                todoList.appendChild(el);
             });
         }
     </script>
