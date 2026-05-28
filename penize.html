@@ -112,29 +112,41 @@
             syncStatus.className = 'sync-status ' + status; 
         }
 
+        // Spustí se hned při otevření aplikace
         async function loadData() {
             setStatus('syncing');
+            
+            // Nejdřív okamžitě vykreslíme to, co máme uloženo v paměti telefonu/PC
             const local = localStorage.getItem('simplenote_money_data');
             if (local) { 
                 try { 
                     expenses = JSON.parse(local); 
                     render(); 
                 } catch(e) { 
-                    expenses = []; 
+                    console.error("Lokální data poškozena", e);
                 } 
             }
+            
+            // Pak se pokusíme stáhnout čerstvá data z tabulky Google
             try {
                 const response = await fetch(CLOUD_URL + "?mode=penize");
                 const cloudExpenses = await response.json();
+                
                 if (cloudExpenses && Array.isArray(cloudExpenses)) {
                     expenses = cloudExpenses;
                     localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
                     render();
                     setStatus('online');
+                } else {
+                    setStatus('online');
                 }
             } catch (err) { 
-                console.error(err); 
-                setStatus('error'); 
+                console.error("Chyba synchronizace", err); 
+                // V případě výpadku nebo zablokování požadavku NESMAŽEME data, ale necháme svítit lokální kopii
+                setStatus('error');
+                if (expenses && expenses.length > 0) {
+                    render();
+                }
             }
         }
 
@@ -150,27 +162,44 @@
                 category: category
             };
 
+            // Přidáme hned na displej, aby uživatel nečekal na síť
             expenses.unshift(newItem);
             amountInput.value = '';
             render();
 
             localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
+            
             try {
                 setStatus('syncing');
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'penize_add', item: newItem }) });
+                await fetch(CLOUD_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ type: 'penize_add', item: newItem }) 
+                });
                 setStatus('online');
-            } catch (err) { setStatus('error'); }
+            } catch (err) { 
+                setStatus('error'); 
+            }
         }
 
         async function deleteExpense(id) {
             expenses = expenses.filter(e => e.id !== id);
             render();
             localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
+            
             try {
                 setStatus('syncing');
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'penize_delete', id: id }) });
+                await fetch(CLOUD_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ type: 'penize_delete', id: id }) 
+                });
                 setStatus('online');
-            } catch (err) { setStatus('error'); }
+            } catch (err) { 
+                setStatus('error'); 
+            }
         }
 
         function render() {
@@ -189,7 +218,7 @@
                 let m, y;
                 let dateStr = String(item.date);
 
-                // Univerzální a bezpečný převod data bez ohledu na formát (český text i ISO)
+                // Bezpečné parsování ISO formátu (obsahuje T) i českého formátu z tabulky
                 if (dateStr.indexOf('T') !== -1) {
                     const dObj = new Date(dateStr);
                     m = dObj.getMonth() + 1;
@@ -246,4 +275,15 @@
                         <div class="history-amt ${isIncome ? 'income' : 'expense'}">
                             ${isIncome ? '+' : '-'}${item.amount} Kč
                         </div>
-                        <button class="del-btn" onclick="deleteExpense
+                        <button class="del-btn" onclick="deleteExpense('${item.id}')">✕</button>
+                    </div>
+                `;
+                historyList.appendChild(el);
+            });
+        }
+
+        // Spuštění kódu na pozadí ihned po načtení prvků stránky
+        window.onload = loadData;
+    </script>
+</body>
+</html>
