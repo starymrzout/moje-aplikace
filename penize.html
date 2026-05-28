@@ -92,4 +92,58 @@
             <button class="cat-btn" onclick="addExpense('📱 Mobily')">📱 Mobily</button>
             <button class="cat-btn" onclick="addExpense('🍿 Zábava')">🍿 Zábava</button>
             <button class="cat-btn" onclick="addExpense('🏠 Domácnost')">🏠 Domácnost</button>
-            <button class="cat-btn" onclick="addExpense('👶 Děti')">👶 Děti</
+            <button class="cat-btn" onclick="addExpense('👶 Děti')">👶 Děti</button>
+        </div>
+
+        <div class="section-title">Poslední pohyby</div>
+        <div class="history-list" id="history-list"></div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        let expenses = [];
+        const amountInput = document.getElementById('amount-input');
+        const totalBudget = document.getElementById('total-budget');
+        const historyList = document.getElementById('history-list');
+        const syncStatus = document.getElementById('sync-status');
+
+        function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
+
+        window.addEventListener('DOMContentLoaded', loadData);
+
+        async function loadData() {
+            setStatus('syncing');
+            const local = localStorage.getItem('simplenote_money_data');
+            if (local) { try { expenses = JSON.parse(local); render(); } catch(e) { expenses = []; } }
+            try {
+                const response = await fetch(`${CLOUD_URL}?mode=penize`);
+                const cloudExpenses = await response.json();
+                if (cloudExpenses) {
+                    expenses = cloudExpenses;
+                    localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
+                    render();
+                    setStatus('online');
+                }
+            } catch (err) { console.error(err); setStatus('error'); }
+        }
+
+        async function addExpense(category) {
+            const val = parseFloat(amountInput.value);
+            if (isNaN(val) || val <= 0) return;
+
+            const now = new Date();
+            const newItem = {
+                id: Date.now().toString(),
+                date: now.toLocaleDateString('cs-CZ'),
+                amount: val,
+                category: category
+            };
+
+            expenses.unshift(newItem);
+            amountInput.value = '';
+            render();
+
+            localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: '
