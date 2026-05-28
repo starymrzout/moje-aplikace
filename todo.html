@@ -114,19 +114,18 @@
         async function toggleTodo(id) {
             setStatus('syncing');
             try {
-                // Tady to posílá přesně to, co tvá tabulka potřebuje pro přepnutí #hotovo
+                // Posíláme standardní POST požadavek na toggle
                 await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo_toggle', id: id }) });
                 
-                // Lokální přepnutí v mobilu, aby to reagovalo správně
+                // Opravujeme lokální paměť tak, jak to dělal tvůj původní skript
                 todos = todos.map(t => {
                     if (t.id === id) {
-                        let txt = t.text || '';
-                        if (txt.includes('#hotovo')) {
-                            txt = txt.replace('#hotovo', '').trim();
+                        let isDone = t.text && t.text.includes('#hotovo');
+                        if (isDone) {
+                            return { ...t, text: t.text.replace('#hotovo', '').trim() };
                         } else {
-                            txt = txt + ' #hotovo';
+                            return { ...t, text: t.text + ' #hotovo' };
                         }
-                        return { ...t, text: txt };
                     }
                     return t;
                 });
