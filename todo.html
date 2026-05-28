@@ -87,67 +87,86 @@
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
         let todos = []; let selectedTag = null;
-        const todoInput = document.getElementById('todo-input'); const todoList = document.getElementById('todo-list');
-        const tagsSection = document.getElementById('tags-section'); const syncStatus = document.getElementById('sync-status');
+        const todoInput = document.getElementById('todo-input');
+        const todoList = document.getElementById('todo-list');
+        const tagsSection = document.getElementById('tags-section');
+        const syncStatus = document.getElementById('sync-status');
 
         function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            setStatus('syncing'); const local = localStorage.getItem('simplenote_todo_data');
-            if (local) { todos = JSON.parse(local); renderTags(); renderTodoList(); }
+            setStatus('syncing');
+            const local = localStorage.getItem('simplenote_todo_data');
+            if (local) {
+                try { todos = JSON.parse(local); renderTags(); renderTodoList(); } catch(e) { todos = []; }
+            }
             try {
-                const response = await fetch(`${CLOUD_URL}?mode=todo`); const cloudTodos = await response.json();
-                if (cloudTodos) { todos = cloudTodos; localStorage.setItem('simplenote_todo_data', JSON.stringify(todos)); renderTags(); renderTodoList(); setStatus('online'); }
+                const response = await fetch(`${CLOUD_URL}?mode=todo`);
+                const cloudTodos = await response.json();
+                if (Array.isArray(cloudTodos)) {
+                    todos = cloudTodos;
+                    localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
+                    renderTags(); renderTodoList();
+                }
+                // Zelená tečka vždy když cloud odpoví
+                setStatus('online');
             } catch (err) { console.error(err); setStatus('error'); }
         });
 
         todoInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && todoInput.value.trim() !== '') {
-                const newTodo = { id: Date.now().toString(), text: todoInput.value.trim(), done: false, updatedAt: new Date().toLocaleDateString('cs-CZ') };
+                const newTodo = { id: Date.now().toString(), text: todoInput.value.trim(), done: false, updatedAt: new Date().toISOString() };
                 todos.unshift(newTodo); todoInput.value = ''; renderTags(); renderTodoList(); saveAndSync();
             }
         });
 
         function toggleTodo(id) {
             const todo = todos.find(t => t.id === id);
-            if (todo) { todo.done = !todo.done; todo.updatedAt = new Date().toLocaleDateString('cs-CZ'); renderTodoList(); saveAndSync(); }
+            if (todo) { todo.done = !todo.done; todo.updatedAt = new Date().toISOString(); renderTodoList(); saveAndSync(); }
         }
 
         async function saveAndSync() {
             localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
-            try { setStatus('syncing'); await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo', items: todos }) }); setStatus('online'); } catch (err) { console.error(err); setStatus('error'); }
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo', items: todos }) });
+                setStatus('online');
+            } catch (err) { console.error(err); setStatus('error'); }
         }
 
         function purgeDone() { todos = todos.filter(t => !t.done); renderTags(); renderTodoList(); saveAndSync(); }
-        
-        function getAllTags() { 
-            const tags = new Set(); 
-            todos.forEach(t => { 
-                const matches = t.text.match(/#[\wáéíóúýčďěňřšťžůú]+/g); 
-                if (matches) matches.forEach(tag => tags.add(tag.toLowerCase())); 
-            }); 
-            return Array.from(tags).sort(); 
+
+        function getAllTags() {
+            const tags = new Set();
+            todos.forEach(t => {
+                const matches = t.text.match(/#[\wáéíóúýčďěňřšťžůú]+/g);
+                if (matches) matches.forEach(tag => tags.add(tag.toLowerCase()));
+            });
+            return Array.from(tags).sort();
         }
 
         function renderTags() {
             const tags = getAllTags(); tagsSection.innerHTML = ''; if (tags.length === 0) return;
-            const allBtn = document.createElement('span'); allBtn.className = 'tag-badge' + (!selectedTag ? ' active' : ''); allBtn.innerText = '🏷️ Vše'; allBtn.onclick = () => { selectedTag = null; renderTags(); renderTodoList(); }; tagsSection.appendChild(allBtn);
-            tags.forEach(tag => { const badge = document.createElement('span'); badge.className = 'tag-badge' + (selectedTag === tag ? ' active' : ''); badge.innerText = tag; badge.onclick = () => { selectedTag = (selectedTag === tag) ? null : tag; renderTags(); renderTodoList(); }; tagsSection.appendChild(badge); });
+            const allBtn = document.createElement('span'); allBtn.className = 'tag-badge' + (!selectedTag ? ' active' : ''); allBtn.innerText = '🏷️ Vše';
+            allBtn.onclick = () => { selectedTag = null; renderTags(); renderTodoList(); }; tagsSection.appendChild(allBtn);
+            tags.forEach(tag => {
+                const badge = document.createElement('span'); badge.className = 'tag-badge' + (selectedTag === tag ? ' active' : ''); badge.innerText = tag;
+                badge.onclick = () => { selectedTag = (selectedTag === tag) ? null : tag; renderTags(); renderTodoList(); };
+                tagsSection.appendChild(badge);
+            });
         }
 
-        // Tuto funkci jsem minule smazal, teď je zpět:
         function renderTodoList() {
-            todoList.innerHTML = ''; 
-            const activeTodos = todos.filter(t => !t.done); 
-            const doneTodos = todos.filter(t => t.done); 
+            todoList.innerHTML = '';
+            const activeTodos = todos.filter(t => !t.done);
+            const doneTodos = todos.filter(t => t.done);
             const sortedTodos = [...activeTodos, ...doneTodos];
-            
             sortedTodos.forEach(todo => {
                 if (selectedTag && !todo.text.toLowerCase().includes(selectedTag)) return;
-                const item = document.createElement('div'); 
-                item.className = 'todo-item' + (todo.done ? ' done' : ''); 
+                const item = document.createElement('div');
+                item.className = 'todo-item' + (todo.done ? ' done' : '');
                 item.onclick = () => toggleTodo(todo.id);
-                item.innerHTML = `<div class="checkbox">✓</div><div class="todo-text">${todo.text}</div>`; 
+                item.innerHTML = `<div class="checkbox">✓</div><div class="todo-text">${todo.text}</div>`;
                 todoList.appendChild(item);
             });
         }

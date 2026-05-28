@@ -105,12 +105,13 @@
             try {
                 const response = await fetch(`${CLOUD_URL}?mode=denik`);
                 const cloudItems = await response.json();
-                if (cloudItems) {
+                if (Array.isArray(cloudItems)) {
                     items = cloudItems;
                     localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
                     render();
-                    setStatus('online');
                 }
+                // Zelená tečka vždy když cloud odpoví
+                setStatus('online');
             } catch (err) { console.error(err); setStatus('error'); }
         }
 
@@ -119,16 +120,14 @@
                 const now = new Date();
                 const newItem = {
                     id: Date.now().toString(),
-                    date: now.toLocaleDateString('cs-CZ'),
-                    time: now.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
+                    date: now.toISOString(),
+                    time: now.toISOString(),
                     text: diaryInput.value.trim(),
                     archived: false
                 };
-                
                 items.push(newItem);
                 diaryInput.value = '';
                 render();
-                
                 localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
                 try {
                     setStatus('syncing');
@@ -160,28 +159,33 @@
             } catch (err) { setStatus('error'); }
         }
 
-        function cleanTime(t) {
+        // Převede ISO string nebo jiný formát na čitelný čas HH:MM
+        function formatTime(t) {
             if (!t) return '';
-            let s = String(t);
-            if (s.includes('T')) {
-                let timePart = s.split('T')[1];
-                if (timePart) {
-                    let parts = timePart.split(':');
-                    return parts[0] + ':' + parts[1];
-                }
+            const d = new Date(t);
+            if (!isNaN(d)) {
+                return d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
             }
-            return s;
+            // Fallback pro starý formát HH:MM
+            return String(t).substring(0, 5);
+        }
+
+        // Převede ISO string nebo jiný formát na čitelné datum
+        function formatDate(d) {
+            if (!d) return '';
+            const parsed = new Date(d);
+            if (!isNaN(parsed)) return parsed.toLocaleDateString('cs-CZ');
+            return String(d);
         }
 
         function render() {
             todayTimeline.innerHTML = '';
             archiveGrid.innerHTML = '';
-            
             if (!Array.isArray(items)) items = [];
-            
+
             const todayActive = items.filter(i => i && !i.archived);
             const archived = items.filter(i => i && i.archived);
-            
+
             if (todayActive.length === 0) {
                 todayTimeline.innerHTML = '<div style="color: #4a4d52; font-style: italic; font-size: 0.95rem;">Zatím žádné dnešní zápisky...</div>';
             } else {
@@ -189,40 +193,37 @@
                     const el = document.createElement('div');
                     el.className = 'timeline-item';
                     el.innerHTML = `
-                        <div class="item-meta">${cleanTime(item.time)}</div>
+                        <div class="item-meta">${formatTime(item.time)}</div>
                         <div class="item-text">${item.text}</div>
                         <button class="delete-btn" onclick="deleteItem('${item.id}')">✕</button>
                     `;
                     todayTimeline.appendChild(el);
                 });
             }
-            
+
+            // Seskup archivní záznamy podle data (jako čitelný string)
             const groups = {};
             archived.forEach(item => {
                 if (item && item.date) {
-                    if (!groups[item.date]) groups[item.date] = [];
-                    groups[item.date].push(item);
+                    const dateKey = formatDate(item.date);
+                    if (!groups[dateKey]) groups[dateKey] = { items: [], timestamp: new Date(item.date).getTime() };
+                    groups[dateKey].items.push(item);
                 }
             });
-            
-            const sortedDates = Object.keys(groups).sort((a,b) => {
-                const partsA = a.split('.').map(Number);
-                const partsB = b.split('.').map(Number);
-                return new Date(partsB[2], partsB[1]-1, partsB[0]) - new Date(partsA[2], partsA[1]-1, partsA[0]);
-            });
-            
+
+            // Seřaď podle skutečného timestampu, nejnovější první
+            const sortedDates = Object.keys(groups).sort((a, b) => groups[b].timestamp - groups[a].timestamp);
+
             if (sortedDates.length === 0) {
                 archiveGrid.innerHTML = '<div style="color: #4a4d52; font-style: italic; font-size: 0.95rem;">Archiv je prázdný...</div>';
             } else {
-                sortedDates.forEach(date => {
+                sortedDates.forEach(dateKey => {
                     const block = document.createElement('div');
                     block.className = 'day-block';
-                    let html = `<div class="day-title">${date}</div>`;
-                    
-                    groups[date].forEach(item => {
-                        html += `<div class="day-subitem"><span>[${cleanTime(item.time)}]</span>${item.text}</div>`;
+                    let html = `<div class="day-title">${dateKey}</div>`;
+                    groups[dateKey].items.forEach(item => {
+                        html += `<div class="day-subitem"><span>[${formatTime(item.time)}]</span>${item.text}</div>`;
                     });
-                    
                     block.innerHTML = html;
                     archiveGrid.appendChild(block);
                 });
