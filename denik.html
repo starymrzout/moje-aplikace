@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sběrna pro Sladký život</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙️</text></svg>">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #1a1c1e; color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; justify-content: center; padding: 40px 20px; min-height: 100vh;
+        }
+        .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2d32; padding-bottom: 15px; }
+        h1 { font-size: 1.4rem; font-weight: 400; color: #f0f0f0; }
+        
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; }
+        .sync-status.syncing { background-color: #ffb74d; }
+        .sync-status.online { background-color: #4caf50; }
+        .sync-status.error { background-color: #cf6679; }
+
+        .input-box {
+            width: 100%; background-color: #121314; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 15px; border-radius: 8px; font-size: 1.1rem; outline: none; transition: border 0.2s;
+        }
+        .input-box:focus { border-color: #009688; }
+
+        .section-title { font-size: 0.9rem; color: #8a8d92; font-weight: bold; text-transform: uppercase; margin-top: 10px; }
+        
+        .timeline { display: flex; flex-direction: column; gap: 10px; }
+        .timeline-item {
+            background-color: #121314; border: 1px solid #2a2d32; padding: 15px; border-radius: 8px;
+            display: flex; flex-direction: column; gap: 5px; position: relative;
+        }
+        .item-meta { font-size: 0.8rem; color: #009688; font-weight: bold; }
+        .item-text { font-size: 1.05rem; line-height: 1.4; color: #e2e2e2; }
+        
+        .delete-btn {
+            position: absolute; top: 12px; right: 15px; background: transparent; border: none;
+            color: #4a4d52; cursor: pointer; font-size: 0.9rem; transition: color 0.2s;
+        }
+        .delete-btn:hover { color: #cf6679; }
+
+        .archive-section {
+            border-top: 1px solid #2a2d32; padding-top: 20px; margin-top: 10px;
+            display: flex; flex-direction: column; gap: 15px;
+        }
+        .archive-grid { display: flex; flex-direction: column; gap: 15px; }
+        .day-block { background-color: #121314; border-left: 3px solid #3a3f45; padding: 12px; border-radius: 0 6px 6px 0; }
+        .day-title { font-size: 0.9rem; color: #8a8d92; font-weight: bold; margin-bottom: 8px; }
+        .day-subitem { font-size: 0.95rem; margin-bottom: 4px; color: #c0c0c0; }
+        .day-subitem span { color: #009688; font-size: 0.8rem; font-weight: bold; margin-right: 6px; }
+
+        .footer { display: flex; justify-content: flex-end; margin-top: 10px; margin-bottom: 10px; }
+        .action-btn { border: none; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+        .btn-archive { background-color: #009688; color: white; width: 100%; }
+        .btn-archive:hover { background-color: #00bfa5; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>Dnešní podklady k podcastu</h1>
+            <div class="sync-status" id="sync-status"></div>
+        </div>
+
+        <input type="text" id="diary-input" class="input-box" placeholder="Co se stalo? Napiš a stiskni Enter..." autofocus>
+
+        <div class="section-title">Dnešní osa papíru</div>
+        <div class="timeline" id="today-timeline"></div>
+
+        <div class="footer">
+            <button class="action-btn btn-archive" onclick="archiveDay()">Uzavřít a archivovat den</button>
+        </div>
+
+        <div class="archive-section">
+            <div class="section-title">Historie a archiv dnů</div>
+            <div class="archive-grid" id="archive-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        let items = [];
+        const diaryInput = document.getElementById('diary-input');
+        const todayTimeline = document.getElementById('today-timeline');
+        const archiveGrid = document.getElementById('archive-grid');
+        const syncStatus = document.getElementById('sync-status');
+
+        function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
+
+        window.addEventListener('DOMContentLoaded', loadData);
+
+        async function loadData() {
+            setStatus('syncing');
+            const local = localStorage.getItem('simplenote_diary_data');
+            if (local) {
+                try { items = JSON.parse(local); render(); } catch(e) { items = []; }
+            }
+            try {
+                const response = await fetch(`${CLOUD_URL}?mode=denik`);
+                const cloudItems = await response.json();
+                if (cloudItems) {
+                    items = cloudItems;
+                    localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
+                    render();
+                    setStatus('online');
+                }
+            } catch (err) { console.error(err); setStatus('error'); }
+        }
+
+        diaryInput.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter' && diaryInput.value.trim() !== '') {
+                const now = new Date();
+                const newItem = {
+                    id: Date.now().toString(),
+                    date: now.toLocaleDateString('cs-CZ'),
+                    time: now.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }),
+                    text: diaryInput.value.trim(),
+                    archived: false
+                };
+                
+                items.push(newItem);
+                diaryInput.value = '';
+                render();
+                
+                localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
+                try {
+                    setStatus('syncing');
+                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'denik_add', item: newItem }) });
+                    setStatus('online');
+                } catch (err) { setStatus('error'); }
+            }
+        });
+
+        // OPRAVENÁ FUNKCE MAZÁNÍ
+        async function deleteItem(id) {
+            items = items.filter(i => i.id !== id);
+            render();
+            localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'denik_delete', id: id }) });
+                setStatus('online');
+            } catch (err) { setStatus('error'); }
+        }
+
+        async function archiveDay() {
+            const confirmArchive = confirm("Opravdu chceš uzavřít a archivovat dnešní den?");
+            if (!confirmArchive) return;
+
+            items.forEach(i => { if (!i.archived) i.archived = true; });
+            render();
+            localStorage.setItem('simplenote_diary_data', JSON.stringify(items));
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'denik_archive' }) });
+                setStatus('online');
+            } catch (err) { setStatus('error'); }
+        }
+
+        function cleanTime(t) {
+            if (!t) return '';
+            let s = String(t);
+            if (s.includes('T')) {
+                let timePart = s.split('T')[1];
+                if (timePart) {
+                    let parts = timePart.split(':');
+                    return parts[0] + ':' + parts[1];
+                }
+            }
+            return s;
+        }
+
+        function render() {
+            todayTimeline.innerHTML = '';
+            archiveGrid.innerHTML = '';
+            
+            if (!Array.isArray(items)) items = [];
+            
+            const todayActive = items.filter(i => i && !i.archived);
+            const archived = items.filter(i => i && i.archived);
+            
+            if (todayActive.length === 0) {
+                todayTimeline.innerHTML = '<div style="color: #4a4d52; font-style: italic; font-size: 0.95rem;">Zatím žádné dnešní zápisky...</div>';
+            } else {
+                todayActive.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = '
