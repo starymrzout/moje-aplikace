@@ -80,10 +80,9 @@
             const local = localStorage.getItem('simplenote_todo_data');
             if (local) { try { todos = JSON.parse(local); render(); } catch(e) {} }
             try {
-                // OPRAVENO: Správný parametr mode=todo, který vyžaduje tvůj doGet
                 const response = await fetch(`${CLOUD_URL}?mode=todo`);
                 const cloudTodos = await response.json();
-                if (cloudTodos && Array.isArray(cloudTodos)) {
+                if (cloudTodos) {
                     todos = cloudTodos;
                     localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
                     render();
@@ -96,8 +95,7 @@
             if (e.key === 'Enter' && todoInput.value.trim() !== '') {
                 const newItem = {
                     id: Date.now().toString(),
-                    text: todoInput.value.trim(),
-                    done: false
+                    text: todoInput.value.trim()
                 };
                 
                 todos.push(newItem);
@@ -107,15 +105,15 @@
                 localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
                 try {
                     setStatus('syncing');
-                    // OPRAVENO: Posíláme typ 'todo' a balík 'items' přesně pro tvůj doPost
-                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo', items: todos }) });
+                    await fetch(CLOUD_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo', items: todos }) });
                     setStatus('online');
                 } catch (err) { setStatus('error'); }
             }
         });
 
         async function toggleTodo(id) {
-            // Změna stavu proběhne okamžitě na displeji
+            setStatus('syncing');
+            
             todos = todos.map(t => {
                 if (t.id === id) {
                     let txt = t.text || '';
@@ -128,14 +126,11 @@
                 }
                 return t;
             });
-            
             localStorage.setItem('simplenote_todo_data', JSON.stringify(todos));
             render();
-            
+
             try {
-                setStatus('syncing');
-                // OPRAVENO: Uložíme aktualizovaný balík do buňky A2
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo', items: todos }) });
+                await fetch(CLOUD_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'todo', items: todos }) });
                 setStatus('online');
             } catch (err) { setStatus('error'); }
         }
