@@ -102,14 +102,15 @@
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
         let expenses = [];
+        
         const amountInput = document.getElementById('amount-input');
         const totalBudget = document.getElementById('total-budget');
         const historyList = document.getElementById('history-list');
         const syncStatus = document.getElementById('sync-status');
 
-        function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
-
-        window.addEventListener('DOMContentLoaded', loadData);
+        function setStatus(status) { 
+            syncStatus.className = 'sync-status ' + status; 
+        }
 
         async function loadData() {
             setStatus('syncing');
@@ -119,24 +120,21 @@
                     expenses = JSON.parse(local); 
                     render(); 
                 } catch(e) { 
-                    console.error("Chyba lokalni pameti", e);
+                    expenses = []; 
                 } 
             }
             try {
-                const response = await fetch(`${CLOUD_URL}?mode=penize`);
+                const response = await fetch(CLOUD_URL + "?mode=penize");
                 const cloudExpenses = await response.json();
                 if (cloudExpenses && Array.isArray(cloudExpenses)) {
                     expenses = cloudExpenses;
                     localStorage.setItem('simplenote_money_data', JSON.stringify(expenses));
                     render();
                     setStatus('online');
-                } else {
-                    if (expenses.length > 0) setStatus('online');
                 }
             } catch (err) { 
-                console.error("Chyba stahovani", err); 
+                console.error(err); 
                 setStatus('error'); 
-                if (expenses.length > 0) render(); // V pripade vypadku stale vykresli aspon lokalni data
             }
         }
 
@@ -184,37 +182,33 @@
             const currentYear = now.getFullYear();
 
             let balance = 0;
+            
             expenses.forEach(item => {
-                if (item && item.date) {
-                    try {
-                        let m, y;
-                        let dateStr = String(item.date);
+                if (!item || !item.date) return;
+                
+                let m, y;
+                let dateStr = String(item.date);
 
-                        if (dateStr.includes('T')) {
-                            const dObj = new Date(dateStr);
-                            if (isNaN(dObj.getTime())) return; // Pokud je datum poskozene, preskocit položku
-                            m = dObj.getMonth() + 1;
-                            y = dObj.getFullYear();
-                        } else {
-                            let cleanDate = dateStr.replace(/\s/g, '');
-                            let parts = cleanDate.split('.');
-                            if (parts.length < 3) return;
-                            m = parseInt(parts[1], 10);
-                            y = parseInt(parts[2], 10);
-                        }
-                        
-                        let amt = parseFloat(item.amount);
-                        if (isNaN(amt)) amt = 0;
+                // Univerzální a bezpečný převod data bez ohledu na formát (český text i ISO)
+                if (dateStr.indexOf('T') !== -1) {
+                    const dObj = new Date(dateStr);
+                    m = dObj.getMonth() + 1;
+                    y = dObj.getFullYear();
+                } else {
+                    let cleanDate = dateStr.replace(/\s/g, '');
+                    let parts = cleanDate.split('.');
+                    m = parseInt(parts[1], 10);
+                    y = parseInt(parts[2], 10);
+                }
 
-                        if (m === currentMonth && y === currentYear) {
-                            if (item.category === '💰 Příjem') {
-                                balance += amt;
-                            } else {
-                                balance -= amt;
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Chyba polozky", e);
+                let amt = parseFloat(item.amount);
+                if (isNaN(amt)) amt = 0;
+
+                if (m === currentMonth && y === currentYear) {
+                    if (item.category === '💰 Příjem') {
+                        balance += amt;
+                    } else {
+                        balance -= amt;
                     }
                 }
             });
@@ -237,14 +231,9 @@
                 const isIncome = item.category === '💰 Příjem';
                 
                 let displayDate = item.date;
-                try {
-                    if (typeof item.date === 'string' && item.date.includes('T')) {
-                        const dObj = new Date(item.date);
-                        if (!isNaN(dObj.getTime())) {
-                            displayDate = dObj.toLocaleDateString('cs-CZ');
-                        }
-                    }
-                } catch(e) {}
+                if (typeof item.date === 'string' && item.date.indexOf('T') !== -1) {
+                    displayDate = new Date(item.date).toLocaleDateString('cs-CZ');
+                }
 
                 const el = document.createElement('div');
                 el.className = 'history-item';
@@ -257,12 +246,4 @@
                         <div class="history-amt ${isIncome ? 'income' : 'expense'}">
                             ${isIncome ? '+' : '-'}${item.amount} Kč
                         </div>
-                        <button class="del-btn" onclick="deleteExpense('${item.id}')">✕</button>
-                    </div>
-                `;
-                historyList.appendChild(el);
-            });
-        }
-    </script>
-</body>
-</html>
+                        <button class="del-btn" onclick="deleteExpense
