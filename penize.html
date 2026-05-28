@@ -173,14 +173,21 @@
             let balance = 0;
             expenses.forEach(item => {
                 if (item && item.date) {
-                    let parts = item.date.split('.');
-                    let m = parseInt(parts[1]);
-                    let y = parseInt(parts[2]);
+                    // Odstranění mezer z datumu (převod z "28. 5. 2026" na "28.5.2026")
+                    let cleanDate = item.date.replace(/\s/g, '');
+                    let parts = cleanDate.split('.');
+                    let m = parseInt(parts[1], 10);
+                    let y = parseInt(parts[2], 10);
+                    
+                    // Bezpečné převedení částky na číslo
+                    let amt = parseFloat(item.amount);
+                    if (isNaN(amt)) amt = 0;
+
                     if (m === currentMonth && y === currentYear) {
                         if (item.category === '💰 Příjem') {
-                            balance += item.amount;
+                            balance += amt;
                         } else {
-                            balance -= item.amount;
+                            balance -= amt;
                         }
                     }
                 }
