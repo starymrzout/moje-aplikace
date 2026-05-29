@@ -248,21 +248,37 @@
             if (vahaData.length < 2) { chartBox.classList.remove('visible'); return; }
             chartBox.classList.add('visible');
 
-            const labels = vahaData.map(e => new Date(e.date).toLocaleDateString('cs-CZ'));
-            const skutecna = vahaData.map(e => e.vaha);
-
-            // Trendová linie k cíli
             const goalKg = parseFloat(document.getElementById('goal-vaha').value);
             const goalDatum = document.getElementById('goal-datum').value;
+            const hasGoal = !isNaN(goalKg) && goalDatum;
+
+            // Sloučíme skutečné body a cílový bod do jedné časové osy
+            const startDate = new Date(vahaData[0].date);
+            const endDate = hasGoal ? new Date(goalDatum) : null;
+
+            // Labely = všechna skutečná data + datum cíle (pokud je v budoucnosti)
+            let allDates = vahaData.map(e => new Date(e.date));
+            if (hasGoal && endDate > allDates[allDates.length - 1]) {
+                allDates.push(endDate);
+            }
+            const labels = allDates.map(d => d.toLocaleDateString('cs-CZ'));
+
+            // Skutečná váha — null pro datum cíle (nejsou tam data)
+            const skutecna = allDates.map(d => {
+                const match = vahaData.find(e => new Date(e.date).toDateString() === d.toDateString());
+                return match ? match.vaha : null;
+            });
+
+            // Trendová linie — od prvního měření rovnou na cíl
             let trend = [];
-            if (!isNaN(goalKg) && goalDatum && vahaData.length > 0) {
+            if (hasGoal) {
                 const startVaha = vahaData[0].vaha;
-                const startDate = new Date(vahaData[0].date).getTime();
-                const endDate = new Date(goalDatum).getTime();
-                const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
-                trend = vahaData.map(e => {
-                    const daysPassed = (new Date(e.date).getTime() - startDate) / (1000 * 60 * 60 * 24);
-                    return startVaha + (goalKg - startVaha) * (daysPassed / totalDays);
+                const totalMs = endDate - startDate;
+                trend = allDates.map(d => {
+                    const ratio = (d - startDate) / totalMs;
+                    if (ratio < 0) return null;
+                    if (ratio > 1) return goalKg;
+                    return parseFloat((startVaha + (goalKg - startVaha) * ratio).toFixed(2));
                 });
             }
 
