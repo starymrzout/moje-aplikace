@@ -289,16 +289,15 @@
                 return match !== undefined ? match.vaha : null;
             });
 
-            // Trendová linie — přímka od prvního měření na cílovou váhu k datu cíle
+            // Trendová linie — jen dva body: start a cíl, Chart.js udělá rovnou čáru
             let trend = new Array(axisDates.length).fill(null);
             if (hasGoal) {
                 const startVaha = vahaData[0].vaha;
-                const totalMs = goalDate - firstDate;
-                axisDates.forEach((d, i) => {
-                    if (d < firstDate) return;
-                    const ratio = Math.min((d - firstDate) / totalMs, 1);
-                    trend[i] = parseFloat((startVaha + (goalKg - startVaha) * ratio).toFixed(2));
-                });
+                // Najdi index prvního měření a index datumu cíle
+                const iStart = axisDates.findIndex(d => d.toDateString() === firstDate.toDateString());
+                const iEnd = axisDates.findIndex(d => d.toDateString() === goalDate.toDateString());
+                if (iStart !== -1) trend[iStart] = startVaha;
+                if (iEnd !== -1) trend[iEnd] = goalKg;
             }
 
             if (chart) chart.destroy();
