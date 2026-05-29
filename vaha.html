@@ -252,33 +252,53 @@
             const goalDatum = document.getElementById('goal-datum').value;
             const hasGoal = !isNaN(goalKg) && goalDatum;
 
-            // Sloučíme skutečné body a cílový bod do jedné časové osy
+            // Časová osa: první měření až datum cíle (nebo poslední měření)
             const startDate = new Date(vahaData[0].date);
-            const endDate = hasGoal ? new Date(goalDatum) : null;
+            const endDate = hasGoal ? new Date(goalDatum) : new Date(vahaData[vahaData.length-1].date);
+            // Pokud start === end (vše ze stejného dne), posun end na datum cíle nebo +6 měsíců
+            const minEnd = new Date(startDate); minEnd.setMonth(minEnd.getMonth() + 1);
+            if (endDate <= startDate) endDate.setTime(minEnd.getTime());
 
-            // Labely = všechna skutečná data + datum cíle (pokud je v budoucnosti)
-            let allDates = vahaData.map(e => new Date(e.date));
-            if (hasGoal && endDate > allDates[allDates.length - 1]) {
-                allDates.push(endDate);
+            // Vygeneruj měsíční body od startu do cíle pro plynulou trendovou linii
+            let allDates = [];
+            let cursor = new Date(startDate);
+            cursor.setDate(1); // začni od 1. dne měsíce
+            while (cursor <= endDate) {
+                allDates.push(new Date(cursor));
+                cursor.setMonth(cursor.getMonth() + 1);
             }
-            const labels = allDates.map(d => d.toLocaleDateString('cs-CZ'));
+            // Přidej datum cíle pokud tam ještě není
+            if (hasGoal && allDates[allDates.length-1].toDateString() !== endDate.toDateString()) {
+                allDates.push(new Date(endDate));
+            }
+            // Přidej všechna skutečná měření (ať jsou i mimo měsíční body)
+            vahaData.forEach(e => {
+                const d = new Date(e.date);
+                if (!allDates.find(x => x.toDateString() === d.toDateString())) {
+                    allDates.push(d);
+                }
+            });
+            allDates.sort((a, b) => a - b);
 
-            // Skutečná váha — null pro datum cíle (nejsou tam data)
+            const labels = allDates.map(d => d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }));
+
+            // Skutečná váha — jen pro dny s měřením, jinak null
             const skutecna = allDates.map(d => {
                 const match = vahaData.find(e => new Date(e.date).toDateString() === d.toDateString());
                 return match ? match.vaha : null;
             });
 
-            // Trendová linie — od prvního měření rovnou na cíl
+            // Trendová linie — od nejstaršího měření dolů na cíl
             let trend = [];
             if (hasGoal) {
-                const startVaha = vahaData[0].vaha;
-                const totalMs = endDate - startDate;
+                const trendStartVaha = vahaData[0].vaha;
+                const trendStartDate = new Date(vahaData[0].date);
+                const totalMs = endDate - trendStartDate;
                 trend = allDates.map(d => {
-                    const ratio = (d - startDate) / totalMs;
-                    if (ratio < 0) return null;
+                    if (d < trendStartDate) return null;
+                    const ratio = (d - trendStartDate) / totalMs;
                     if (ratio > 1) return goalKg;
-                    return parseFloat((startVaha + (goalKg - startVaha) * ratio).toFixed(2));
+                    return parseFloat((trendStartVaha + (goalKg - trendStartVaha) * ratio).toFixed(2));
                 });
             }
 
