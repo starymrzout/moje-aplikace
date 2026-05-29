@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Můj Twitter</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐦</text></svg>">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #1a1c1e; color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; justify-content: center; padding: 30px 20px; min-height: 100vh;
+        }
+        .container { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2d32; padding-bottom: 15px; }
+        h1 { font-size: 1.3rem; font-weight: 400; color: #f0f0f0; display: flex; align-items: center; gap: 10px; }
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; }
+        .sync-status.syncing { background-color: #ffb74d; }
+        .sync-status.online { background-color: #4caf50; }
+        .sync-status.error { background-color: #cf6679; }
+
+        .compose {
+            background-color: #121314; border: 1px solid #2a2d32;
+            border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .compose textarea {
+            width: 100%; background: transparent; border: none; color: #f0f0f0;
+            font-size: 1.1rem; line-height: 1.6; resize: none; outline: none;
+            font-family: inherit; min-height: 80px;
+        }
+        .compose textarea::placeholder { color: #4a4d52; }
+        .compose-footer { display: flex; justify-content: space-between; align-items: center; }
+        .char-count { font-size: 0.85rem; color: #8a8d92; }
+        .char-count.warning { color: #ffb74d; }
+        .char-count.danger { color: #cf6679; font-weight: bold; }
+        .post-btn {
+            background-color: #1d9bf0; color: white; border: none;
+            padding: 8px 20px; border-radius: 20px; font-size: 0.95rem; font-weight: bold;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .post-btn:hover { background-color: #1a8cd8; }
+        .post-btn:disabled { background-color: #2a2d32; color: #4a4d52; cursor: not-allowed; }
+
+        .feed { display: flex; flex-direction: column; gap: 2px; }
+        .tweet {
+            background-color: #121314; border: 1px solid #2a2d32;
+            padding: 16px; border-radius: 12px;
+            display: flex; flex-direction: column; gap: 10px;
+            transition: border-color 0.2s;
+        }
+        .tweet:hover { border-color: #3a3f45; }
+        .tweet-text { font-size: 1.05rem; line-height: 1.6; color: #e2e2e2; white-space: pre-wrap; word-break: break-word; }
+        .tweet-footer { display: flex; justify-content: space-between; align-items: center; }
+        .tweet-meta { font-size: 0.8rem; color: #8a8d92; }
+        .tweet-actions { display: flex; gap: 8px; }
+        .action-btn {
+            background: transparent; border: 1px solid #2a2d32; color: #8a8d92;
+            padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-btn.copy:hover { border-color: #1d9bf0; color: #1d9bf0; }
+        .action-btn.copy.success { border-color: #4caf50; color: #4caf50; }
+        .action-btn.del:hover { border-color: #cf6679; color: #cf6679; }
+
+        .empty { color: #4a4d52; font-style: italic; text-align: center; padding: 40px 0; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐦 Můj Twitter</h1>
+            <div class="sync-status" id="sync-status"></div>
+        </div>
+
+        <div class="compose">
+            <textarea id="tweet-input" placeholder="Co se děje?" maxlength="280"></textarea>
+            <div class="compose-footer">
+                <span class="char-count" id="char-count">280</span>
+                <button class="post-btn" id="post-btn" onclick="postTweet()" disabled>Odeslat</button>
+            </div>
+        </div>
+
+        <div class="feed" id="feed"></div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        let tweets = [];
+        const input = document.getElementById('tweet-input');
+        const charCount = document.getElementById('char-count');
+        const postBtn = document.getElementById('post-btn');
+        const feed = document.getElementById('feed');
+        const syncStatus = document.getElementById('sync-status');
+
+        function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
+
+        input.addEventListener('input', () => {
+            const remaining = 280 - input.value.length;
+            charCount.innerText = remaining;
+            charCount.className = 'char-count' + (remaining < 0 ? ' danger' : remaining < 50 ? ' warning' : '');
+            postBtn.disabled = input.value.trim().length === 0 || remaining < 0;
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) postTweet();
+        });
+
+        async function loadData() {
+            setStatus('syncing');
+            const local = localStorage.getItem('mytwitter_data');
+            if (local) { try { tweets = JSON.parse(local); render(); } catch(e) { tweets = []; } }
+            try {
+                const response = await fetch(`${CLOUD_URL}?mode=twitter`);
+                const cloud = await response.json();
+                if (Array.isArray(cloud)) {
+                    tweets = cloud;
+                    localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+                    render();
+                }
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        async function postTweet() {
+            const text = input.value.trim();
+            if (!text || text.length > 280) return;
+            const now = new Date();
+            const tweet = {
+                id: Date.now().toString(),
+                text: text,
+                date: now.toISOString()
+            };
+            tweets.unshift(tweet);
+            input.value = '';
+            charCount.innerText = '280';
+            charCount.className = 'char-count';
+            postBtn.disabled = true;
+            localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+            render();
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'twitter_add', item: tweet }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        async function deleteTweet(id) {
+            tweets = tweets.filter(t => t.id !== id);
+            localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+            render();
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'twitter_delete', id: id }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        function copyTweet(id, btn) {
+            const tweet = tweets.find(t => t.id === id);
+            if (!tweet) return;
+            navigator.clipboard.writeText(tweet.text).then(() => {
+                btn.innerText = 'Zkopírováno!';
+                btn.classList.add('success');
+                setTimeout(() => { btn.innerText = 'Kopírovat'; btn.classList.remove('success'); }, 1500);
+            });
+        }
+
+        function render() {
+            feed.innerHTML = '';
+            if (tweets.length === 0) {
+                feed.innerHTML = '<div class="empty">Zatím žádné příspěvky...</div>';
+                return;
+            }
+            tweets.forEach(tweet => {
+                const d = new Date(tweet.date);
+                const dateStr = d.toLocaleDateString('cs-CZ') + ' ' + d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+                const el = document.createElement('div');
+                el.className = 'tweet';
+                el.innerHTML = `
+                    <div class="tweet-text">${tweet.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                    <div class="tweet-footer">
+                        <div class="tweet-meta">${dateStr}</div>
+                        <div class="tweet-actions">
+                            <button class="action-btn copy" onclick="copyTweet('${tweet.id}', this)">Kopírovat</button>
+                            <button class="action-btn del" onclick="deleteTweet('${tweet.id}')">Smazat</button>
+                        </div>
+                    </div>
+                `;
+                feed.appendChild(el);
+            });
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
