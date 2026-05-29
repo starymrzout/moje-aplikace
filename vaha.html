@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Váha a měření</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚖️</text></svg>">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #1a1c1e; color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; justify-content: center; padding: 30px 20px; min-height: 100vh;
+        }
+        .container { width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2d32; padding-bottom: 15px; }
+        h1 { font-size: 1.3rem; font-weight: 400; color: #f0f0f0; }
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; }
+        .sync-status.syncing { background-color: #ffb74d; }
+        .sync-status.online { background-color: #4caf50; }
+        .sync-status.error { background-color: #cf6679; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .stat-box {
+            background-color: #121314; border: 1px solid #2a2d32; padding: 15px;
+            border-radius: 12px; text-align: center; display: flex; flex-direction: column; gap: 5px;
+        }
+        .stat-title { font-size: 0.75rem; color: #8a8d92; text-transform: uppercase; font-weight: bold; }
+        .stat-value { font-size: 1.6rem; font-weight: 300; color: #009688; }
+        .stat-diff { font-size: 0.8rem; color: #8a8d92; }
+        .stat-diff.good { color: #4caf50; }
+        .stat-diff.bad { color: #cf6679; }
+
+        .chart-box {
+            background-color: #121314; border: 1px solid #2a2d32;
+            padding: 15px; border-radius: 12px; display: none;
+        }
+        .chart-box.visible { display: block; }
+
+        .goal-box {
+            background-color: #121314; border: 1px solid #2a2d32;
+            padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .goal-title { font-size: 0.85rem; color: #8a8d92; font-weight: bold; text-transform: uppercase; }
+        .goal-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .goal-result {
+            background-color: #1a1c1e; border: 1px solid #2a2d32; padding: 12px;
+            border-radius: 8px; font-size: 0.9rem; color: #e2e2e2; line-height: 1.7; display: none;
+        }
+        .goal-result.visible { display: block; }
+        .goal-result .good { color: #4caf50; font-weight: bold; }
+        .goal-result .warn { color: #cf6679; font-weight: bold; }
+        .goal-result .neutral { color: #009688; font-weight: bold; }
+
+        .input-section {
+            background-color: #121314; border: 1px solid #2a2d32;
+            padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px;
+        }
+        .input-row { display: flex; flex-direction: column; gap: 6px; }
+        .input-label { font-size: 0.85rem; color: #8a8d92; font-weight: bold; }
+        .input-field {
+            width: 100%; background-color: #1a1c1e; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 12px; border-radius: 8px; font-size: 1.3rem; text-align: center; outline: none;
+            transition: border 0.2s; font-weight: 300;
+        }
+        .input-field:focus { border-color: #009688; }
+        .input-field-small {
+            width: 100%; background-color: #1a1c1e; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 10px; border-radius: 8px; font-size: 1rem; text-align: center; outline: none;
+            transition: border 0.2s;
+        }
+        .input-field-small:focus { border-color: #009688; }
+        .save-btn {
+            width: 100%; background-color: #009688; color: white; border: none;
+            padding: 16px; border-radius: 10px; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .save-btn:active { background-color: #00bfa5; }
+
+        .section-title { font-size: 0.85rem; color: #8a8d92; font-weight: bold; text-transform: uppercase; margin-top: 5px; }
+        .history-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+        .history-item {
+            background-color: #121314; border: 1px solid #2a2d32; padding: 12px 15px; border-radius: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .history-left { display: flex; flex-direction: column; gap: 3px; }
+        .history-date { font-size: 0.8rem; color: #8a8d92; }
+        .history-values { font-size: 0.95rem; color: #e2e2e2; }
+        .history-values span { color: #009688; font-weight: bold; }
+        .del-btn { background: transparent; border: none; color: #4a4d52; cursor: pointer; font-size: 1rem; }
+        .del-btn:hover { color: #cf6679; }
+        .first-badge { font-size: 0.7rem; background-color: #2a2d32; color: #8a8d92; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚖️ Váha a měření</h1>
+            <div class="sync-status" id="sync-status"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-title">Váha</div>
+                <div class="stat-value" id="stat-vaha">—</div>
+                <div class="stat-diff" id="diff-vaha"></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title">Tuk %</div>
+                <div class="stat-value" id="stat-tuk">—</div>
+                <div class="stat-diff" id="diff-tuk"></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title">Visc. tuk</div>
+                <div class="stat-value" id="stat-visc">—</div>
+                <div class="stat-diff" id="diff-visc"></div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title">Svaly %</div>
+                <div class="stat-value" id="stat-svaly">—</div>
+                <div class="stat-diff" id="diff-svaly"></div>
+            </div>
+        </div>
+
+        <div class="chart-box" id="chart-box">
+            <canvas id="vaha-chart"></canvas>
+        </div>
+
+        <div class="goal-box">
+            <div class="goal-title">🎯 Cíl</div>
+            <div class="goal-inputs">
+                <div class="input-row">
+                    <div class="input-label">Cílová váha (kg)</div>
+                    <input type="number" id="goal-vaha" class="input-field-small" placeholder="85" step="0.1" inputmode="decimal" oninput="saveGoal(); renderGoal(); renderChart();">
+                </div>
+                <div class="input-row">
+                    <div class="input-label">Datum cíle</div>
+                    <input type="date" id="goal-datum" class="input-field-small" oninput="saveGoal(); renderGoal(); renderChart();">
+                </div>
+            </div>
+            <div class="goal-result" id="goal-result"></div>
+        </div>
+
+        <div class="input-section">
+            <div class="input-row">
+                <div class="input-label">Váha (kg)</div>
+                <input type="number" id="input-vaha" class="input-field" placeholder="0.0" step="0.1" inputmode="decimal">
+            </div>
+            <div class="input-row">
+                <div class="input-label">Tuk (%)</div>
+                <input type="number" id="input-tuk" class="input-field" placeholder="0.0" step="0.1" inputmode="decimal">
+            </div>
+            <div class="input-row">
+                <div class="input-label">Viscerální tuk</div>
+                <input type="number" id="input-visc" class="input-field" placeholder="0.0" step="0.1" inputmode="decimal">
+            </div>
+            <div class="input-row">
+                <div class="input-label">Kosterní svalstvo (%)</div>
+                <input type="number" id="input-svaly" class="input-field" placeholder="0.0" step="0.1" inputmode="decimal">
+            </div>
+            <button class="save-btn" onclick="saveEntry()">ULOŽIT MĚŘENÍ</button>
+        </div>
+
+        <div class="section-title">Historie měření</div>
+        <div class="history-list" id="history-list"></div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        let entries = [];
+        let chart = null;
+        const syncStatus = document.getElementById('sync-status');
+        function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
+
+        async function load() {
+            setStatus('syncing');
+            const local = localStorage.getItem('vaha_data');
+            if (local) { try { entries = JSON.parse(local); } catch(e) { entries = []; } }
+            const goalVaha = localStorage.getItem('vaha_goal_kg');
+            const goalDatum = localStorage.getItem('vaha_goal_datum');
+            if (goalVaha) document.getElementById('goal-vaha').value = goalVaha;
+            if (goalDatum) document.getElementById('goal-datum').value = goalDatum;
+            render(); renderGoal(); renderChart();
+
+            try {
+                const response = await fetch(`${CLOUD_URL}?mode=vaha`);
+                const cloudEntries = await response.json();
+                if (Array.isArray(cloudEntries) && cloudEntries.length > 0) {
+                    entries = cloudEntries;
+                    localStorage.setItem('vaha_data', JSON.stringify(entries));
+                    render(); renderGoal(); renderChart();
+                }
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        function saveGoal() {
+            localStorage.setItem('vaha_goal_kg', document.getElementById('goal-vaha').value);
+            localStorage.setItem('vaha_goal_datum', document.getElementById('goal-datum').value);
+        }
+
+        async function saveEntry() {
+            const vaha = parseFloat(document.getElementById('input-vaha').value);
+            const tuk = parseFloat(document.getElementById('input-tuk').value);
+            const visc = parseFloat(document.getElementById('input-visc').value);
+            const svaly = parseFloat(document.getElementById('input-svaly').value);
+            if (isNaN(vaha) && isNaN(tuk) && isNaN(visc) && isNaN(svaly)) return;
+
+            const entry = {
+                id: Date.now().toString(),
+                date: new Date().toISOString(),
+                vaha: isNaN(vaha) ? null : vaha,
+                tuk: isNaN(tuk) ? null : tuk,
+                visc: isNaN(visc) ? null : visc,
+                svaly: isNaN(svaly) ? null : svaly
+            };
+
+            entries.unshift(entry);
+            document.getElementById('input-vaha').value = '';
+            document.getElementById('input-tuk').value = '';
+            document.getElementById('input-visc').value = '';
+            document.getElementById('input-svaly').value = '';
+            localStorage.setItem('vaha_data', JSON.stringify(entries));
+            render(); renderGoal(); renderChart();
+
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'vaha_add', item: entry }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        async function deleteEntry(id) {
+            entries = entries.filter(e => e.id !== id);
+            localStorage.setItem('vaha_data', JSON.stringify(entries));
+            render(); renderGoal(); renderChart();
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'vaha_delete', id: id }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        function renderChart() {
+            const vahaData = [...entries].reverse().filter(e => e.vaha !== null);
+            const chartBox = document.getElementById('chart-box');
+            if (vahaData.length < 2) { chartBox.classList.remove('visible'); return; }
+            chartBox.classList.add('visible');
+
+            const labels = vahaData.map(e => new Date(e.date).toLocaleDateString('cs-CZ'));
+            const skutecna = vahaData.map(e => e.vaha);
+
+            // Trendová linie k cíli
+            const goalKg = parseFloat(document.getElementById('goal-vaha').value);
+            const goalDatum = document.getElementById('goal-datum').value;
+            let trend = [];
+            if (!isNaN(goalKg) && goalDatum && vahaData.length > 0) {
+                const startVaha = vahaData[0].vaha;
+                const startDate = new Date(vahaData[0].date).getTime();
+                const endDate = new Date(goalDatum).getTime();
+                const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+                trend = vahaData.map(e => {
+                    const daysPassed = (new Date(e.date).getTime() - startDate) / (1000 * 60 * 60 * 24);
+                    return startVaha + (goalKg - startVaha) * (daysPassed / totalDays);
+                });
+            }
+
+            if (chart) chart.destroy();
+            chart = new Chart(document.getElementById('vaha-chart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Skutečná váha',
+                            data: skutecna,
+                            borderColor: '#009688',
+                            backgroundColor: 'rgba(0,150,136,0.1)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#009688',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        ...(trend.length ? [{
+                            label: 'Trend k cíli',
+                            data: trend,
+                            borderColor: '#ffb74d',
+                            borderWidth: 2,
+                            borderDash: [6, 4],
+                            pointRadius: 0,
+                            tension: 0,
+                            fill: false
+                        }] : [])
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { labels: { color: '#8a8d92', font: { size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#8a8d92', maxTicksLimit: 6 }, grid: { color: '#2a2d32' } },
+                        y: { ticks: { color: '#8a8d92' }, grid: { color: '#2a2d32' } }
+                    }
+                }
+            });
+        }
+
+        function renderGoal() {
+            const goalKg = parseFloat(document.getElementById('goal-vaha').value);
+            const goalDatum = document.getElementById('goal-datum').value;
+            const resultEl = document.getElementById('goal-result');
+            if (isNaN(goalKg) || !goalDatum) { resultEl.classList.remove('visible'); return; }
+            const lastVaha = entries.find(e => e.vaha !== null);
+            if (!lastVaha) { resultEl.classList.remove('visible'); return; }
+            const dnes = new Date();
+            const cil = new Date(goalDatum);
+            const dniZbyva = Math.round((cil - dnes) / (1000 * 60 * 60 * 24));
+            const tydnuZbyva = dniZbyva / 7;
+            const kgZbyva = lastVaha.vaha - goalKg;
+            const kgTydne = tydnuZbyva > 0 ? kgZbyva / tydnuZbyva : null;
+            if (dniZbyva <= 0) { resultEl.innerHTML = 'Datum cíle je v minulosti.'; resultEl.classList.add('visible'); return; }
+            let html = '';
+            if (kgZbyva <= 0) {
+                html += `🎉 <span class="good">Cíle jsi dosáhl!</span> Aktuální váha ${lastVaha.vaha} kg, cíl ${goalKg} kg.`;
+            } else {
+                const barva = kgTydne > 1 ? 'warn' : 'good';
+                html += `Zbývá <span class="neutral">${kgZbyva.toFixed(1)} kg</span> do cíle ${goalKg} kg.<br>`;
+                html += `Do ${cil.toLocaleDateString('cs-CZ')} je to <span class="neutral">${dniZbyva} dní</span> (${Math.round(tydnuZbyva)} týdnů).<br>`;
+                if (kgTydne !== null) {
+                    html += `Tempo: <span class="${barva}">${kgTydne.toFixed(2)} kg týdně</span>`;
+                    if (kgTydne > 1) html += ` — hodně, reálné max. je ~0,5–1 kg/týden.`;
+                    else if (kgTydne < 0.2) html += ` — velmi pomalé, ale udržitelné.`;
+                    else html += ` — reálný a zdravý cíl.`;
+                }
+            }
+            resultEl.innerHTML = html;
+            resultEl.classList.add('visible');
+        }
+
+        function render() {
+            const firstVaha = [...entries].reverse().find(e => e.vaha !== null);
+            const firstTuk = [...entries].reverse().find(e => e.tuk !== null);
+            const firstVisc = [...entries].reverse().find(e => e.visc !== null);
+            const firstSvaly = [...entries].reverse().find(e => e.svaly !== null && e.svaly !== undefined);
+            const lastVaha = entries.find(e => e.vaha !== null);
+            const lastTuk = entries.find(e => e.tuk !== null);
+            const lastVisc = entries.find(e => e.visc !== null);
+            const lastSvaly = entries.find(e => e.svaly !== null && e.svaly !== undefined);
+
+            document.getElementById('stat-vaha').innerText = lastVaha ? lastVaha.vaha + ' kg' : '—';
+            document.getElementById('stat-tuk').innerText = lastTuk ? lastTuk.tuk + ' %' : '—';
+            document.getElementById('stat-visc').innerText = lastVisc ? lastVisc.visc : '—';
+            document.getElementById('stat-svaly').innerText = lastSvaly ? lastSvaly.svaly + ' %' : '—';
+
+            function showDiff(elId, currentEntry, firstEntry, field, higherIsBetter) {
+                const el = document.getElementById(elId);
+                if (!currentEntry || !firstEntry) { el.innerText = ''; return; }
+                if (currentEntry.id === firstEntry.id) { el.innerText = 'první měření'; return; }
+                const diff = currentEntry[field] - firstEntry[field];
+                const sign = diff > 0 ? '+' : '';
+                const isGood = higherIsBetter ? diff > 0 : diff < 0;
+                el.innerText = sign + diff.toFixed(1) + ' od začátku';
+                el.className = 'stat-diff ' + (isGood ? 'good' : 'bad');
+            }
+
+            showDiff('diff-vaha', lastVaha, firstVaha, 'vaha', false);
+            showDiff('diff-tuk', lastTuk, firstTuk, 'tuk', false);
+            showDiff('diff-visc', lastVisc, firstVisc, 'visc', false);
+            showDiff('diff-svaly', lastSvaly, firstSvaly, 'svaly', true);
+
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            if (entries.length === 0) {
+                historyList.innerHTML = '<div style="color: #4a4d52; font-style: italic; text-align: center; font-size: 0.95rem;">Zatím žádná měření...</div>';
+                return;
+            }
+            entries.forEach((entry, index) => {
+                const isFirst = index === entries.length - 1;
+                const date = new Date(entry.date).toLocaleDateString('cs-CZ');
+                const time = new Date(entry.date).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+                const parts = [];
+                if (entry.vaha !== null) parts.push(`<span>${entry.vaha} kg</span>`);
+                if (entry.tuk !== null) parts.push(`tuk <span>${entry.tuk}%</span>`);
+                if (entry.visc !== null) parts.push(`visc <span>${entry.visc}</span>`);
+                if (entry.svaly !== null && entry.svaly !== undefined) parts.push(`svaly <span>${entry.svaly}%</span>`);
+                const el = document.createElement('div');
+                el.className = 'history-item';
+                el.innerHTML = `
+                    <div class="history-left">
+                        <div class="history-date">${date} ${time}${isFirst ? '<span class="first-badge">START</span>' : ''}</div>
+                        <div class="history-values">${parts.join(' · ')}</div>
+                    </div>
+                    <button class="del-btn" onclick="deleteEntry('${entry.id}')">✕</button>
+                `;
+                historyList.appendChild(el);
+            });
+        }
+
+        load();
+    </script>
+</body>
+</html>
