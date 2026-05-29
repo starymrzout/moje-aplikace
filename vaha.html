@@ -243,7 +243,10 @@
         }
 
         function renderChart() {
-            const vahaData = [...entries].reverse().filter(e => e.vaha !== null);
+            const vahaData = [...entries]
+                .filter(e => e.vaha !== null)
+                .sort((a, b) => new Date(a.date) - new Date(b.date)); // nejstarší první
+
             const chartBox = document.getElementById('chart-box');
             if (vahaData.length < 2) { chartBox.classList.remove('visible'); return; }
             chartBox.classList.add('visible');
@@ -252,53 +255,49 @@
             const goalDatum = document.getElementById('goal-datum').value;
             const hasGoal = !isNaN(goalKg) && goalDatum;
 
-            // Časová osa: první měření až datum cíle (nebo poslední měření)
-            const startDate = new Date(vahaData[0].date);
-            const endDate = hasGoal ? new Date(goalDatum) : new Date(vahaData[vahaData.length-1].date);
-            // Pokud start === end (vše ze stejného dne), posun end na datum cíle nebo +6 měsíců
-            const minEnd = new Date(startDate); minEnd.setMonth(minEnd.getMonth() + 1);
-            if (endDate <= startDate) endDate.setTime(minEnd.getTime());
+            const firstDate = new Date(vahaData[0].date);
+            const lastMeasDate = new Date(vahaData[vahaData.length - 1].date);
+            const goalDate = hasGoal ? new Date(goalDatum) : null;
 
-            // Vygeneruj měsíční body od startu do cíle pro plynulou trendovou linii
-            let allDates = [];
-            let cursor = new Date(startDate);
-            cursor.setDate(1); // začni od 1. dne měsíce
-            while (cursor <= endDate) {
-                allDates.push(new Date(cursor));
-                cursor.setMonth(cursor.getMonth() + 1);
+            // Osa X: měsíční body od prvního měření do data cíle
+            let axisDates = [];
+            let cur = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
+            const axisEnd = goalDate || lastMeasDate;
+            while (cur <= axisEnd) {
+                axisDates.push(new Date(cur));
+                cur.setMonth(cur.getMonth() + 1);
             }
-            // Přidej datum cíle pokud tam ještě není
-            if (hasGoal && allDates[allDates.length-1].toDateString() !== endDate.toDateString()) {
-                allDates.push(new Date(endDate));
+            // Přidej datum cíle jako poslední bod
+            if (goalDate && axisDates[axisDates.length-1].toDateString() !== goalDate.toDateString()) {
+                axisDates.push(new Date(goalDate));
             }
-            // Přidej všechna skutečná měření (ať jsou i mimo měsíční body)
+            // Přidej skutečná data měření (pokud nejsou v ose)
             vahaData.forEach(e => {
                 const d = new Date(e.date);
-                if (!allDates.find(x => x.toDateString() === d.toDateString())) {
-                    allDates.push(d);
+                if (!axisDates.find(x => x.toDateString() === d.toDateString())) {
+                    axisDates.push(d);
                 }
             });
-            allDates.sort((a, b) => a - b);
+            // Seřaď osu
+            axisDates.sort((a, b) => a - b);
 
-            const labels = allDates.map(d => d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' }));
+            const labels = axisDates.map(d => d.toLocaleDateString('cs-CZ', {day:'numeric', month:'numeric', year:'numeric'}));
 
-            // Skutečná váha — jen pro dny s měřením, jinak null
-            const skutecna = allDates.map(d => {
+            // Skutečná váha — jen pro dny s měřením
+            const skutecna = axisDates.map(d => {
                 const match = vahaData.find(e => new Date(e.date).toDateString() === d.toDateString());
-                return match ? match.vaha : null;
+                return match !== undefined ? match.vaha : null;
             });
 
-            // Trendová linie — od nejstaršího měření dolů na cíl
-            let trend = [];
+            // Trendová linie — přímka od prvního měření na cílovou váhu k datu cíle
+            let trend = new Array(axisDates.length).fill(null);
             if (hasGoal) {
-                const trendStartVaha = vahaData[0].vaha;
-                const trendStartDate = new Date(vahaData[0].date);
-                const totalMs = endDate - trendStartDate;
-                trend = allDates.map(d => {
-                    if (d < trendStartDate) return null;
-                    const ratio = (d - trendStartDate) / totalMs;
-                    if (ratio > 1) return goalKg;
-                    return parseFloat((trendStartVaha + (goalKg - trendStartVaha) * ratio).toFixed(2));
+                const startVaha = vahaData[0].vaha;
+                const totalMs = goalDate - firstDate;
+                axisDates.forEach((d, i) => {
+                    if (d < firstDate) return;
+                    const ratio = Math.min((d - firstDate) / totalMs, 1);
+                    trend[i] = parseFloat((startVaha + (goalKg - startVaha) * ratio).toFixed(2));
                 });
             }
 
@@ -314,12 +313,13 @@
                             borderColor: '#009688',
                             backgroundColor: 'rgba(0,150,136,0.1)',
                             borderWidth: 2,
-                            pointRadius: 4,
+                            pointRadius: axisDates.map(d => vahaData.find(e => new Date(e.date).toDateString() === d.toDateString()) ? 5 : 0),
                             pointBackgroundColor: '#009688',
                             tension: 0.3,
-                            fill: true
+                            fill: true,
+                            spanGaps: false
                         },
-                        ...(trend.length ? [{
+                        ...(hasGoal ? [{
                             label: 'Trend k cíli',
                             data: trend,
                             borderColor: '#ffb74d',
@@ -327,7 +327,8 @@
                             borderDash: [6, 4],
                             pointRadius: 0,
                             tension: 0,
-                            fill: false
+                            fill: false,
+                            spanGaps: true
                         }] : [])
                     ]
                 },
@@ -337,7 +338,7 @@
                         legend: { labels: { color: '#8a8d92', font: { size: 11 } } }
                     },
                     scales: {
-                        x: { ticks: { color: '#8a8d92', maxTicksLimit: 6 }, grid: { color: '#2a2d32' } },
+                        x: { ticks: { color: '#8a8d92', maxTicksLimit: 8 }, grid: { color: '#2a2d32' } },
                         y: { ticks: { color: '#8a8d92' }, grid: { color: '#2a2d32' } }
                     }
                 }
