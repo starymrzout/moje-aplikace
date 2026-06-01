@@ -116,7 +116,7 @@
                     <input type="number" id="input-kroky" class="input-field" placeholder="0" inputmode="numeric">
                 </div>
             </div>
-            <button class="save-btn" onclick="saveDay()">ULOŽIT DEN</button>
+            <button class="save-btn" onclick="saveDay()">PŘIČÍST</button>
         </div>
 
         <div class="week-box">
@@ -187,11 +187,21 @@
 
             const today = todayKey();
             const existing = records.findIndex(r => r.date === today);
-            const record = { id: existing >= 0 ? records[existing].id : Date.now().toString(), date: today, kliky, drepy, cinka, kroky };
 
+            let record;
             if (existing >= 0) {
+                // Přičti k dnešnímu součtu
+                record = {
+                    id: records[existing].id,
+                    date: today,
+                    kliky: (records[existing].kliky || 0) + kliky,
+                    drepy: (records[existing].drepy || 0) + drepy,
+                    cinka: (records[existing].cinka || 0) + cinka,
+                    kroky: (records[existing].kroky || 0) + kroky
+                };
                 records[existing] = record;
             } else {
+                record = { id: Date.now().toString(), date: today, kliky, drepy, cinka, kroky };
                 records.unshift(record);
             }
 
@@ -224,13 +234,7 @@
             const today = todayKey();
             const todayRecord = records.find(r => r.date === today);
 
-            // Předvyplň dnešní hodnoty pokud existují
-            if (todayRecord) {
-                if (!document.getElementById('input-kliky').value) document.getElementById('input-kliky').placeholder = todayRecord.kliky || '0';
-                if (!document.getElementById('input-drepy').value) document.getElementById('input-drepy').placeholder = todayRecord.drepy || '0';
-                if (!document.getElementById('input-cinka').value) document.getElementById('input-cinka').placeholder = todayRecord.cinka || '0';
-                if (!document.getElementById('input-kroky').value) document.getElementById('input-kroky').placeholder = todayRecord.kroky || '0';
-            }
+
 
             // Týdenní součet — pondělí až dnes
             const now = new Date();
