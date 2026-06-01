@@ -307,14 +307,69 @@
             });
         }
 
+        function fixQuotes(text) {
+            // Nahraď anglické uvozovky českými „ "
+            // Projdi znak po znaku a rozhodni jestli je to otevírací nebo zavírací
+            let result = '';
+            let open = false;
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (ch === '"' || ch === '\u201c' || ch === '\u201d') {
+                    if (!open) {
+                        result += '\u201e'; // „
+                        open = true;
+                    } else {
+                        result += '\u201c'; // "
+                        open = false;
+                    }
+                } else {
+                    result += ch;
+                }
+            }
+            return result;
+        }
+
         function copyText() {
             editor.select();
-            navigator.clipboard.writeText(editor.value).then(() => {
+            const fixedText = fixQuotes(editor.value);
+            navigator.clipboard.writeText(fixedText).then(() => {
                 const originalText = copyBtn.innerText;
                 copyBtn.innerText = 'ZKOPÍROVÁNO!'; copyBtn.classList.add('success');
                 setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.remove('success'); }, 1500);
             });
         }
+
+        // Zvuk psacího stroje
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function typewriterClick() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            const bufferSize = Math.floor(audioCtx.sampleRate * 0.04);
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 8);
+            }
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1200 + Math.random() * 400;
+            filter.Q.value = 0.8;
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0.18 + Math.random() * 0.08;
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            source.start();
+        }
+
+        editor.addEventListener('keydown', (e) => {
+            if (e.key.length === 1 || e.key === 'Enter' || e.key === 'Backspace') {
+                typewriterClick();
+            }
+        });
     </script>
 </body>
 </html>
