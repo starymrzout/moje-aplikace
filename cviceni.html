@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cvičení</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💪</text></svg>">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #1a1c1e; color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; justify-content: center; padding: 30px 20px; min-height: 100vh;
+        }
+        .container { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 20px; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2d32; padding-bottom: 15px; }
+        h1 { font-size: 1.3rem; font-weight: 400; color: #f0f0f0; }
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; }
+        .sync-status.syncing { background-color: #ffb74d; }
+        .sync-status.online { background-color: #4caf50; }
+        .sync-status.error { background-color: #cf6679; }
+
+        /* Dnešní záznam */
+        .today-box {
+            background-color: #121314; border: 1px solid #2a2d32;
+            border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px;
+        }
+        .today-title { font-size: 0.8rem; color: #8a8d92; text-transform: uppercase; font-weight: bold; }
+        .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .input-row { display: flex; flex-direction: column; gap: 5px; }
+        .input-label { font-size: 0.78rem; color: #8a8d92; font-weight: bold; }
+        .input-field {
+            background-color: #1a1c1e; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 12px; border-radius: 8px; font-size: 1.4rem; text-align: center;
+            outline: none; transition: border 0.2s; font-weight: 300; width: 100%;
+        }
+        .input-field:focus { border-color: #009688; }
+        .input-field.wide { grid-column: span 2; font-size: 1.2rem; }
+        .save-btn {
+            width: 100%; background-color: #009688; color: white; border: none;
+            padding: 14px; border-radius: 10px; font-size: 1rem; font-weight: bold;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .save-btn:active { background-color: #00bfa5; }
+
+        /* Týdenní souhrn */
+        .week-box {
+            background-color: #121314; border: 1px solid #2a2d32;
+            border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .week-title { font-size: 0.8rem; color: #8a8d92; text-transform: uppercase; font-weight: bold; }
+        .week-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .week-stat { text-align: center; }
+        .week-stat-val { font-size: 1.3rem; font-weight: 300; color: #009688; }
+        .week-stat-lbl { font-size: 0.72rem; color: #8a8d92; margin-top: 2px; }
+
+        /* Kalendář */
+        .calendar-box {
+            background-color: #121314; border: 1px solid #2a2d32;
+            border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+        }
+        .cal-title { font-size: 0.8rem; color: #8a8d92; text-transform: uppercase; font-weight: bold; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .cal-day-name { font-size: 0.65rem; color: #4a4d52; text-align: center; font-weight: bold; padding-bottom: 2px; }
+        .cal-day {
+            aspect-ratio: 1; border-radius: 6px; display: flex; align-items: center;
+            justify-content: center; font-size: 0.72rem; font-weight: bold; cursor: default;
+        }
+        .cal-day.empty { background: transparent; }
+        .cal-day.future { background-color: #1a1c1e; color: #4a4d52; }
+        .cal-day.rest { background-color: #2a2d32; color: #4a4d52; }
+        .cal-day.done { background-color: #1b4d3e; color: #4caf50; }
+        .cal-day.today-rest { background-color: #2a2d32; color: #8a8d92; border: 1px solid #3a3f45; }
+        .cal-day.today-done { background-color: #009688; color: white; }
+
+        /* Historie */
+        .section-title { font-size: 0.8rem; color: #8a8d92; font-weight: bold; text-transform: uppercase; }
+        .history-list { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+        .history-item {
+            background-color: #121314; border: 1px solid #2a2d32; padding: 12px 15px;
+            border-radius: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .history-left { display: flex; flex-direction: column; gap: 3px; }
+        .history-date { font-size: 0.8rem; color: #8a8d92; }
+        .history-vals { font-size: 0.9rem; color: #e2e2e2; display: flex; gap: 10px; flex-wrap: wrap; }
+        .history-vals span { color: #009688; font-weight: bold; }
+        .del-btn { background: transparent; border: none; color: #4a4d52; cursor: pointer; font-size: 0.9rem; }
+        .del-btn:hover { color: #cf6679; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💪 Cvičení</h1>
+            <div class="sync-status" id="sync-status"></div>
+        </div>
+
+        <div class="today-box">
+            <div class="today-title">📅 Dnešní záznam</div>
+            <div class="inputs-grid">
+                <div class="input-row">
+                    <div class="input-label">Kliky</div>
+                    <input type="number" id="input-kliky" class="input-field" placeholder="0" inputmode="numeric">
+                </div>
+                <div class="input-row">
+                    <div class="input-label">Dřepy</div>
+                    <input type="number" id="input-drepy" class="input-field" placeholder="0" inputmode="numeric">
+                </div>
+                <div class="input-row">
+                    <div class="input-label">Činka (opak.)</div>
+                    <input type="number" id="input-cinka" class="input-field" placeholder="0" inputmode="numeric">
+                </div>
+                <div class="input-row">
+                    <div class="input-label">Kroky</div>
+                    <input type="number" id="input-kroky" class="input-field" placeholder="0" inputmode="numeric">
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveDay()">ULOŽIT DEN</button>
+        </div>
+
+        <div class="week-box">
+            <div class="week-title">📊 Tento týden</div>
+            <div class="week-stats">
+                <div class="week-stat">
+                    <div class="week-stat-val" id="w-kliky">0</div>
+                    <div class="week-stat-lbl">Kliky</div>
+                </div>
+                <div class="week-stat">
+                    <div class="week-stat-val" id="w-drepy">0</div>
+                    <div class="week-stat-lbl">Dřepy</div>
+                </div>
+                <div class="week-stat">
+                    <div class="week-stat-val" id="w-cinka">0</div>
+                    <div class="week-stat-lbl">Činka</div>
+                </div>
+                <div class="week-stat">
+                    <div class="week-stat-val" id="w-kroky">0</div>
+                    <div class="week-stat-lbl">Kroky</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar-box">
+            <div class="cal-title">📆 Poslední měsíc</div>
+            <div class="cal-grid" id="calendar"></div>
+        </div>
+
+        <div class="section-title">Historie</div>
+        <div class="history-list" id="history-list"></div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        let records = [];
+        const syncStatus = document.getElementById('sync-status');
+        function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
+
+        function dateKey(date) {
+            return date.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+
+        function todayKey() { return dateKey(new Date()); }
+
+        async function loadData() {
+            setStatus('syncing');
+            const local = localStorage.getItem('cviceni_data');
+            if (local) { try { records = JSON.parse(local); render(); } catch(e) { records = []; } }
+            try {
+                const response = await fetch(`${CLOUD_URL}?mode=cviceni`);
+                const cloud = await response.json();
+                if (Array.isArray(cloud)) {
+                    records = cloud;
+                    localStorage.setItem('cviceni_data', JSON.stringify(records));
+                    render();
+                }
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        async function saveDay() {
+            const kliky = parseInt(document.getElementById('input-kliky').value) || 0;
+            const drepy = parseInt(document.getElementById('input-drepy').value) || 0;
+            const cinka = parseInt(document.getElementById('input-cinka').value) || 0;
+            const kroky = parseInt(document.getElementById('input-kroky').value) || 0;
+            if (!kliky && !drepy && !cinka && !kroky) return;
+
+            const today = todayKey();
+            const existing = records.findIndex(r => r.date === today);
+            const record = { id: existing >= 0 ? records[existing].id : Date.now().toString(), date: today, kliky, drepy, cinka, kroky };
+
+            if (existing >= 0) {
+                records[existing] = record;
+            } else {
+                records.unshift(record);
+            }
+
+            document.getElementById('input-kliky').value = '';
+            document.getElementById('input-drepy').value = '';
+            document.getElementById('input-cinka').value = '';
+            document.getElementById('input-kroky').value = '';
+            localStorage.setItem('cviceni_data', JSON.stringify(records));
+            render();
+
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'cviceni_save', item: record }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        async function deleteRecord(id) {
+            records = records.filter(r => r.id !== id);
+            localStorage.setItem('cviceni_data', JSON.stringify(records));
+            render();
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'cviceni_delete', id }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        function render() {
+            const today = todayKey();
+            const todayRecord = records.find(r => r.date === today);
+
+            // Předvyplň dnešní hodnoty pokud existují
+            if (todayRecord) {
+                if (!document.getElementById('input-kliky').value) document.getElementById('input-kliky').placeholder = todayRecord.kliky || '0';
+                if (!document.getElementById('input-drepy').value) document.getElementById('input-drepy').placeholder = todayRecord.drepy || '0';
+                if (!document.getElementById('input-cinka').value) document.getElementById('input-cinka').placeholder = todayRecord.cinka || '0';
+                if (!document.getElementById('input-kroky').value) document.getElementById('input-kroky').placeholder = todayRecord.kroky || '0';
+            }
+
+            // Týdenní součet — pondělí až dnes
+            const now = new Date();
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+            monday.setHours(0,0,0,0);
+
+            let wKliky = 0, wDrepy = 0, wCinka = 0, wKroky = 0;
+            records.forEach(r => {
+                const d = new Date(r.date);
+                if (d >= monday && d <= now) {
+                    wKliky += r.kliky || 0;
+                    wDrepy += r.drepy || 0;
+                    wCinka += r.cinka || 0;
+                    wKroky += r.kroky || 0;
+                }
+            });
+            document.getElementById('w-kliky').innerText = wKliky;
+            document.getElementById('w-drepy').innerText = wDrepy;
+            document.getElementById('w-cinka').innerText = wCinka;
+            document.getElementById('w-kroky').innerText = wKroky > 999 ? Math.round(wKroky/1000) + 'k' : wKroky;
+
+            // Kalendář — posledních 35 dní
+            const cal = document.getElementById('calendar');
+            cal.innerHTML = '';
+            const dayNames = ['Po','Út','St','Čt','Pá','So','Ne'];
+            dayNames.forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'cal-day-name';
+                el.innerText = d;
+                cal.appendChild(el);
+            });
+
+            const recordMap = {};
+            records.forEach(r => { recordMap[r.date] = r; });
+
+            // Začni od pondělí 5 týdnů zpět
+            const start = new Date(now);
+            start.setDate(now.getDate() - 34);
+            const dayOfWeek = (start.getDay() + 6) % 7; // 0=Po
+            start.setDate(start.getDate() - dayOfWeek);
+
+            for (let i = 0; i < 35; i++) {
+                const d = new Date(start);
+                d.setDate(start.getDate() + i);
+                const key = dateKey(d);
+                const isToday = key === today;
+                const isFuture = d > now;
+                const hasRecord = !!recordMap[key];
+
+                const el = document.createElement('div');
+                el.title = key;
+                if (isFuture) {
+                    el.className = 'cal-day future';
+                    el.innerText = d.getDate();
+                } else if (isToday) {
+                    el.className = 'cal-day ' + (hasRecord ? 'today-done' : 'today-rest');
+                    el.innerText = d.getDate();
+                } else if (hasRecord) {
+                    el.className = 'cal-day done';
+                    el.innerText = d.getDate();
+                } else {
+                    el.className = 'cal-day rest';
+                    el.innerText = d.getDate();
+                }
+                cal.appendChild(el);
+            }
+
+            // Historie
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            if (records.length === 0) {
+                historyList.innerHTML = '<div style="color:#4a4d52;font-style:italic;text-align:center;padding:20px">Zatím žádné záznamy...</div>';
+                return;
+            }
+            const sorted = [...records].sort((a,b) => b.date.localeCompare(a.date));
+            sorted.forEach(r => {
+                const d = new Date(r.date);
+                const dateStr = d.toLocaleDateString('cs-CZ');
+                const parts = [];
+                if (r.kliky) parts.push(`kliky <span>${r.kliky}</span>`);
+                if (r.drepy) parts.push(`dřepy <span>${r.drepy}</span>`);
+                if (r.cinka) parts.push(`činka <span>${r.cinka}</span>`);
+                if (r.kroky) parts.push(`kroky <span>${r.kroky}</span>`);
+                const el = document.createElement('div');
+                el.className = 'history-item';
+                el.innerHTML = `
+                    <div class="history-left">
+                        <div class="history-date">${dateStr}${r.date === today ? ' · dnes' : ''}</div>
+                        <div class="history-vals">${parts.join(' · ')}</div>
+                    </div>
+                    <button class="del-btn" onclick="deleteRecord('${r.id}')">✕</button>
+                `;
+                historyList.appendChild(el);
+            });
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
