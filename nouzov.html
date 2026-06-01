@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouzov — obyvatelé</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏘️</text></svg>">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #1a1c1e; color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; justify-content: center; padding: 30px 20px; min-height: 100vh;
+        }
+        .container { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 16px; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2d32; padding-bottom: 15px; }
+        h1 { font-size: 1.3rem; font-weight: 400; color: #f0f0f0; }
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; }
+        .sync-status.syncing { background-color: #ffb74d; }
+        .sync-status.online { background-color: #4caf50; }
+        .sync-status.error { background-color: #cf6679; }
+
+        .toolbar { display: flex; gap: 10px; }
+        .search-input {
+            flex: 1; background-color: #121314; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 12px 15px; border-radius: 8px; font-size: 1rem; outline: none; transition: border 0.2s;
+        }
+        .search-input:focus { border-color: #009688; }
+        .search-input::placeholder { color: #4a4d52; }
+        .add-btn {
+            background-color: #009688; color: white; border: none;
+            padding: 12px 20px; border-radius: 8px; font-size: 1rem; font-weight: bold;
+            cursor: pointer; white-space: nowrap; transition: background 0.2s;
+        }
+        .add-btn:hover { background-color: #00bfa5; }
+
+        .count { font-size: 0.8rem; color: #4a4d52; }
+
+        /* Kartičky */
+        .cards { display: flex; flex-direction: column; gap: 10px; }
+        .card {
+            background-color: #121314; border: 1px solid #2a2d32;
+            border-radius: 10px; padding: 16px; cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: #009688; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .card-name { font-size: 1.1rem; font-weight: bold; color: #f0f0f0; }
+        .card-meta { font-size: 0.82rem; color: #8a8d92; margin-top: 3px; }
+        .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+        .tag {
+            background-color: #2a2d32; color: #8a8d92;
+            padding: 3px 8px; border-radius: 4px; font-size: 0.75rem;
+        }
+        .card-note { font-size: 0.88rem; color: #aaa; margin-top: 8px; line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 100; justify-content: center; align-items: flex-start;
+            padding: 30px 20px; overflow-y: auto;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal {
+            background-color: #1a1c1e; border: 1px solid #2a2d32;
+            border-radius: 12px; padding: 24px; width: 100%; max-width: 520px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; }
+        .modal-title { font-size: 1.1rem; font-weight: bold; color: #f0f0f0; }
+        .close-btn { background: transparent; border: none; color: #8a8d92; font-size: 1.3rem; cursor: pointer; }
+        .close-btn:hover { color: #cf6679; }
+
+        .field { display: flex; flex-direction: column; gap: 5px; }
+        .field label { font-size: 0.8rem; color: #8a8d92; font-weight: bold; text-transform: uppercase; }
+        .field input, .field textarea {
+            background-color: #121314; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 10px 12px; border-radius: 8px; font-size: 0.95rem; outline: none;
+            transition: border 0.2s; font-family: inherit;
+        }
+        .field input:focus, .field textarea:focus { border-color: #009688; }
+        .field textarea { resize: vertical; min-height: 80px; }
+        .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        .modal-footer { display: flex; justify-content: space-between; gap: 10px; margin-top: 5px; }
+        .save-btn {
+            flex: 2; background-color: #009688; color: white; border: none;
+            padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;
+        }
+        .save-btn:hover { background-color: #00bfa5; }
+        .delete-btn {
+            flex: 1; background-color: transparent; color: #cf6679; border: 1px solid #cf6679;
+            padding: 12px; border-radius: 8px; font-size: 1rem; cursor: pointer;
+        }
+        .delete-btn:hover { background-color: #cf6679; color: white; }
+
+        .empty { color: #4a4d52; font-style: italic; text-align: center; padding: 40px 0; }
+
+        mark { background-color: #009688; color: white; border-radius: 2px; padding: 0 2px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏘️ Nouzov — obyvatelé</h1>
+            <div class="sync-status" id="sync-status"></div>
+        </div>
+
+        <div class="toolbar">
+            <input type="text" id="search" class="search-input" placeholder="Hledat... (jméno, funkce, charakter...)" oninput="render()">
+            <button class="add-btn" onclick="openModal()">+ Přidat</button>
+        </div>
+
+        <div class="count" id="count"></div>
+        <div class="cards" id="cards"></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeOnOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modal-title">Nová postava</div>
+                <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+
+            <div class="fields-grid">
+                <div class="field">
+                    <label>Jméno *</label>
+                    <input type="text" id="f-jmeno" placeholder="Jan Novák">
+                </div>
+                <div class="field">
+                    <label>Věk</label>
+                    <input type="text" id="f-vek" placeholder="52">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Bydliště</label>
+                <input type="text" id="f-bydliste" placeholder="Nouzov 14">
+            </div>
+
+            <div class="field">
+                <label>Funkce / zaměstnání</label>
+                <input type="text" id="f-funkce" placeholder="starosta, řidič autobusu...">
+            </div>
+
+            <div class="fields-grid">
+                <div class="field">
+                    <label>Partner / manžel/ka</label>
+                    <input type="text" id="f-partner" placeholder="Marie Nováková">
+                </div>
+                <div class="field">
+                    <label>Děti / rodina</label>
+                    <input type="text" id="f-rodina" placeholder="syn Petr, dcera Jana">
+                </div>
+            </div>
+
+            <div class="field">
+                <label>Charakter</label>
+                <input type="text" id="f-charakter" placeholder="temperamentní, lakomý, dobrosrdečný...">
+            </div>
+
+            <div class="field">
+                <label>Koníčky</label>
+                <input type="text" id="f-konicky" placeholder="zahrádkaření, myslivost...">
+            </div>
+
+            <div class="field">
+                <label>Poznámka (volné pole)</label>
+                <textarea id="f-poznamka" placeholder="Cokoliv dalšího..."></textarea>
+            </div>
+
+            <div class="modal-footer">
+                <button class="save-btn" onclick="savePostava()">Uložit</button>
+                <button class="delete-btn" id="delete-btn" onclick="deletePostava()" style="display:none">Smazat</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        let postavy = [];
+        let editingId = null;
+        const syncStatus = document.getElementById('sync-status');
+        function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
+
+        async function loadData() {
+            setStatus('syncing');
+            const local = localStorage.getItem('nouzov_data');
+            if (local) { try { postavy = JSON.parse(local); render(); } catch(e) { postavy = []; } }
+            try {
+                const response = await fetch(`${CLOUD_URL}?mode=nouzov`);
+                const cloud = await response.json();
+                if (Array.isArray(cloud)) {
+                    postavy = cloud;
+                    localStorage.setItem('nouzov_data', JSON.stringify(postavy));
+                    render();
+                }
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        function searchText(postava) {
+            return [postava.jmeno, postava.vek, postava.bydliste, postava.funkce,
+                    postava.partner, postava.rodina, postava.charakter,
+                    postava.konicky, postava.poznamka].join(' ').toLowerCase();
+        }
+
+        function highlight(text, query) {
+            if (!query || !text) return text || '';
+            const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return text.replace(new RegExp(escaped, 'gi'), m => `<mark>${m}</mark>`);
+        }
+
+        function render() {
+            const query = document.getElementById('search').value.toLowerCase().trim();
+            const filtered = query
+                ? postavy.filter(p => searchText(p).includes(query))
+                : [...postavy];
+
+            filtered.sort((a, b) => a.jmeno.localeCompare(b.jmeno, 'cs'));
+
+            const cards = document.getElementById('cards');
+            const count = document.getElementById('count');
+            count.innerText = filtered.length + ' / ' + postavy.length + ' obyvatel';
+            cards.innerHTML = '';
+
+            if (filtered.length === 0) {
+                cards.innerHTML = '<div class="empty">' + (query ? 'Nikdo nenalezen...' : 'Zatím žádné postavy...') + '</div>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                const el = document.createElement('div');
+                el.className = 'card';
+                el.onclick = () => openModal(p.id);
+
+                const tags = [];
+                if (p.funkce) tags.push(p.funkce);
+                if (p.charakter) tags.push(p.charakter);
+
+                const hl = t => highlight(t, query);
+
+                el.innerHTML = `
+                    <div class="card-header">
+                        <div>
+                            <div class="card-name">${hl(p.jmeno)}</div>
+                            <div class="card-meta">${[p.vek ? p.vek + ' let' : '', p.bydliste].filter(Boolean).map(hl).join(' · ')}</div>
+                        </div>
+                    </div>
+                    ${tags.length ? `<div class="card-tags">${tags.map(t => `<span class="tag">${hl(t)}</span>`).join('')}</div>` : ''}
+                    ${p.poznamka ? `<div class="card-note">${hl(p.poznamka)}</div>` : ''}
+                `;
+                cards.appendChild(el);
+            });
+        }
+
+        function openModal(id) {
+            editingId = id || null;
+            const p = id ? postavy.find(x => x.id === id) : null;
+            document.getElementById('modal-title').innerText = p ? 'Upravit postavu' : 'Nová postava';
+            document.getElementById('f-jmeno').value = p ? p.jmeno || '' : '';
+            document.getElementById('f-vek').value = p ? p.vek || '' : '';
+            document.getElementById('f-bydliste').value = p ? p.bydliste || '' : '';
+            document.getElementById('f-funkce').value = p ? p.funkce || '' : '';
+            document.getElementById('f-partner').value = p ? p.partner || '' : '';
+            document.getElementById('f-rodina').value = p ? p.rodina || '' : '';
+            document.getElementById('f-charakter').value = p ? p.charakter || '' : '';
+            document.getElementById('f-konicky').value = p ? p.konicky || '' : '';
+            document.getElementById('f-poznamka').value = p ? p.poznamka || '' : '';
+            document.getElementById('delete-btn').style.display = p ? 'block' : 'none';
+            document.getElementById('modal-overlay').classList.add('visible');
+            setTimeout(() => document.getElementById('f-jmeno').focus(), 100);
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('visible');
+            editingId = null;
+        }
+
+        function closeOnOverlay(e) {
+            if (e.target === document.getElementById('modal-overlay')) closeModal();
+        }
+
+        async function savePostava() {
+            const jmeno = document.getElementById('f-jmeno').value.trim();
+            if (!jmeno) { document.getElementById('f-jmeno').focus(); return; }
+
+            const postava = {
+                id: editingId || Date.now().toString(),
+                jmeno,
+                vek: document.getElementById('f-vek').value.trim(),
+                bydliste: document.getElementById('f-bydliste').value.trim(),
+                funkce: document.getElementById('f-funkce').value.trim(),
+                partner: document.getElementById('f-partner').value.trim(),
+                rodina: document.getElementById('f-rodina').value.trim(),
+                charakter: document.getElementById('f-charakter').value.trim(),
+                konicky: document.getElementById('f-konicky').value.trim(),
+                poznamka: document.getElementById('f-poznamka').value.trim()
+            };
+
+            if (editingId) {
+                postavy = postavy.map(p => p.id === editingId ? postava : p);
+            } else {
+                postavy.unshift(postava);
+            }
+
+            localStorage.setItem('nouzov_data', JSON.stringify(postavy));
+            closeModal();
+            render();
+
+            try {
+                setStatus('syncing');
+                const type = editingId ? 'nouzov_update' : 'nouzov_add';
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, item: postava }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        async function deletePostava() {
+            if (!editingId) return;
+            if (!confirm('Smazat tuto postavu?')) return;
+            postavy = postavy.filter(p => p.id !== editingId);
+            localStorage.setItem('nouzov_data', JSON.stringify(postavy));
+            closeModal();
+            render();
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'nouzov_delete', id: editingId }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
