@@ -324,14 +324,17 @@
         }
 
         function render() {
-            const firstVaha = [...entries].reverse().find(e => e.vaha !== null);
-            const firstTuk = [...entries].reverse().find(e => e.tuk !== null);
-            const firstVisc = [...entries].reverse().find(e => e.visc !== null);
-            const firstSvaly = [...entries].reverse().find(e => e.svaly !== null && e.svaly !== undefined);
-            const lastVaha = entries.find(e => e.vaha !== null);
-            const lastTuk = entries.find(e => e.tuk !== null);
-            const lastVisc = entries.find(e => e.visc !== null);
-            const lastSvaly = entries.find(e => e.svaly !== null && e.svaly !== undefined);
+            // Seřaď podle data — nejstarší první pro first, nejnovější první pro last
+            const sorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
+            const sortedDesc = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const firstVaha = sorted.find(e => e.vaha !== null);
+            const firstTuk = sorted.find(e => e.tuk !== null);
+            const firstVisc = sorted.find(e => e.visc !== null);
+            const firstSvaly = sorted.find(e => e.svaly !== null && e.svaly !== undefined);
+            const lastVaha = sortedDesc.find(e => e.vaha !== null);
+            const lastTuk = sortedDesc.find(e => e.tuk !== null);
+            const lastVisc = sortedDesc.find(e => e.visc !== null);
+            const lastSvaly = sortedDesc.find(e => e.svaly !== null && e.svaly !== undefined);
 
             document.getElementById('stat-vaha').innerText = lastVaha ? lastVaha.vaha + ' kg' : '—';
             document.getElementById('stat-tuk').innerText = lastTuk ? lastTuk.tuk + ' %' : '—';
