@@ -75,7 +75,7 @@
         </div>
 
         <div class="compose">
-            <textarea id="tweet-input" placeholder="Co se děje?" maxlength="280"></textarea>
+            <textarea id="tweet-input" placeholder="Co se děje?"></textarea>
             <div class="compose-footer">
                 <span class="char-count" id="char-count">280</span>
                 <button class="post-btn" id="post-btn" onclick="postTweet()" disabled>Odeslat</button>
@@ -97,10 +97,19 @@
         function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
 
         input.addEventListener('input', () => {
-            const remaining = 280 - input.value.length;
-            charCount.innerText = remaining;
-            charCount.className = 'char-count' + (remaining < 0 ? ' danger' : remaining < 50 ? ' warning' : '');
-            postBtn.disabled = input.value.trim().length === 0 || remaining < 0;
+            const len = input.value.length;
+            const remaining = 280 - len;
+            if (remaining >= 50) {
+                charCount.innerText = len + ' / 280';
+                charCount.className = 'char-count';
+            } else if (remaining >= 0) {
+                charCount.innerText = 'zbývá ' + remaining + ' znaků';
+                charCount.className = 'char-count warning';
+            } else {
+                charCount.innerText = 'přesah o ' + Math.abs(remaining) + ' znaků';
+                charCount.className = 'char-count danger';
+            }
+            postBtn.disabled = input.value.trim().length === 0;
         });
 
         input.addEventListener('keydown', (e) => {
@@ -125,7 +134,7 @@
 
         async function postTweet() {
             const text = input.value.trim();
-            if (!text || text.length > 280) return;
+            if (!text) return;
             const now = new Date();
             const tweet = {
                 id: Date.now().toString(),
