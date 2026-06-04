@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prodej věcí</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏷️</text></svg>">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #1a1c1e; color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; justify-content: center; padding: 30px 20px; min-height: 100vh;
+        }
+        .container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 20px; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2d32; padding-bottom: 15px; }
+        h1 { font-size: 1.3rem; font-weight: 400; color: #f0f0f0; }
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; }
+        .sync-status.syncing { background-color: #ffb74d; }
+        .sync-status.online { background-color: #4caf50; }
+        .sync-status.error { background-color: #cf6679; }
+
+        /* Součet nahoře */
+        .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .sum-box {
+            background-color: #121314; border: 1px solid #2a2d32;
+            border-radius: 12px; padding: 16px; text-align: center;
+        }
+        .sum-label { font-size: 0.75rem; color: #8a8d92; text-transform: uppercase; font-weight: bold; }
+        .sum-value { font-size: 1.8rem; font-weight: 300; margin-top: 4px; }
+        .sum-value.earned { color: #4caf50; }
+        .sum-value.waiting { color: #ffb74d; }
+
+        /* Přidat věc */
+        .add-box {
+            background-color: #121314; border: 1px solid #2a2d32;
+            border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .add-input {
+            width: 100%; background-color: #1a1c1e; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 11px 14px; border-radius: 8px; font-size: 1rem; outline: none;
+            transition: border 0.2s; font-family: inherit;
+        }
+        .add-input:focus { border-color: #009688; }
+        .add-input::placeholder { color: #4a4d52; }
+        .add-btn {
+            width: 100%; background-color: #2a2d32; color: #e2e2e2; border: none;
+            padding: 11px; border-radius: 8px; font-size: 0.95rem; font-weight: bold;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .add-btn:hover { background-color: #3a3f45; }
+
+        /* Sekce */
+        .section-title {
+            font-size: 0.8rem; color: #8a8d92; font-weight: bold;
+            text-transform: uppercase; display: flex; justify-content: space-between; align-items: center;
+        }
+        .archive-btn {
+            background: transparent; border: 1px solid #2a2d32; color: #4a4d52;
+            padding: 3px 10px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;
+        }
+        .archive-btn:hover { color: #8a8d92; border-color: #3a3f45; }
+
+        /* Kartičky věcí */
+        .items-list { display: flex; flex-direction: column; gap: 8px; }
+        .item {
+            background-color: #121314; border: 1px solid #2a2d32;
+            border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .item.prodano { opacity: 0.55; }
+        .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .item-name { font-size: 1rem; font-weight: bold; color: #f0f0f0; }
+        .item.prodano .item-name { text-decoration: line-through; color: #8a8d92; }
+        .item-note { font-size: 0.85rem; color: #8a8d92; margin-top: 2px; }
+        .item-del { background: transparent; border: none; color: #4a4d52; cursor: pointer; font-size: 0.9rem; flex-shrink: 0; }
+        .item-del:hover { color: #cf6679; }
+
+        .item-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .state-btn {
+            border: none; padding: 7px 14px; border-radius: 6px;
+            font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-vystavit { background-color: #1d3a5c; color: #5ba3d9; }
+        .btn-vystavit:hover { background-color: #5ba3d9; color: white; }
+        .btn-prodat { background-color: #1b4d3e; color: #4caf50; }
+        .btn-prodat:hover { background-color: #4caf50; color: white; }
+        .btn-zpet { background-color: #2a2d32; color: #8a8d92; font-size: 0.78rem; padding: 5px 10px; }
+        .btn-zpet:hover { background-color: #3a3f45; }
+
+        .state-badge {
+            font-size: 0.75rem; font-weight: bold; padding: 4px 10px; border-radius: 4px;
+        }
+        .badge-ksale { background-color: #2a2d32; color: #8a8d92; }
+        .badge-vystaveno { background-color: #1d3a5c; color: #5ba3d9; }
+        .badge-prodano { background-color: #1b4d3e; color: #4caf50; }
+
+        .price-row { display: flex; gap: 8px; align-items: center; }
+        .price-input {
+            flex: 1; background-color: #1a1c1e; border: 1px solid #2a2d32; color: #f0f0f0;
+            padding: 8px 12px; border-radius: 6px; font-size: 1rem; outline: none; transition: border 0.2s;
+        }
+        .price-input:focus { border-color: #4caf50; }
+        .prodano-price { font-size: 1rem; font-weight: bold; color: #4caf50; }
+
+        .empty { color: #4a4d52; font-style: italic; text-align: center; padding: 20px 0; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏷️ Prodej věcí</h1>
+            <div class="sync-status" id="sync-status"></div>
+        </div>
+
+        <div class="summary">
+            <div class="sum-box">
+                <div class="sum-label">💰 Utrženo</div>
+                <div class="sum-value earned" id="sum-earned">0 Kč</div>
+            </div>
+            <div class="sum-box">
+                <div class="sum-label">⏳ Čeká na prodej</div>
+                <div class="sum-value waiting" id="sum-count">0 věcí</div>
+            </div>
+        </div>
+
+        <div class="add-box">
+            <input type="text" id="input-name" class="add-input" placeholder="Název věci...">
+            <input type="text" id="input-note" class="add-input" placeholder="Poznámka (nepovinná)...">
+            <button class="add-btn" onclick="addItem()">+ Přidat věc k prodeji</button>
+        </div>
+
+        <div class="section-title">
+            <span>K prodeji a vystaveno</span>
+        </div>
+        <div class="items-list" id="list-active"></div>
+
+        <div class="section-title">
+            <span>Prodáno</span>
+            <button class="archive-btn" onclick="archiveProdano()">Skrýt prodané</button>
+        </div>
+        <div class="items-list" id="list-sold"></div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        let items = [];
+        const syncStatus = document.getElementById('sync-status');
+        function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
+
+        async function loadData() {
+            setStatus('syncing');
+            const local = localStorage.getItem('prodej_data');
+            if (local) { try { items = JSON.parse(local); render(); } catch(e) { items = []; } }
+            try {
+                const response = await fetch(`${CLOUD_URL}?mode=prodej`);
+                const cloud = await response.json();
+                if (Array.isArray(cloud)) {
+                    items = cloud;
+                    localStorage.setItem('prodej_data', JSON.stringify(items));
+                    render();
+                }
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        function save() { localStorage.setItem('prodej_data', JSON.stringify(items)); }
+
+        async function sync(type, data) {
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, ...data }) });
+                setStatus('online');
+            } catch(err) { setStatus('error'); }
+        }
+
+        async function addItem() {
+            const name = document.getElementById('input-name').value.trim();
+            if (!name) return;
+            const item = {
+                id: Date.now().toString(),
+                name,
+                note: document.getElementById('input-note').value.trim(),
+                state: 'ksale', // ksale | vystaveno | prodano
+                price: null,
+                archived: false,
+                date: new Date().toISOString()
+            };
+            items.unshift(item);
+            document.getElementById('input-name').value = '';
+            document.getElementById('input-note').value = '';
+            save(); render();
+            await sync('prodej_add', { item });
+        }
+
+        function setState(id, state) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            item.state = state;
+            if (state !== 'prodano') item.price = null;
+            save(); render();
+            sync('prodej_update', { item });
+        }
+
+        function setPrice(id, price) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            item.price = parseFloat(price) || null;
+            save(); render();
+            sync('prodej_update', { item });
+        }
+
+        function markSold(id) {
+            const priceInput = document.getElementById('price-' + id);
+            const price = priceInput ? parseFloat(priceInput.value) : null;
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            item.state = 'prodano';
+            item.price = price || null;
+            item.soldDate = new Date().toISOString();
+            save(); render();
+            sync('prodej_update', { item });
+        }
+
+        function deleteItem(id) {
+            items = items.filter(i => i.id !== id);
+            save(); render();
+            sync('prodej_delete', { id });
+        }
+
+        function archiveProdano() {
+            items = items.filter(i => i.state !== 'prodano');
+            save(); render();
+            sync('prodej_archive', {});
+        }
+
+        function render() {
+            const active = items.filter(i => i.state !== 'prodano');
+            const sold = items.filter(i => i.state === 'prodano');
+
+            // Součty
+            const earned = sold.reduce((s, i) => s + (i.price || 0), 0);
+            document.getElementById('sum-earned').innerText = earned.toLocaleString('cs-CZ') + ' Kč';
+            document.getElementById('sum-count').innerText = active.length + (active.length === 1 ? ' věc' : active.length < 5 ? ' věci' : ' věcí');
+
+            // Aktivní věci
+            const listActive = document.getElementById('list-active');
+            listActive.innerHTML = '';
+            if (active.length === 0) {
+                listActive.innerHTML = '<div class="empty">Žádné věci k prodeji...</div>';
+            } else {
+                active.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'item';
+                    const badgeClass = item.state === 'vystaveno' ? 'badge-vystaveno' : 'badge-ksale';
+                    const badgeText = item.state === 'vystaveno' ? 'VYSTAVENO' : 'K PRODEJI';
+                    el.innerHTML = `
+                        <div class="item-top">
+                            <div>
+                                <div class="item-name">${item.name}</div>
+                                ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <span class="state-badge ${badgeClass}">${badgeText}</span>
+                                <button class="item-del" onclick="deleteItem('${item.id}')">✕</button>
+                            </div>
+                        </div>
+                        <div class="item-actions">
+                            ${item.state === 'ksale' ? `<button class="state-btn btn-vystavit" onclick="setState('${item.id}','vystaveno')">📢 Vystavit</button>` : ''}
+                            ${item.state === 'vystaveno' ? `<button class="state-btn btn-zpet" onclick="setState('${item.id}','ksale')">↩ Zpět</button>` : ''}
+                            <div class="price-row">
+                                <input type="number" id="price-${item.id}" class="price-input" placeholder="Cena (Kč)" inputmode="numeric">
+                                <button class="state-btn btn-prodat" onclick="markSold('${item.id}')">✓ Prodáno</button>
+                            </div>
+                        </div>
+                    `;
+                    listActive.appendChild(el);
+                });
+            }
+
+            // Prodané věci
+            const listSold = document.getElementById('list-sold');
+            listSold.innerHTML = '';
+            if (sold.length === 0) {
+                listSold.innerHTML = '<div class="empty">Zatím nic prodáno...</div>';
+            } else {
+                sold.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'item prodano';
+                    const soldDate = item.soldDate ? new Date(item.soldDate).toLocaleDateString('cs-CZ') : '';
+                    el.innerHTML = `
+                        <div class="item-top">
+                            <div>
+                                <div class="item-name">${item.name}</div>
+                                ${item.note ? `<div class="item-note">${item.note}</div>` : ''}
+                                ${soldDate ? `<div class="item-note">${soldDate}</div>` : ''}
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <span class="prodano-price">${item.price ? item.price.toLocaleString('cs-CZ') + ' Kč' : '—'}</span>
+                                <button class="item-del" onclick="deleteItem('${item.id}')">✕</button>
+                            </div>
+                        </div>
+                    `;
+                    listSold.appendChild(el);
+                });
+            }
+        }
+
+        document.getElementById('input-name').addEventListener('keypress', e => { if (e.key === 'Enter') addItem(); });
+
+        loadData();
+    </script>
+</body>
+</html>
