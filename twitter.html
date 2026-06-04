@@ -28,7 +28,7 @@
         .compose textarea {
             width: 100%; background: transparent; border: none; color: #f0f0f0;
             font-size: 1.1rem; line-height: 1.6; resize: none; outline: none;
-            font-family: inherit; min-height: 80px;
+            font-family: inherit; min-height: 120px; overflow: hidden;
         }
         .compose textarea::placeholder { color: #4a4d52; }
         .compose-footer { display: flex; justify-content: space-between; align-items: center; }
@@ -97,6 +97,8 @@
         function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
 
         input.addEventListener('input', () => {
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
             const len = input.value.length;
             const remaining = 280 - len;
             if (remaining >= 50) {
