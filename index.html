@@ -308,13 +308,23 @@
         }
 
         function fixQuotes(text) {
-            // Nahraď anglické uvozovky českými „ "
-            // Projdi znak po znaku a rozhodni jestli je to otevírací nebo zavírací
+            // Nahraď VŠECHNY varianty uvozovek (rovné ", anglické "" '', české „" apod.)
+            // jednotně na české „..."
+            // Sjednotíme všechny varianty na rovnou " a pak rozhodneme open/close
+            const quoteChars = [
+                '"',        // rovná
+                '\u201c',  // " levá anglická
+                '\u201d',  // " pravá anglická
+                '\u201e',  // „ levá česká
+                '\u00ab',  // « francouzská
+                '\u00bb'   // » francouzská
+            ];
+
             let result = '';
             let open = false;
             for (let i = 0; i < text.length; i++) {
                 const ch = text[i];
-                if (ch === '"' || ch === '\u201c' || ch === '\u201d') {
+                if (quoteChars.includes(ch)) {
                     if (!open) {
                         result += '\u201e'; // „
                         open = true;
