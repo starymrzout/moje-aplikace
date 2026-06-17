@@ -337,11 +337,14 @@
                 }
                 item.innerHTML = `
                     <div class="note-item-title">
-                        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" onclick="togglePin(event,'${note.id}')" title="${note.pinned ? 'Odepnout' : 'Připnout'}">📌</button>
+                        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" title="${note.pinned ? 'Odepnout' : 'Připnout'}">📌</button>
                         ${title}
                     </div>
                     <div class="note-item-date">${displayDate}</div>
                 `;
+                // Přidej listener na špendlík
+                const pinBtn = item.querySelector('.pin-btn');
+                pinBtn.addEventListener('click', (e) => togglePin(e, note.id));
                 notesList.appendChild(item);
             });
         }
