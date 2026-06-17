@@ -91,6 +91,14 @@
         .note-item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; }
         .note-item-date { font-size: 0.75rem; color: #8a8d92; margin-top: 5px; }
         .note-item.active .note-item-date { color: #e0f2f1; }
+        .pin-btn {
+            background: transparent; border: none; cursor: pointer;
+            font-size: 0.85rem; opacity: 0.3; float: right; margin-left: 6px;
+            transition: opacity 0.2s; padding: 0;
+        }
+        .pin-btn:hover { opacity: 1; }
+        .pin-btn.pinned { opacity: 1; }
+        .note-item.pinned { border-left: 2px solid #009688; }
 
         .switch-app-box {
             padding: 15px;
@@ -285,24 +293,51 @@
 
         function filterNotes() { renderNotesList(); }
 
+        function togglePin(e, id) {
+            e.stopPropagation();
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                note.pinned = !note.pinned;
+                localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
+                renderTags(); renderNotesList();
+                saveAndSync();
+            }
+        }
+
         function renderNotesList() {
             notesList.innerHTML = ''; const query = searchBar.value.toLowerCase().trim();
-            notes.forEach(note => {
+
+            // Připnuté nahoru, pak ostatní (pořadí zachováno)
+            const filtered = notes.filter(note => {
                 const contentLower = note.content.toLowerCase();
-                if (query && !contentLower.includes(query)) return;
-                if (selectedTag && !contentLower.includes(selectedTag)) return;
-                const item = document.createElement('div'); item.classList.add('note-item');
+                if (query && !contentLower.includes(query)) return false;
+                if (selectedTag && !contentLower.includes(selectedTag)) return false;
+                return true;
+            });
+            const pinned = filtered.filter(n => n.pinned);
+            const unpinned = filtered.filter(n => !n.pinned);
+            const sorted = [...pinned, ...unpinned];
+
+            sorted.forEach(note => {
+                const item = document.createElement('div');
+                item.classList.add('note-item');
+                if (note.pinned) item.classList.add('pinned');
                 if (note.id === currentNoteId) item.classList.add('active');
                 item.onclick = () => { currentNoteId = note.id; renderNotesList(); loadCurrentNote(); };
                 const firstLine = note.content.trim().split('\n')[0];
                 const title = firstLine || 'Bez názvu';
-                // Zobraz datum čitelně ať přijde v jakémkoliv formátu
                 let displayDate = note.updatedAt;
                 if (note.updatedAt) {
                     const parsed = new Date(note.updatedAt);
                     if (!isNaN(parsed)) displayDate = parsed.toLocaleDateString('cs-CZ');
                 }
-                item.innerHTML = `<div class="note-item-title">${title}</div><div class="note-item-date">${displayDate}</div>`;
+                item.innerHTML = `
+                    <div class="note-item-title">
+                        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" onclick="togglePin(event,'${note.id}')" title="${note.pinned ? 'Odepnout' : 'Připnout'}">📌</button>
+                        ${title}
+                    </div>
+                    <div class="note-item-date">${displayDate}</div>
+                `;
                 notesList.appendChild(item);
             });
         }
