@@ -93,12 +93,12 @@
         .note-item.active .note-item-date { color: #e0f2f1; }
         .pin-btn {
             background: transparent; border: none; cursor: pointer;
-            font-size: 0.85rem; opacity: 0.3; float: right; margin-left: 6px;
-            transition: opacity 0.2s; padding: 0;
+            font-size: 0.85rem; opacity: 0.25; float: right; margin-left: 6px;
+            transition: all 0.2s; padding: 0; filter: grayscale(1);
         }
-        .pin-btn:hover { opacity: 1; }
-        .pin-btn.pinned { opacity: 1; }
-        .note-item.pinned { border-left: 2px solid #009688; }
+        .pin-btn:hover { opacity: 0.8; filter: grayscale(0); }
+        .pin-btn.pinned { opacity: 1; filter: grayscale(0); }
+        .note-item.pinned { border-left: 2px solid #ffb74d; }
 
         .switch-app-box {
             padding: 15px;
@@ -295,12 +295,16 @@
 
         function togglePin(e, id) {
             e.stopPropagation();
+            e.preventDefault();
             const note = notes.find(n => n.id === id);
             if (note) {
                 note.pinned = !note.pinned;
+                // Nepřesouvej připnutou poznámku na začátek pole — jen označ
                 localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
-                renderTags(); renderNotesList();
-                saveAndSync();
+                renderTags();
+                renderNotesList();
+                // Ulož do cloudu bez změny pořadí
+                fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'notes_save', notes: notes }) }).catch(() => {});
             }
         }
 
