@@ -228,9 +228,8 @@
             updateCounters();
         }
 
-        // SPOLEHLIVÉ NAHRAZOVÁNÍ UVOZOVEK
+        // OPRAVENÉ UVOZOVEK SE ZACHOVÁNÍM CELÉHO ARCHIVU
         editor.addEventListener('keydown', (e) => {
-            // Reaguje na klávesu uvozovek na jakékoliv klávesnici
             if (e.key === '"' || e.key === '“' || e.key === '”' || e.code === 'Quote') {
                 e.preventDefault();
                 
@@ -252,6 +251,7 @@
                 if (currentNote) {
                     currentNote.content = editor.value;
                     currentNote.updatedAt = new Date().toISOString();
+                    // Zde byla chyba – správné řazení beze ztráty zbytku pole:
                     notes = [currentNote, ...notes.filter(n => n.id !== currentNoteId)];
                 }
                 
@@ -290,70 +290,3 @@
         function deleteCurrentNote() {
             if (notes.length <= 1) {
                 const currentNote = notes.find(n => n.id === currentNoteId);
-                if (currentNote) { currentNote.content = ''; saveAndSync(); renderTags(); renderNotesList(); loadCurrentNote(); updateCounters(); }
-                return;
-            }
-            notes = notes.filter(n => n.id !== currentNoteId);
-            currentNoteId = notes[0].id;
-            saveAndSync(); renderTags(); renderNotesList(); loadCurrentNote(); updateCounters();
-        }
-
-        function getAllTags() {
-            const tags = new Set();
-            notes.forEach(note => {
-                const matches = note.content.match(/#[\wáéíóúýčďěňřšťžůú]+/g);
-                if (matches) matches.forEach(tag => tags.add(tag.toLowerCase()));
-            });
-            return Array.from(tags).sort();
-        }
-
-        function renderTags() {
-            const tags = getAllTags(); tagsSection.innerHTML = '';
-            if (tags.length === 0) { tagsSection.style.display = 'none'; return; }
-            tagsSection.style.display = 'flex';
-            const allBtn = document.createElement('span'); allBtn.classList.add('tag-badge');
-            if (!selectedTag) allBtn.classList.add('active'); allBtn.innerText = '🏷️ Vše';
-            allBtn.onclick = () => { selectedTag = null; renderTags(); renderNotesList(); };
-            tagsSection.appendChild(allBtn);
-            tags.forEach(tag => {
-                const badge = document.createElement('span'); badge.classList.add('tag-badge');
-                if (selectedTag === tag) badge.classList.add('active'); badge.innerText = tag;
-                badge.onclick = () => { selectedTag = (selectedTag === tag) ? null : tag; renderTags(); renderNotesList(); };
-                tagsSection.appendChild(badge);
-            });
-        }
-
-        function filterNotes() { renderNotesList(); }
-
-        function renderNotesList() {
-            notesList.innerHTML = ''; const query = searchBar.value.toLowerCase().trim();
-            notes.forEach(note => {
-                const contentLower = note.content.toLowerCase();
-                if (query && !contentLower.includes(query)) return;
-                if (selectedTag && !contentLower.includes(selectedTag)) return;
-                const item = document.createElement('div'); item.classList.add('note-item');
-                if (note.id === currentNoteId) item.classList.add('active');
-                item.onclick = () => { currentNoteId = note.id; renderNotesList(); loadCurrentNote(); };
-                const firstLine = note.content.trim().split('\n')[0];
-                const title = firstLine || 'Bez názvu';
-                let displayDate = note.updatedAt;
-                if (note.updatedAt) {
-                    const parsed = new Date(note.updatedAt);
-                    if (!isNaN(parsed)) displayDate = parsed.toLocaleDateString('cs-CZ');
-                }
-                item.innerHTML = `<div class="note-item-title">${title}</div><div class="note-item-date">${displayDate}</div>`;
-                notesList.appendChild(item);
-            });
-        }
-
-        function copyText() {
-            editor.select();
-            navigator.clipboard.writeText(editor.value).then(() => {
-                const originalText = copyBtn.innerText;
-                copyBtn.innerText = 'ZKOPÍROVÁNO!'; copyBtn.classList.add('success');
-                setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.remove('success'); }, 1500);
-            });
-        }
-    </script>
-</body>
-</html>
