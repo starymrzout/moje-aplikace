@@ -181,8 +181,8 @@
             const text = editor.value;
             const charCount = text.length;
             const words = text.trim().split(/\s+/).filter(w => w.length > 0);
-            charCountEl.innerText = `Znaky: ${${charCount}} / 280`;
-            wordCountEl.innerText = `Slova: ${${words.length}}`;
+            charCountEl.innerText = `Znaky: ${charCount} / 280`;
+            wordCountEl.innerText = `Slova: ${words.length}`;
             charCountEl.className = charCount > 280 ? 'counter-danger' : '';
         }
 
@@ -225,12 +225,11 @@
             updateCounters();
         }
 
-        // TVÁ ORIGINÁLNÍ URČUJÍCÍ FUNKCE INPUT S PŘIDANÝM PŘEVODEM UVOZOVEK
         editor.addEventListener('input', (e) => {
             const start = editor.selectionStart;
             const text = editor.value;
             
-            // Zachytí napsání obyčejné uvozovky
+            // AUTOMATICKÉ UVOZOVEK PŘÍMO V PŮVODNÍ FUNKCI
             if (e.inputType === 'insertText' && e.data === '"') {
                 const charBefore = start > 1 ? text.charAt(start - 2) : '';
                 let quote = '„';
