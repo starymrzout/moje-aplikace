@@ -226,26 +226,6 @@
             updateCounters();
         }
 
-        // Intercept stisku klávesy ještě před zapsáním do pole, aby se nerozbila historie kurzoru ani ukládání
-        editor.addEventListener('beforeinput', (e) => {
-            if (e.data === '"') {
-                e.preventDefault();
-                const start = editor.selectionStart;
-                const end = editor.selectionEnd;
-                const text = editor.value;
-                
-                const charBefore = start > 0 ? text.charAt(start - 1) : '';
-                
-                let quote = '„';
-                if (charBefore && !/\s/.test(charBefore) && charBefore !== '(' && charBefore !== '[') {
-                    quote = '“';
-                }
-                
-                // Vloží uvozovku na správné místo a posune kurzor
-                document.execCommand('insertText', false, quote);
-            }
-        });
-
         editor.addEventListener('input', () => {
             const currentNote = notes.find(n => n.id === currentNoteId);
             if (currentNote) {
