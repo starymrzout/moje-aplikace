@@ -210,10 +210,8 @@
             } catch (err) {
                 console.error(err);
                 setStatus('error');
-                if (notes.length === 0) {
-                    const newNote = { id: Date.now().toString(), content: '', updatedAt: new Date().toISOString() };
-                    notes.unshift(newNote); currentNoteId = newNote.id; renderTags(); renderNotesList(); loadCurrentNote(); updateCounters();
-                }
+                // Bezpečné chování při chybě
+                if (notes.length === 0) createNewNote();
             }
         });
 
@@ -228,32 +226,23 @@
             updateCounters();
         }
 
-        // BEZPEČNÉ AUTOMATICKÉ UVOZOVEK BEZ SAHÁNÍ DO PAMĚTI ARCHIVU
-        editor.addEventListener('keydown', (e) => {
-            if (e.key === '"' || e.key === '“' || e.key === '”' || e.code === 'Quote') {
-                e.preventDefault();
-                
+        // TADY JE TVÁ PŮVODNÍ FUNKCE, KTERÁ DOSTALA JEN PÁR ŘÁDKŮ PRO UVOZOVEK
+        editor.addEventListener('input', (e) => {
+            // Bezpečný převod uvozovek přímo během psaní
+            if (e.inputType === 'insertText' && e.data === '"') {
                 const start = editor.selectionStart;
-                const end = editor.selectionEnd;
                 const text = editor.value;
-                
-                const charBefore = start > 0 ? text.charAt(start - 1) : '';
+                const charBefore = start > 1 ? text.charAt(start - 2) : '';
                 
                 let quote = '„';
                 if (charBefore && !/\s/.test(charBefore) && charBefore !== '(' && charBefore !== '[') {
                     quote = '“';
                 }
                 
-                // Vloží uvozovku do textového pole
-                editor.value = text.substring(0, start) + quote + text.substring(end);
-                editor.selectionStart = editor.selectionEnd = start + 1;
-                
-                // Předá práci originální funkci input, která bezpečně synchronizuje beze ztráty dat
-                editor.dispatchEvent(new Event('input'));
+                editor.value = text.substring(0, start - 1) + quote + text.substring(start);
+                editor.selectionStart = editor.selectionEnd = start;
             }
-        });
 
-        editor.addEventListener('input', () => {
             const currentNote = notes.find(n => n.id === currentNoteId);
             if (currentNote) {
                 currentNote.content = editor.value;
