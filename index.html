@@ -210,7 +210,11 @@
             } catch (err) {
                 console.error(err);
                 setStatus('error');
-                if (notes.length === 0) createNewNote();
+                // BEZPEČNOSTNÍ OPRAVA: Pokud selže cloud a máme lokální data, NEVYTVÁŘET novou prázdnou poznámku, která by přepsala cloud.
+                if (notes.length === 0) {
+                    const newNote = { id: Date.now().toString(), content: '', updatedAt: new Date().toISOString() };
+                    notes.unshift(newNote); currentNoteId = newNote.id; renderTags(); renderNotesList(); loadCurrentNote(); updateCounters();
+                }
             }
         });
 
@@ -225,6 +229,7 @@
             updateCounters();
         }
 
+        // CHYTRÉ ČESKÉ UVOZOVKY PŘÍMO PŘI PSANÍ
         editor.addEventListener('keydown', (e) => {
             if (e.key === '"' || e.key === '“' || e.key === '”') {
                 e.preventDefault();
@@ -236,14 +241,28 @@
                 const charBefore = start > 0 ? text.charAt(start - 1) : '';
                 
                 let quote = '„';
-                if (charBefore && !/\s/.test(charBefore) && charBefore !== '(', charBefore !== '[') {
+                if (charBefore && !/\s/.test(charBefore) && charBefore !== '(' && charBefore !== '[') {
                     quote = '“';
                 }
                 
                 editor.value = text.substring(0, start) + quote + text.substring(end);
                 editor.selectionStart = editor.selectionEnd = start + 1;
                 
-                editor.dispatchEvent(new Event('input'));
+                const currentNote = notes.find(n => n.id === currentNoteId);
+                if (currentNote) {
+                    currentNote.content = editor.value;
+                    currentNote.updatedAt = new Date().toISOString();
+                    notes = [currentNote, ...notes.filter(n => n.id !== currentNoteId)];
+                }
+                
+                renderTags(); 
+                renderNotesList(); 
+                updateCounters();
+                
+                localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
+                setStatus('syncing'); 
+                clearTimeout(saveTimeout); 
+                saveTimeout = setTimeout(saveAndSync, 1200);
             }
         });
 
