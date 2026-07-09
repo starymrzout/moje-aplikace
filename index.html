@@ -116,7 +116,7 @@
         #editor {
             flex: 1; width: 100%; background: transparent; border: none; color: #d0d0d0;
             font-size: 1.05rem; line-height: 1.8; padding: 40px 60px; resize: none; outline: none; font-weight: 400;
-            font-family: "Georgia", "Times New Roman", serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         #editor::placeholder { color: #4a4d52; }
 
@@ -152,7 +152,7 @@
     </div>
 
     <div class="main-content">
-        <textarea id="editor" lang="cs" spellcheck="true" autocomplete="on" placeholder="Začněte psát... První řádek bude název." autofocus></textarea>
+        <textarea id="editor" placeholder="Začněte psát... První řádek bude název." autofocus></textarea>
         <div class="meta-info">
             <span id="char-count">Znaky: 0 / 280</span>
             <span id="word-count">Slova: 0</span>
@@ -181,8 +181,8 @@
             const text = editor.value;
             const charCount = text.length;
             const words = text.trim().split(/\s+/).filter(w => w.length > 0);
-            charCountEl.innerText = `Znaky: ${charCount} / 280`;
-            wordCountEl.innerText = `Slova: ${words.length}`;
+            charCountEl.innerText = `Znaky: ${${charCount}} / 280`;
+            wordCountEl.innerText = `Slova: ${${words.length}}`;
             charCountEl.className = charCount > 280 ? 'counter-danger' : '';
         }
 
@@ -225,7 +225,22 @@
             updateCounters();
         }
 
-        editor.addEventListener('input', () => {
+        // TVÁ ORIGINÁLNÍ URČUJÍCÍ FUNKCE INPUT S PŘIDANÝM PŘEVODEM UVOZOVEK
+        editor.addEventListener('input', (e) => {
+            const start = editor.selectionStart;
+            const text = editor.value;
+            
+            // Zachytí napsání obyčejné uvozovky
+            if (e.inputType === 'insertText' && e.data === '"') {
+                const charBefore = start > 1 ? text.charAt(start - 2) : '';
+                let quote = '„';
+                if (charBefore && !/\s/.test(charBefore) && charBefore !== '(' && charBefore !== '[') {
+                    quote = '“';
+                }
+                editor.value = text.substring(0, start - 1) + quote + text.substring(start);
+                editor.selectionStart = editor.selectionEnd = start;
+            }
+
             const currentNote = notes.find(n => n.id === currentNoteId);
             if (currentNote) {
                 currentNote.content = editor.value;
