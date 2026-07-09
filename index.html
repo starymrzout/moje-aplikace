@@ -112,18 +112,18 @@
         }
         .switch-link:hover { background-color: #009688; color: white; border-color: #009688; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; background-color: #f5f0e8; }
+        .main-content { flex: 1; display: flex; flex-direction: column; background-color: #1a1c1e; }
         #editor {
-            flex: 1; width: 100%; background: transparent; border: none; color: #1a1a1a;
-            font-size: 1.35rem; line-height: 1.9; padding: 40px 60px; resize: none; outline: none; font-weight: 400;
+            flex: 1; width: 100%; background: transparent; border: none; color: #d0d0d0;
+            font-size: 1.05rem; line-height: 1.8; padding: 40px 60px; resize: none; outline: none; font-weight: 400;
             font-family: "Georgia", "Times New Roman", serif;
         }
-        #editor::placeholder { color: #aaa; }
+        #editor::placeholder { color: #4a4d52; }
 
-        .meta-info { padding: 5px 40px; font-size: 0.85rem; color: #888; display: flex; gap: 20px; background-color: #ede8df; }
+        .meta-info { padding: 5px 40px; font-size: 0.85rem; color: #8a8d92; display: flex; gap: 20px; background-color: #1a1c1e; }
         .counter-danger { color: #cf6679; font-weight: bold; }
 
-        .footer { padding: 15px 40px; background-color: #e0dbd2; display: flex; gap: 15px; }
+        .footer { padding: 15px 40px; background-color: #121314; display: flex; gap: 15px; }
         .footer-btn { padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
         .copy-btn { background-color: #009688; color: white; flex: 2; }
         .copy-btn:hover { background-color: #00bfa5; }
@@ -307,79 +307,14 @@
             });
         }
 
-        function fixQuotes(text) {
-            // Nahraď VŠECHNY varianty uvozovek (rovné ", anglické "" '', české „" apod.)
-            // jednotně na české „..."
-            // Sjednotíme všechny varianty na rovnou " a pak rozhodneme open/close
-            const quoteChars = [
-                '"',        // rovná
-                '\u201c',  // " levá anglická
-                '\u201d',  // " pravá anglická
-                '\u201e',  // „ levá česká
-                '\u00ab',  // « francouzská
-                '\u00bb'   // » francouzská
-            ];
-
-            let result = '';
-            let open = false;
-            for (let i = 0; i < text.length; i++) {
-                const ch = text[i];
-                if (quoteChars.includes(ch)) {
-                    if (!open) {
-                        result += '\u201e'; // „
-                        open = true;
-                    } else {
-                        result += '\u201c'; // "
-                        open = false;
-                    }
-                } else {
-                    result += ch;
-                }
-            }
-            return result;
-        }
-
         function copyText() {
             editor.select();
-            const fixedText = fixQuotes(editor.value);
-            navigator.clipboard.writeText(fixedText).then(() => {
+            navigator.clipboard.writeText(editor.value).then(() => {
                 const originalText = copyBtn.innerText;
                 copyBtn.innerText = 'ZKOPÍROVÁNO!'; copyBtn.classList.add('success');
                 setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.remove('success'); }, 1500);
             });
         }
-
-        // Zvuk psacího stroje
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        let audioCtx = null;
-
-        function typewriterClick() {
-            if (!audioCtx) audioCtx = new AudioCtx();
-            const bufferSize = Math.floor(audioCtx.sampleRate * 0.04);
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 8);
-            }
-            const source = audioCtx.createBufferSource();
-            source.buffer = buffer;
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.value = 1200 + Math.random() * 400;
-            filter.Q.value = 0.8;
-            const gain = audioCtx.createGain();
-            gain.gain.value = 0.18 + Math.random() * 0.08;
-            source.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            source.start();
-        }
-
-        editor.addEventListener('keydown', (e) => {
-            if (e.key.length === 1 || e.key === 'Enter' || e.key === 'Backspace') {
-                typewriterClick();
-            }
-        });
     </script>
 </body>
 </html>
