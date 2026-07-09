@@ -152,7 +152,7 @@
     </div>
 
     <div class="main-content">
-        <textarea id="editor" placeholder="Začněte psát... První řádek bude název." autofocus></textarea>
+        <textarea id="editor" lang="cs" spellcheck="true" autocomplete="on" placeholder="Začněte psát... První řádek bude název." autofocus></textarea>
         <div class="meta-info">
             <span id="char-count">Znaky: 0 / 280</span>
             <span id="word-count">Slova: 0</span>
@@ -210,7 +210,6 @@
             } catch (err) {
                 console.error(err);
                 setStatus('error');
-                // Bezpečné chování při chybě
                 if (notes.length === 0) createNewNote();
             }
         });
@@ -226,23 +225,7 @@
             updateCounters();
         }
 
-        // TADY JE TVÁ PŮVODNÍ FUNKCE, KTERÁ DOSTALA JEN PÁR ŘÁDKŮ PRO UVOZOVEK
-        editor.addEventListener('input', (e) => {
-            // Bezpečný převod uvozovek přímo během psaní
-            if (e.inputType === 'insertText' && e.data === '"') {
-                const start = editor.selectionStart;
-                const text = editor.value;
-                const charBefore = start > 1 ? text.charAt(start - 2) : '';
-                
-                let quote = '„';
-                if (charBefore && !/\s/.test(charBefore) && charBefore !== '(' && charBefore !== '[') {
-                    quote = '“';
-                }
-                
-                editor.value = text.substring(0, start - 1) + quote + text.substring(start);
-                editor.selectionStart = editor.selectionEnd = start;
-            }
-
+        editor.addEventListener('input', () => {
             const currentNote = notes.find(n => n.id === currentNoteId);
             if (currentNote) {
                 currentNote.content = editor.value;
