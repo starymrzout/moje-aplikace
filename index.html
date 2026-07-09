@@ -91,6 +91,14 @@
         .note-item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; }
         .note-item-date { font-size: 0.75rem; color: #8a8d92; margin-top: 5px; }
         .note-item.active .note-item-date { color: #e0f2f1; }
+        .pin-btn {
+            background: transparent; border: none; cursor: pointer;
+            font-size: 0.85rem; opacity: 0.25; float: right; margin-left: 6px;
+            transition: all 0.2s; padding: 0; filter: grayscale(1);
+        }
+        .pin-btn:hover { opacity: 0.8; filter: grayscale(0); }
+        .pin-btn.pinned { opacity: 1; filter: grayscale(0); }
+        .note-item.pinned { border-left: 2px solid #ffb74d; }
 
         .switch-app-box {
             padding: 15px;
@@ -285,36 +293,135 @@
 
         function filterNotes() { renderNotesList(); }
 
+        function togglePin(e, id) {
+            e.stopPropagation();
+            e.preventDefault();
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                note.pinned = !note.pinned;
+                // Nepřesouvej připnutou poznámku na začátek pole — jen označ
+                localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
+                renderTags();
+                renderNotesList();
+                // Ulož do cloudu bez změny pořadí
+                fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'notes_save', notes: notes }) }).catch(() => {});
+            }
+        }
+
         function renderNotesList() {
             notesList.innerHTML = ''; const query = searchBar.value.toLowerCase().trim();
-            notes.forEach(note => {
+
+            // Připnuté nahoru, pak ostatní (pořadí zachováno)
+            const filtered = notes.filter(note => {
                 const contentLower = note.content.toLowerCase();
-                if (query && !contentLower.includes(query)) return;
-                if (selectedTag && !contentLower.includes(selectedTag)) return;
-                const item = document.createElement('div'); item.classList.add('note-item');
+                if (query && !contentLower.includes(query)) return false;
+                if (selectedTag && !contentLower.includes(selectedTag)) return false;
+                return true;
+            });
+            const pinned = filtered.filter(n => n.pinned);
+            const unpinned = filtered.filter(n => !n.pinned);
+            const sorted = [...pinned, ...unpinned];
+
+            sorted.forEach(note => {
+                const item = document.createElement('div');
+                item.classList.add('note-item');
+                if (note.pinned) item.classList.add('pinned');
                 if (note.id === currentNoteId) item.classList.add('active');
                 item.onclick = () => { currentNoteId = note.id; renderNotesList(); loadCurrentNote(); };
                 const firstLine = note.content.trim().split('\n')[0];
                 const title = firstLine || 'Bez názvu';
-                // Zobraz datum čitelně ať přijde v jakémkoliv formátu
                 let displayDate = note.updatedAt;
                 if (note.updatedAt) {
                     const parsed = new Date(note.updatedAt);
                     if (!isNaN(parsed)) displayDate = parsed.toLocaleDateString('cs-CZ');
                 }
-                item.innerHTML = `<div class="note-item-title">${title}</div><div class="note-item-date">${displayDate}</div>`;
+                item.innerHTML = `
+                    <div class="note-item-title">
+                        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" title="${note.pinned ? 'Odepnout' : 'Připnout'}">📌</button>
+                        ${title}
+                    </div>
+                    <div class="note-item-date">${displayDate}</div>
+                `;
+                // Přidej listener na špendlík
+                const pinBtn = item.querySelector('.pin-btn');
+                pinBtn.addEventListener('click', (e) => togglePin(e, note.id));
                 notesList.appendChild(item);
             });
         }
 
+        function fixQuotes(text) {
+            // Nahraď VŠECHNY varianty uvozovek (rovné ", anglické "" '', české „" apod.)
+            // jednotně na české „..."
+            // Sjednotíme všechny varianty na rovnou " a pak rozhodneme open/close
+            const quoteChars = [
+                '"',        // rovná
+                '\u201c',  // " levá anglická
+                '\u201d',  // " pravá anglická
+                '\u201e',  // „ levá česká
+                '\u00ab',  // « francouzská
+                '\u00bb'   // » francouzská
+            ];
+
+            let result = '';
+            let open = false;
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (quoteChars.includes(ch)) {
+                    if (!open) {
+                        result += '\u201e'; // „
+                        open = true;
+                    } else {
+                        result += '\u201c'; // "
+                        open = false;
+                    }
+                } else {
+                    result += ch;
+                }
+            }
+            return result;
+        }
+
         function copyText() {
             editor.select();
-            navigator.clipboard.writeText(editor.value).then(() => {
+            const fixedText = fixQuotes(editor.value);
+            navigator.clipboard.writeText(fixedText).then(() => {
                 const originalText = copyBtn.innerText;
                 copyBtn.innerText = 'ZKOPÍROVÁNO!'; copyBtn.classList.add('success');
                 setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.remove('success'); }, 1500);
             });
         }
+
+        // Zvuk psacího stroje
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function typewriterClick() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+            const bufferSize = Math.floor(audioCtx.sampleRate * 0.04);
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 8);
+            }
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1200 + Math.random() * 400;
+            filter.Q.value = 0.8;
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0.18 + Math.random() * 0.08;
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+            source.start();
+        }
+
+        editor.addEventListener('keydown', (e) => {
+            if (e.key.length === 1 || e.key === 'Enter' || e.key === 'Backspace') {
+                typewriterClick();
+            }
+        });
     </script>
 </body>
 </html>
