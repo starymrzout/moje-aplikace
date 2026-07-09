@@ -91,14 +91,6 @@
         .note-item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; }
         .note-item-date { font-size: 0.75rem; color: #8a8d92; margin-top: 5px; }
         .note-item.active .note-item-date { color: #e0f2f1; }
-        .pin-btn {
-            background: transparent; border: none; cursor: pointer;
-            font-size: 0.85rem; opacity: 0.25; float: right; margin-left: 6px;
-            transition: all 0.2s; padding: 0; filter: grayscale(1);
-        }
-        .pin-btn:hover { opacity: 0.8; filter: grayscale(0); }
-        .pin-btn.pinned { opacity: 1; filter: grayscale(0); }
-        .note-item.pinned { border-left: 2px solid #ffb74d; }
 
         .switch-app-box {
             padding: 15px;
@@ -120,18 +112,18 @@
         }
         .switch-link:hover { background-color: #009688; color: white; border-color: #009688; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; background-color: #f5f0e8; }
+        .main-content { flex: 1; display: flex; flex-direction: column; background-color: #1a1c1e; }
         #editor {
-            flex: 1; width: 100%; background: transparent; border: none; color: #1a1a1a;
-            font-size: 1.35rem; line-height: 1.9; padding: 40px 60px; resize: none; outline: none; font-weight: 400;
+            flex: 1; width: 100%; background: transparent; border: none; color: #d0d0d0;
+            font-size: 1.05rem; line-height: 1.8; padding: 40px 60px; resize: none; outline: none; font-weight: 400;
             font-family: "Georgia", "Times New Roman", serif;
         }
-        #editor::placeholder { color: #aaa; }
+        #editor::placeholder { color: #4a4d52; }
 
-        .meta-info { padding: 5px 40px; font-size: 0.85rem; color: #888; display: flex; gap: 20px; background-color: #ede8df; }
+        .meta-info { padding: 5px 40px; font-size: 0.85rem; color: #8a8d92; display: flex; gap: 20px; background-color: #1a1c1e; }
         .counter-danger { color: #cf6679; font-weight: bold; }
 
-        .footer { padding: 15px 40px; background-color: #e0dbd2; display: flex; gap: 15px; }
+        .footer { padding: 15px 40px; background-color: #121314; display: flex; gap: 15px; }
         .footer-btn { padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
         .copy-btn { background-color: #009688; color: white; flex: 2; }
         .copy-btn:hover { background-color: #00bfa5; }
@@ -214,7 +206,6 @@
                 } else if (notes.length === 0) {
                     createNewNote();
                 }
-                // Zelená tečka vždy když cloud odpoví
                 setStatus('online');
             } catch (err) {
                 console.error(err);
@@ -233,6 +224,28 @@
             editor.value = currentNote ? currentNote.content : '';
             updateCounters();
         }
+
+        editor.addEventListener('keydown', (e) => {
+            if (e.key === '"' || e.key === '“' || e.key === '”') {
+                e.preventDefault();
+                
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                const text = editor.value;
+                
+                const charBefore = start > 0 ? text.charAt(start - 1) : '';
+                
+                let quote = '„';
+                if (charBefore && !/\s/.test(charBefore) && charBefore !== '(', charBefore !== '[') {
+                    quote = '“';
+                }
+                
+                editor.value = text.substring(0, start) + quote + text.substring(end);
+                editor.selectionStart = editor.selectionEnd = start + 1;
+                
+                editor.dispatchEvent(new Event('input'));
+            }
+        });
 
         editor.addEventListener('input', () => {
             const currentNote = notes.find(n => n.id === currentNoteId);
@@ -293,39 +306,13 @@
 
         function filterNotes() { renderNotesList(); }
 
-        function togglePin(e, id) {
-            e.stopPropagation();
-            e.preventDefault();
-            const note = notes.find(n => n.id === id);
-            if (note) {
-                note.pinned = !note.pinned;
-                // Nepřesouvej připnutou poznámku na začátek pole — jen označ
-                localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
-                renderTags();
-                renderNotesList();
-                // Ulož do cloudu bez změny pořadí
-                fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'notes_save', notes: notes }) }).catch(() => {});
-            }
-        }
-
         function renderNotesList() {
             notesList.innerHTML = ''; const query = searchBar.value.toLowerCase().trim();
-
-            // Připnuté nahoru, pak ostatní (pořadí zachováno)
-            const filtered = notes.filter(note => {
+            notes.forEach(note => {
                 const contentLower = note.content.toLowerCase();
-                if (query && !contentLower.includes(query)) return false;
-                if (selectedTag && !contentLower.includes(selectedTag)) return false;
-                return true;
-            });
-            const pinned = filtered.filter(n => n.pinned);
-            const unpinned = filtered.filter(n => !n.pinned);
-            const sorted = [...pinned, ...unpinned];
-
-            sorted.forEach(note => {
-                const item = document.createElement('div');
-                item.classList.add('note-item');
-                if (note.pinned) item.classList.add('pinned');
+                if (query && !contentLower.includes(query)) return;
+                if (selectedTag && !contentLower.includes(selectedTag)) return;
+                const item = document.createElement('div'); item.classList.add('note-item');
                 if (note.id === currentNoteId) item.classList.add('active');
                 item.onclick = () => { currentNoteId = note.id; renderNotesList(); loadCurrentNote(); };
                 const firstLine = note.content.trim().split('\n')[0];
@@ -335,81 +322,19 @@
                     const parsed = new Date(note.updatedAt);
                     if (!isNaN(parsed)) displayDate = parsed.toLocaleDateString('cs-CZ');
                 }
-                item.innerHTML = `
-                    <div class="note-item-title">
-                        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" title="${note.pinned ? 'Odepnout' : 'Připnout'}">📌</button>
-                        ${title}
-                    </div>
-                    <div class="note-item-date">${displayDate}</div>
-                `;
-                // Přidej listener na špendlík
-                const pinBtn = item.querySelector('.pin-btn');
-                pinBtn.addEventListener('click', (e) => togglePin(e, note.id));
+                item.innerHTML = `<div class="note-item-title">${title}</div><div class="note-item-date">${displayDate}</div>`;
                 notesList.appendChild(item);
             });
         }
 
         function copyText() {
             editor.select();
-            const fixedText = editor.value;
-            navigator.clipboard.writeText(fixedText).then(() => {
+            navigator.clipboard.writeText(editor.value).then(() => {
                 const originalText = copyBtn.innerText;
                 copyBtn.innerText = 'ZKOPÍROVÁNO!'; copyBtn.classList.add('success');
                 setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.remove('success'); }, 1500);
             });
         }
-
-        // Zvuk psacího stroje
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        let audioCtx = null;
-
-        function typewriterClick() {
-            if (!audioCtx) audioCtx = new AudioCtx();
-            const bufferSize = Math.floor(audioCtx.sampleRate * 0.04);
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 8);
-            }
-            const source = audioCtx.createBufferSource();
-            source.buffer = buffer;
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.value = 1200 + Math.random() * 400;
-            filter.Q.value = 0.8;
-            const gain = audioCtx.createGain();
-            gain.gain.value = 0.18 + Math.random() * 0.08;
-            source.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            source.start();
-        }
-
-        
-        // České typografické uvozovky při psaní
-        editor.addEventListener('beforeinput', function (e) {
-            if (e.inputType !== 'insertText' || e.data !== '"') return;
-
-            e.preventDefault();
-
-            const start = editor.selectionStart;
-            const end = editor.selectionEnd;
-            const txt = editor.value;
-            const prev = start > 0 ? txt[start - 1] : '';
-
-            const opening = start === 0 || /\s|[(\[{]/.test(prev);
-            const quote = opening ? '„' : '“';
-
-            editor.setRangeText(quote, start, end, 'end');
-            editor.dispatchEvent(new Event('input', { bubbles: true }));
-        });
-
-
-        editor.addEventListener('keydown', (e) => {
-            if (e.key.length === 1 || e.key === 'Enter' || e.key === 'Backspace') {
-                typewriterClick();
-            }
-        });
     </script>
 </body>
 </html>
