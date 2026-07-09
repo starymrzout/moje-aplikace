@@ -349,41 +349,9 @@
             });
         }
 
-        function fixQuotes(text) {
-            // Nahraď VŠECHNY varianty uvozovek (rovné ", anglické "" '', české „" apod.)
-            // jednotně na české „..."
-            // Sjednotíme všechny varianty na rovnou " a pak rozhodneme open/close
-            const quoteChars = [
-                '"',        // rovná
-                '\u201c',  // " levá anglická
-                '\u201d',  // " pravá anglická
-                '\u201e',  // „ levá česká
-                '\u00ab',  // « francouzská
-                '\u00bb'   // » francouzská
-            ];
-
-            let result = '';
-            let open = false;
-            for (let i = 0; i < text.length; i++) {
-                const ch = text[i];
-                if (quoteChars.includes(ch)) {
-                    if (!open) {
-                        result += '\u201e'; // „
-                        open = true;
-                    } else {
-                        result += '\u201c'; // "
-                        open = false;
-                    }
-                } else {
-                    result += ch;
-                }
-            }
-            return result;
-        }
-
         function copyText() {
             editor.select();
-            const fixedText = fixQuotes(editor.value);
+            const fixedText = editor.value;
             navigator.clipboard.writeText(fixedText).then(() => {
                 const originalText = copyBtn.innerText;
                 copyBtn.innerText = 'ZKOPÍROVÁNO!'; copyBtn.classList.add('success');
@@ -416,6 +384,26 @@
             gain.connect(audioCtx.destination);
             source.start();
         }
+
+        
+        // České typografické uvozovky při psaní
+        editor.addEventListener('beforeinput', function (e) {
+            if (e.inputType !== 'insertText' || e.data !== '"') return;
+
+            e.preventDefault();
+
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const txt = editor.value;
+            const prev = start > 0 ? txt[start - 1] : '';
+
+            const opening = start === 0 || /\s|[(\[{]/.test(prev);
+            const quote = opening ? '„' : '“';
+
+            editor.setRangeText(quote, start, end, 'end');
+            editor.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+
 
         editor.addEventListener('keydown', (e) => {
             if (e.key.length === 1 || e.key === 'Enter' || e.key === 'Backspace') {
