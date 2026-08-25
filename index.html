@@ -45,7 +45,7 @@
             transition: background 0.2s;
         }
         .new-btn:hover { background-color: #3a3f45; }
-        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; transition: background-color 0.3s; flex-shrink: 0; }
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; transition: background-color 0.3s; }
         .sync-status.syncing { background-color: #ffb74d; }
         .sync-status.online { background-color: #4caf50; }
         .sync-status.error { background-color: #cf6679; }
@@ -120,30 +120,7 @@
         }
         .switch-link:hover { background-color: #009688; color: white; border-color: #009688; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; background-color: #f5f0e8; min-width: 0; }
-
-        /* Mobilní horní lišta editoru - skrytá na desktopu */
-        .editor-topbar {
-            display: none;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            background-color: #e0dbd2;
-            border-bottom: 1px solid #d5cfc3;
-        }
-        .back-btn {
-            background: transparent;
-            border: none;
-            color: #1a1a1a;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 6px 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
+        .main-content { flex: 1; display: flex; flex-direction: column; background-color: #f5f0e8; }
         #editor {
             flex: 1; width: 100%; background: transparent; border: none; color: #1a1a1a;
             font-size: 1.35rem; line-height: 1.9; padding: 40px 60px; resize: none; outline: none; font-weight: 400;
@@ -161,55 +138,6 @@
         .copy-btn.success { background-color: #4caf50; }
         .delete-btn { background-color: #cf6679; color: #121314; flex: 1; }
         .delete-btn:hover { background-color: #ff79c6; }
-
-        /* ===== MOBILNÍ LAYOUT ===== */
-        @media (max-width: 720px) {
-            body { overflow: hidden; }
-
-            .sidebar, .main-content {
-                position: absolute;
-                top: 0; left: 0; right: 0; bottom: 0;
-                width: 100%;
-                height: 100%;
-            }
-
-            /* Výchozí stav: vidíme seznam poznámek, editor je odsunutý mimo obrazovku */
-            .sidebar {
-                transform: translateX(0);
-                transition: transform 0.2s ease;
-                z-index: 2;
-            }
-            .main-content {
-                transform: translateX(100%);
-                transition: transform 0.2s ease;
-                z-index: 1;
-            }
-
-            /* Když je appka v režimu editoru (třída na body) */
-            body.mobile-editor-open .sidebar {
-                transform: translateX(-100%);
-            }
-            body.mobile-editor-open .main-content {
-                transform: translateX(0);
-            }
-
-            .editor-topbar { display: flex; }
-
-            #editor { padding: 24px 20px; font-size: 1.15rem; }
-            .meta-info { padding: 5px 20px; }
-            .footer { padding: 12px 20px; flex-wrap: wrap; }
-        }
-
-        @media (min-width: 721px) {
-            .editor-topbar { display: none; }
-        }
-
-        .empty-hint {
-            padding: 60px 20px;
-            text-align: center;
-            color: #8a8d92;
-            font-size: 0.9rem;
-        }
     </style>
 </head>
 <body>
@@ -232,9 +160,6 @@
     </div>
 
     <div class="main-content">
-        <div class="editor-topbar">
-            <button class="back-btn" onclick="closeMobileEditor()">← Zpět</button>
-        </div>
         <textarea id="editor" placeholder="Začněte psát... První řádek bude název." autofocus></textarea>
         <div class="meta-info">
             <span id="char-count">Znaky: 0 / 280</span>
@@ -257,15 +182,6 @@
         const syncStatus = document.getElementById('sync-status');
         const charCountEl = document.getElementById('char-count');
         const wordCountEl = document.getElementById('word-count');
-
-        const isMobile = () => window.matchMedia('(max-width: 720px)').matches;
-
-        function openMobileEditor() {
-            if (isMobile()) document.body.classList.add('mobile-editor-open');
-        }
-        function closeMobileEditor() {
-            document.body.classList.remove('mobile-editor-open');
-        }
 
         function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
 
@@ -305,18 +221,11 @@
                 setStatus('error');
                 if (notes.length === 0) createNewNote();
             }
-
-            // Na mobilu startujeme na seznamu poznámek, ne rovnou v editoru
-            if (isMobile()) {
-                document.body.classList.remove('mobile-editor-open');
-            }
         });
 
         function createNewNote() {
             const newNote = { id: Date.now().toString(), content: '', updatedAt: new Date().toISOString() };
-            notes.unshift(newNote); currentNoteId = newNote.id; saveAndSync(); renderTags(); renderNotesList(); loadCurrentNote(); updateCounters();
-            openMobileEditor();
-            editor.focus();
+            notes.unshift(newNote); currentNoteId = newNote.id; saveAndSync(); renderTags(); renderNotesList(); loadCurrentNote(); updateCounters(); editor.focus();
         }
 
         function loadCurrentNote() {
@@ -413,22 +322,12 @@
             const unpinned = filtered.filter(n => !n.pinned);
             const sorted = [...pinned, ...unpinned];
 
-            if (sorted.length === 0) {
-                notesList.innerHTML = '<div class="empty-hint">Nic tu není. Klepni na „+ Nová poznámka".</div>';
-                return;
-            }
-
             sorted.forEach(note => {
                 const item = document.createElement('div');
                 item.classList.add('note-item');
                 if (note.pinned) item.classList.add('pinned');
                 if (note.id === currentNoteId) item.classList.add('active');
-                item.onclick = () => {
-                    currentNoteId = note.id;
-                    renderNotesList();
-                    loadCurrentNote();
-                    openMobileEditor();
-                };
+                item.onclick = () => { currentNoteId = note.id; renderNotesList(); loadCurrentNote(); };
                 const firstLine = note.content.trim().split('\n')[0];
                 const title = firstLine || 'Bez názvu';
                 let displayDate = note.updatedAt;
