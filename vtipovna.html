@@ -310,8 +310,15 @@ textarea:focus, input[type=text]:focus{outline:none; border-color:var(--amber);}
   font-style:italic;
 }
 
+.new-btn-mobile{display:none;}
+
 @media (max-width: 800px){
   .app{flex-direction:column;}
+  .new-btn-mobile{
+    display:block;
+    margin:1rem 1.25rem 0;
+    width:auto;
+  }
   .rail{
     width:100%;
     height:auto;
@@ -320,6 +327,7 @@ textarea:focus, input[type=text]:focus{outline:none; border-color:var(--amber);}
     border-bottom:1px solid var(--line);
     order:2;
   }
+  .rail .new-btn:not(.new-btn-mobile){display:none;}
   .main{padding:1.5rem 1.25rem 4rem; order:1;}
   .w5h-grid, .output-grid{grid-template-columns:1fr;}
 }
@@ -328,6 +336,8 @@ textarea:focus, input[type=text]:focus{outline:none; border-color:var(--amber);}
 <body>
 
 <div class="app">
+
+  <button class="new-btn new-btn-mobile" id="newSessionBtnTop">+ Nové sezení</button>
 
   <aside class="rail">
     <p class="rail-title">Archiv sezení <span class="sync-dot" id="syncDot" title="Stav synchronizace"></span></p>
@@ -592,6 +602,7 @@ document.getElementById('saveBtn').addEventListener('click', () => {
 });
 
 document.getElementById('newSessionBtn').addEventListener('click', clearForm);
+document.getElementById('newSessionBtnTop').addEventListener('click', clearForm);
 
 function saveAndSync(){
   localStorage.setItem(LS_KEY, JSON.stringify(sessions));
