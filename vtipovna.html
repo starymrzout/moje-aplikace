@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VTIPOVNA — pracovní stůl</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root{
+  --paper: #EBE3CE;
+  --paper-dark: #DED4B8;
+  --card: #F6F1E3;
+  --ink: #211D1A;
+  --ink-soft: #5A5044;
+  --amber: #A8741F;
+  --amber-deep: #7A5416;
+  --pencil: #A13B2C;
+  --line: #C9BD9E;
+}
+
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Source Serif 4', Georgia, serif;
+  min-height:100vh;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+/* ---------- sidebar / archive ---------- */
+.rail{
+  width:280px;
+  flex-shrink:0;
+  background:var(--paper-dark);
+  border-right:1px solid var(--line);
+  padding:1.5rem 1.25rem;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+.rail-title{
+  font-family:'Special Elite', monospace;
+  font-size:13px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+  margin:0 0 1rem;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.sync-dot{
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:#9c9481;
+  display:inline-block;
+  transition:background-color 0.3s;
+}
+.sync-dot.syncing{background:var(--amber);}
+.sync-dot.online{background:#4c7a3d;}
+.sync-dot.error{background:var(--pencil);}
+.new-btn{
+  width:100%;
+  padding:0.6rem;
+  background:var(--ink);
+  color:var(--paper);
+  border:none;
+  font-family:'Special Elite', monospace;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  cursor:pointer;
+  margin-bottom:1.25rem;
+}
+.new-btn:hover{background:var(--amber-deep);}
+.archive-empty{
+  font-size:13px;
+  color:var(--ink-soft);
+  font-style:italic;
+  line-height:1.5;
+}
+.archive-item{
+  border:1px solid var(--line);
+  background:var(--card);
+  padding:0.6rem 0.7rem;
+  margin-bottom:0.5rem;
+  cursor:pointer;
+  position:relative;
+}
+.archive-item:hover{border-color:var(--amber);}
+.archive-item.active{border-color:var(--amber); box-shadow: inset 2px 0 0 var(--amber);}
+.archive-topic{
+  font-weight:600;
+  font-size:14px;
+  margin:0 0 2px;
+  padding-right:1.4rem;
+}
+.archive-date{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  color:var(--ink-soft);
+}
+.archive-del{
+  position:absolute;
+  top:0.5rem;
+  right:0.5rem;
+  background:none;
+  border:none;
+  color:var(--ink-soft);
+  cursor:pointer;
+  font-size:14px;
+  line-height:1;
+  padding:2px;
+}
+.archive-del:hover{color:var(--pencil);}
+.rail-note{
+  font-size:11px;
+  color:var(--ink-soft);
+  line-height:1.5;
+  margin-top:0.8rem;
+}
+
+/* ---------- main workspace ---------- */
+.main{
+  flex:1;
+  padding:2.5rem 3rem 5rem;
+  max-width:900px;
+}
+.masthead{
+  border-bottom:2px solid var(--ink);
+  padding-bottom:0.75rem;
+  margin-bottom:2rem;
+}
+.masthead h1{
+  font-family:'Special Elite', monospace;
+  font-size:28px;
+  letter-spacing:0.02em;
+  margin:0;
+}
+.masthead p{
+  margin:0.3rem 0 0;
+  color:var(--ink-soft);
+  font-size:14px;
+}
+
+.field-label{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--amber-deep);
+  display:block;
+  margin-bottom:0.3rem;
+}
+
+.topic-input{
+  width:100%;
+  font-family:'Special Elite', monospace;
+  font-size:20px;
+  padding:0.6rem 0.2rem;
+  border:none;
+  border-bottom:1px solid var(--ink);
+  background:transparent;
+  color:var(--ink);
+  margin-bottom:2rem;
+}
+.topic-input:focus{outline:none; border-bottom:2px solid var(--amber);}
+
+.section-heading{
+  font-family:'Special Elite', monospace;
+  font-size:14px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  margin:2.2rem 0 0.9rem;
+  color:var(--ink);
+}
+
+.w5h-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0.9rem;
+}
+.w5h-item textarea{
+  min-height:44px;
+}
+
+textarea, input[type=text]{
+  width:100%;
+  font-family:'Source Serif 4', Georgia, serif;
+  font-size:14px;
+  padding:0.5rem 0.6rem;
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--ink);
+  resize:vertical;
+}
+textarea:focus, input[type=text]:focus{outline:none; border-color:var(--amber);}
+
+.zero-step{
+  background:var(--card);
+  border:1px dashed var(--line);
+  padding:0.9rem 1rem;
+  margin-bottom:0.5rem;
+}
+.zero-step .field-label{margin-bottom:0.5rem;}
+
+.filters-wrap{
+  display:flex;
+  flex-direction:column;
+  gap:0.9rem;
+}
+.filter-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-left:4px solid var(--amber);
+  padding:0.9rem 1rem 1rem;
+  position:relative;
+}
+.filter-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:0.6rem;
+  margin-bottom:0.5rem;
+  flex-wrap:wrap;
+}
+.filter-num{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  color:var(--ink-soft);
+  margin-right:0.5rem;
+}
+.filter-name{
+  font-family:'Special Elite', monospace;
+  font-size:15px;
+}
+.filter-quota{
+  font-size:11px;
+  color:var(--ink-soft);
+  font-family:'JetBrains Mono', monospace;
+}
+.timer-row{
+  display:flex;
+  align-items:center;
+  gap:0.6rem;
+}
+.timer-btn{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  padding:0.25rem 0.6rem;
+  background:transparent;
+  border:1px solid var(--ink-soft);
+  color:var(--ink);
+  cursor:pointer;
+}
+.timer-btn:hover{border-color:var(--amber); color:var(--amber-deep);}
+.timer-display{
+  font-family:'JetBrains Mono', monospace;
+  font-size:13px;
+  min-width:42px;
+}
+.timer-display.warn{color:var(--pencil); font-weight:600;}
+
+.target-input{margin-bottom:0.5rem;}
+
+.output-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0.9rem;
+}
+.output-grid textarea{min-height:120px;}
+
+.save-row{
+  margin-top:2.2rem;
+  display:flex;
+  align-items:center;
+  gap:1rem;
+}
+.save-btn{
+  font-family:'Special Elite', monospace;
+  font-size:13px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  padding:0.7rem 1.4rem;
+  background:var(--ink);
+  color:var(--paper);
+  border:none;
+  cursor:pointer;
+}
+.save-btn:hover{background:var(--amber-deep);}
+.save-status{
+  font-size:13px;
+  color:var(--ink-soft);
+  font-style:italic;
+}
+
+@media (max-width: 800px){
+  .app{flex-direction:column;}
+  .rail{
+    width:100%;
+    height:auto;
+    position:relative;
+    border-right:none;
+    border-bottom:1px solid var(--line);
+  }
+  .main{padding:1.5rem 1.25rem 4rem;}
+  .w5h-grid, .output-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="rail">
+    <p class="rail-title">Archiv sezení <span class="sync-dot" id="syncDot" title="Stav synchronizace"></span></p>
+    <button class="new-btn" id="newSessionBtn">+ Nové sezení</button>
+    <div id="archiveList"><p class="archive-empty">Zatím žádná sezení. Vyplň téma a ulož první — uloží se do tvého Google Sheetu a uvidíš ho na všech počítačích.</p></div>
+    <p class="rail-note">Ukládá se do stejného Google Sheetu jako tvoje ostatní nástroje (list "Vtipovna"). Zelená tečka = synchronizováno, oranžová = probíhá ukládání, červená = cloud teď neodpověděl (data zůstávají aspoň lokálně v tomto prohlížeči).</p>
+  </aside>
+
+  <main class="main">
+    <div class="masthead">
+      <h1>VTIPOVNA</h1>
+      <p>Pracovní stůl pro psaní vtipů bez čekání na inspiraci — 5W+H, listing, filtry, výstup. Archiv se sám synchronizuje mezi tvými počítači.</p>
+    </div>
+
+    <label class="field-label" for="topic">Téma</label>
+    <input type="text" id="topic" class="topic-input" placeholder="např. autoškola, poslední zastupitelstvo, sousedova sekačka…">
+
+    <div class="section-heading">5W + H</div>
+    <div class="w5h-grid">
+      <div class="w5h-item"><label class="field-label">Kdo</label><textarea id="w_kdo" rows="2"></textarea></div>
+      <div class="w5h-item"><label class="field-label">Co</label><textarea id="w_co" rows="2"></textarea></div>
+      <div class="w5h-item"><label class="field-label">Kde</label><textarea id="w_kde" rows="2"></textarea></div>
+      <div class="w5h-item"><label class="field-label">Kdy</label><textarea id="w_kdy" rows="2"></textarea></div>
+      <div class="w5h-item"><label class="field-label">Proč</label><textarea id="w_proc" rows="2"></textarea></div>
+      <div class="w5h-item"><label class="field-label">Jak</label><textarea id="w_jak" rows="2"></textarea></div>
+    </div>
+
+    <div class="section-heading">Terč (na koho / na co vtip míří)</div>
+    <input type="text" id="target" class="target-input" placeholder="např. byrokracie autoškoly, moje vlastní tréma…" style="font-family:'Source Serif 4',Georgia,serif; font-size:14px; padding:0.5rem 0.6rem; border:1px solid var(--line); background:var(--card);">
+
+    <div class="section-heading">Listing</div>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-0.4rem 0 0.6rem;">Otevři svůj externí seznamový soubor a vypiš sem asociace k tématu — slova, klišé, fráze.</p>
+    <textarea id="listing" rows="3" placeholder="volné asociace, klišé, fráze spojené s tématem…"></textarea>
+
+    <div class="section-heading">Krok 0 — schválně špatný / doslovný vtip</div>
+    <div class="zero-step">
+      <label class="field-label">Prolomení bloku (nehodnotit, jen napsat)</label>
+      <textarea id="zero" rows="2"></textarea>
+    </div>
+
+    <div class="section-heading">Filtry</div>
+    <div class="filters-wrap" id="filtersWrap">
+      <!-- filter cards injected by JS -->
+    </div>
+
+    <div class="section-heading">Výstup</div>
+    <div class="output-grid">
+      <div>
+        <label class="field-label">Surový výběr (2–3 nejlepší z filtrů)</label>
+        <textarea id="out_raw" rows="6"></textarea>
+      </div>
+      <div>
+        <label class="field-label">Finální přepis (pro mluvené slovo)</label>
+        <textarea id="out_final" rows="6"></textarea>
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button class="save-btn" id="saveBtn">Uložit sezení</button>
+      <span class="save-status" id="saveStatus"></span>
+    </div>
+  </main>
+
+</div>
+
+<script>
+const FILTERS = [
+  {key:'prehnani', name:'Přehnání'},
+  {key:'kontrast', name:'Kontrast'},
+  {key:'doslovnost', name:'Doslovnost'},
+  {key:'prirovnani', name:'Přirovnání'},
+  {key:'absurdita', name:'Absurdita'},
+  {key:'cokdyby', name:'Co kdyby'}
+];
+
+const filtersWrap = document.getElementById('filtersWrap');
+FILTERS.forEach((f, i) => {
+  const num = String(i+1).padStart(2,'0');
+  const card = document.createElement('div');
+  card.className = 'filter-card';
+  card.innerHTML = `
+    <div class="filter-head">
+      <div><span class="filter-num">${num}</span><span class="filter-name">${f.name}</span></div>
+      <div class="timer-row">
+        <span class="filter-quota">min. 3 nápady</span>
+        <button class="timer-btn" data-filter="${f.key}">Start 3 min</button>
+        <span class="timer-display" id="timer_${f.key}">3:00</span>
+      </div>
+    </div>
+    <textarea id="filter_${f.key}" rows="3" placeholder="chrli nápady, nehodnoť za pochodu…"></textarea>
+  `;
+  filtersWrap.appendChild(card);
+});
+
+const timers = {};
+document.querySelectorAll('.timer-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.filter;
+    if(timers[key]) clearInterval(timers[key]);
+    let seconds = 180;
+    const display = document.getElementById('timer_'+key);
+    display.classList.remove('warn');
+    display.textContent = '3:00';
+    btn.textContent = 'Restart';
+    timers[key] = setInterval(() => {
+      seconds--;
+      const m = Math.floor(seconds/60);
+      const s = String(seconds%60).padStart(2,'0');
+      display.textContent = m+':'+s;
+      if(seconds <= 0){
+        clearInterval(timers[key]);
+        display.textContent = 'čas!';
+        display.classList.add('warn');
+      }
+    }, 1000);
+  });
+});
+
+function fieldIds(){
+  const ids = ['topic','target','listing','zero','out_raw','out_final',
+    'w_kdo','w_co','w_kde','w_kdy','w_proc','w_jak'];
+  FILTERS.forEach(f => ids.push('filter_'+f.key));
+  return ids;
+}
+
+function collectSession(){
+  const data = {};
+  fieldIds().forEach(id => {
+    const el = document.getElementById(id);
+    data[id] = el ? el.value : '';
+  });
+  return data;
+}
+
+function clearForm(){
+  fieldIds().forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  Object.values(timers).forEach(t => clearInterval(t));
+  document.querySelectorAll('.timer-display').forEach(d => {d.textContent='3:00'; d.classList.remove('warn');});
+  document.querySelectorAll('.timer-btn').forEach(b => b.textContent='Start 3 min');
+  currentId = null;
+  highlightActive();
+}
+
+function loadSession(data){
+  fieldIds().forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = data[id] || '';
+  });
+}
+
+const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+const LS_KEY = 'vtipovna_cloud_data';
+let sessions = [];
+let currentId = null;
+let saveTimeout = null;
+
+function setSyncStatus(status){
+  document.getElementById('syncDot').className = 'sync-dot ' + status;
+}
+
+function statusMsg(text){
+  document.getElementById('saveStatus').textContent = text;
+}
+
+async function initSync(){
+  setSyncStatus('syncing');
+  const local = localStorage.getItem(LS_KEY);
+  if(local){
+    try{ sessions = JSON.parse(local); renderArchive(); }catch(e){ sessions = []; }
+  }
+  try{
+    const res = await fetch(CLOUD_URL + '?mode=vtipovna');
+    const cloudSessions = await res.json();
+    if(Array.isArray(cloudSessions) && cloudSessions.length > 0){
+      sessions = cloudSessions;
+      localStorage.setItem(LS_KEY, JSON.stringify(sessions));
+      renderArchive();
+    }
+    setSyncStatus('online');
+  }catch(err){
+    setSyncStatus('error');
+  }
+}
+
+function renderArchive(){
+  const wrap = document.getElementById('archiveList');
+  if(!sessions.length){
+    wrap.innerHTML = '<p class="archive-empty">Zatím žádná sezení. Vyplň téma a ulož první — uloží se do tvého Google Sheetu a uvidíš ho na všech počítačích.</p>';
+    return;
+  }
+  const sorted = [...sessions].sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  wrap.innerHTML = '';
+  sorted.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'archive-item' + (item.id === currentId ? ' active' : '');
+    const d = new Date(item.createdAt);
+    const dateStr = isNaN(d) ? '' : d.toLocaleDateString('cs-CZ') + ' ' + d.toLocaleTimeString('cs-CZ', {hour:'2-digit', minute:'2-digit'});
+    div.innerHTML = `
+      <button class="archive-del" data-id="${item.id}" aria-label="Smazat sezení">×</button>
+      <p class="archive-topic">${escapeHtml(item.topic || '(bez tématu)')}</p>
+      <p class="archive-date">${dateStr}</p>
+    `;
+    div.addEventListener('click', (e) => {
+      if(e.target.classList.contains('archive-del')) return;
+      openSession(item.id);
+    });
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll('.archive-del').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteSession(btn.dataset.id);
+    });
+  });
+}
+
+function openSession(id){
+  const data = sessions.find(s => s.id === id);
+  if(data){
+    loadSession(data);
+    currentId = id;
+    highlightActive();
+    statusMsg('Sezení načteno.');
+  }
+}
+
+function highlightActive(){
+  document.querySelectorAll('.archive-item').forEach(el => el.classList.remove('active'));
+  renderArchive();
+}
+
+function deleteSession(id){
+  sessions = sessions.filter(s => s.id !== id);
+  if(currentId === id){
+    clearForm();
+  }
+  renderArchive();
+  saveAndSync();
+}
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const data = collectSession();
+  if(!data.topic || !data.topic.trim()){
+    statusMsg('Vyplň nejdřív téma.');
+    return;
+  }
+  const id = currentId || (Date.now().toString(36) + Math.random().toString(36).slice(2,7));
+  const existing = sessions.find(s => s.id === id);
+  const createdAt = existing ? existing.createdAt : Date.now();
+  const record = Object.assign({}, data, {id, createdAt});
+  if(existing){
+    Object.assign(existing, record);
+  } else {
+    sessions.push(record);
+  }
+  currentId = id;
+  renderArchive();
+  saveAndSync();
+});
+
+document.getElementById('newSessionBtn').addEventListener('click', clearForm);
+
+function saveAndSync(){
+  localStorage.setItem(LS_KEY, JSON.stringify(sessions));
+  statusMsg('Uloženo lokálně, synchronizuji…');
+  setSyncStatus('syncing');
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(pushToCloud, 800);
+}
+
+async function pushToCloud(){
+  try{
+    setSyncStatus('syncing');
+    await fetch(CLOUD_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({type: 'vtipovna_save', items: sessions})
+    });
+    setSyncStatus('online');
+    statusMsg('Synchronizováno.');
+  }catch(err){
+    setSyncStatus('error');
+    statusMsg('Cloud teď neodpověděl — sezení zůstává aspoň lokálně, zkusí se to znovu při další úpravě.');
+  }
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+initSync();
+</script>
+
+</body>
+</html>
