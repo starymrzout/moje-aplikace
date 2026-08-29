@@ -135,6 +135,37 @@ body{
   line-height:1.5;
   margin-top:0.8rem;
 }
+.dice-row{
+  display:flex;
+  gap:0.6rem;
+  flex-wrap:wrap;
+  margin-bottom:0.7rem;
+}
+.dice-btn{
+  font-family:'JetBrains Mono', monospace;
+  font-size:12px;
+  padding:0.5rem 0.9rem;
+  background:var(--card);
+  border:1px solid var(--line);
+  color:var(--ink);
+  cursor:pointer;
+}
+.dice-btn:hover{border-color:var(--amber); color:var(--amber-deep);}
+.dice-result{
+  min-height:2.2rem;
+  font-family:'Special Elite', monospace;
+  font-size:15px;
+  color:var(--ink);
+  padding:0.4rem 0;
+}
+.dice-result .dice-tag{
+  font-family:'JetBrains Mono', monospace;
+  font-size:10px;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  margin-right:0.4rem;
+}
 
 /* ---------- main workspace ---------- */
 .main{
@@ -368,6 +399,14 @@ textarea:focus, input[type=text]:focus{outline:none; border-color:var(--amber);}
     <div class="section-heading">Terč (na koho / na co vtip míří)</div>
     <input type="text" id="target" class="target-input" placeholder="např. byrokracie autoškoly, moje vlastní tréma…" style="font-family:'Source Serif 4',Georgia,serif; font-size:14px; padding:0.5rem 0.6rem; border:1px solid var(--line); background:var(--card);">
 
+    <div class="section-heading">Na sucho — losovačka</div>
+    <p style="font-size:13px; color:var(--ink-soft); margin:-0.4rem 0 0.7rem;">Nic se nikam nezapisuje automaticky. Jen podnět, když nevíš, kde začít.</p>
+    <div class="dice-row">
+      <button class="dice-btn" id="diceWordsBtn">🎲 Vylosovat slova</button>
+      <button class="dice-btn" id="diceContrastBtn">🎲 Vylosovat kontrast</button>
+    </div>
+    <div class="dice-result" id="diceResult"></div>
+
     <div class="section-heading">Listing — konvergence dvou subjektů</div>
     <p style="font-size:13px; color:var(--ink-soft); margin:-0.4rem 0 0.9rem;">Vypiš asociace ke dvěma nesourodým prvkům (klidně jedním z nich nech samotné téma, druhým něco záměrně vzdáleného) a hledej, kde se protnou — to je zdroj překvapení.</p>
     <div class="w5h-grid" style="margin-bottom:0.9rem;">
@@ -507,6 +546,30 @@ function loadSession(data){
 }
 
 const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+
+const LOSOVACKA = {"categories": {"LIDÉ / ROLE": ["rodič", "dítě", "prarodič", "tchyně", "tchán", "švagr", "kmotr", "macecha", "nevlastní sourozenec", "dvojče", "policista", "soudce", "voják", "úředník", "ředitel", "prezident", "starosta", "kontrolor", "inspektor", "celník", "doktor", "sestra", "učitel", "terapeut", "kněz", "hasič", "řidič", "prodavač", "číšník", "kadeřník", "politik", "celebrita", "influencer", "moderátor", "herec", "zpěvák", "novinář", "sportovec", "youtuber", "blogger", "soused", "kamarád", "bývalý partner", "spolubydlící", "spolužák", "kolega", "šéf", "podřízený", "sousedský expert na všechno", "sváteční politolog"], "MÍSTA": ["byt", "dům", "zahrada", "garáž", "sklep", "půda", "chata", "panelák", "sídliště", "vesnice", "škola", "nemocnice", "úřad", "soud", "vězení", "kasárna", "ministerstvo", "banka", "pojišťovna", "matrika", "ulice", "náměstí", "zastávka", "nádraží", "letiště", "dálnice", "kruhový objezd", "parkoviště", "přechod pro chodce", "chodník", "hospoda", "restaurace", "kino", "divadlo", "stadion", "posilovna", "wellness centrum", "festival", "tábor", "chata", "pohotovost", "hranice", "hraniční přechod", "vojenská základna", "pustý ostrov", "vesmírná stanice", "podzemí", "hora", "moře", "poušť"], "VĚCI / OBJEKTY": ["telefon", "počítač", "televize", "tiskárna", "router", "powerbanka", "sluchátka", "kamera", "dron", "chytré hodinky", "občanka", "řidičák", "pas", "kreditka", "hotovost", "účtenka", "smlouva", "razítko", "faktura", "výplatní páska", "pračka", "lednice", "mikrovlnka", "sporák", "žehlička", "vysavač", "gauč", "postel", "závěsy", "koberec", "brýle", "hodinky", "batoh", "deštník", "klíče", "peněženka", "taška", "bunda", "boty", "čepice", "prsten", "diplom", "medaile", "trofej", "urna", "vlajka", "kříž", "svíčka", "dárek", "kytice"], "ČINNOSTI": ["pracovat", "jednat", "plánovat", "kontrolovat", "školit", "prezentovat", "vyjednávat", "propouštět", "najímat", "auditovat", "vychovávat", "hádat se", "usmiřovat se", "randit", "rozcházet se", "pečovat", "utěšovat", "žárlit", "odpouštět", "slavit", "vyplňovat", "razítkovat", "podepisovat", "žádat", "čekat", "odvolávat se", "platit", "reklamovat", "registrovat", "hlásit", "cestovat", "sportovat", "hrát", "sledovat", "poslouchat", "fotit", "nakupovat", "vařit", "oslavovat", "relaxovat", "rodit se", "křtít", "promovat", "ženit se", "rozvádět se", "stěhovat se", "odcházet do důchodu", "umírat", "pohřbívat", "vzpomínat"], "SITUACE / UDÁLOSTI": ["první rande", "zásnuby", "svatba", "rozvod", "narození dítěte", "promoce", "odchod do důchodu", "pohřeb", "výročí", "rodinná sešlost", "zkouška", "pohovor", "soud", "kontrola", "audit", "přijímačky", "vyšetřování", "deportace", "exekuce", "sčítání lidu", "nehoda", "požár", "povodeň", "výpadek proudu", "stávka", "krádež", "vloupání", "únik dat", "epidemie", "blackout", "volby", "referendum", "demonstrace", "summit", "olympiáda", "koncert", "festival", "korunovace", "otevření mostu", "výročí revoluce", "čekání ve frontě", "ztráta klíčů", "defekt na kole", "výpadek internetu", "zapomenutá schůzka", "špatná objednávka", "zmeškaný autobus", "dvojí rezervace", "výpadek wifi na dovolené", "špatně zaparkované auto"], "VLASTNOSTI": ["chytrý", "hloupý", "geniální", "naivní", "prospolečně mazaný", "natvrdlý", "sečtělý", "nevzdělaný", "přemoudřelý", "popletený", "bohatý", "chudý", "luxusní", "laciný", "zadlužený", "úsporný", "marnotratný", "skromný", "okázalý", "na dračku", "krásný", "ošklivý", "elegantní", "ušmudlaný", "upravený", "zanedbaný", "nápadný", "nenápadný", "módní", "staromódní", "velkorysý", "trpělivý", "upřímný", "spolehlivý", "skromný", "obětavý", "veselý", "klidný", "přátelský", "zodpovědný", "lakomý", "arogantní", "agresivní", "líný", "pomlouvačný", "panovačný", "podlézavý", "cynický", "lstivý", "ukňouraný"], "EMOCE / STAVY": ["radost", "smutek", "strach", "vztek", "znechucení", "překvapení", "klid", "panika", "úzkost", "euforie", "stud", "vina", "žárlivost", "závist", "hrdost", "ponížení", "sounáležitost", "osamělost", "respekt", "pohrdání", "únava", "hlad", "bolest", "ospalost", "nevolnost", "adrenalin", "vyčerpání", "hyperaktivita", "otupělost", "napětí", "bezmoc", "smíření", "prázdnota", "naděje", "rezignace", "vykoupení", "nostalgie", "vykořeněnost", "sebeuvědomění", "existenciální krize", "nedočkavost", "zklamání", "úleva", "napětí před výsledkem", "deziluze", "škodolibost", "nadšení", "otrávenost", "netrpělivost", "pochyby"], "SPOLEČENSKÉ VĚCI": ["vláda", "zákony", "volby", "armáda", "policie", "soudnictví", "školství", "zdravotnictví", "samospráva", "diplomacie", "inflace", "nezaměstnanost", "daně", "dluhy", "hypotéky", "mzdy", "důchody", "dotace", "burza", "korupce", "televize", "internet", "sociální sítě", "reklama", "celebrity", "fake news", "cenzura", "streamování", "influenceři", "bulvár", "bydlení", "doprava", "strava", "móda", "wellness", "minimalismus", "konzum", "cestování", "sport", "volný čas", "umělá inteligence", "automatizace", "kryptoměny", "sledování", "roboti", "sociální kredit", "dezinformace", "kybernetická bezpečnost", "klonování", "vesmírný turismus"], "FRÁZE / KLIŠÉ": ["musíme si promluvit", "to je na dlouhé povídání", "neber si to osobně", "důvěřuj mi", "tohle je mezi námi", "já jsem ti to říkal", "dej mi ještě šanci", "nejsi to ty, jsem to já", "potřebuju prostor", "vážím si tě jako člověka", "to není v naší kompetenci", "musíte to doložit", "obraťte se na jiné oddělení", "systém je momentálně nedostupný", "přijďte si to osobně vyzvednout", "to už bohužel neplatí", "to jsme nedostali", "to je proti předpisům", "to musí schválit nadřízený", "lhůta již vypršela", "všechno se děje z nějakého důvodu", "co tě nezabije, to tě posílí", "věř si a zvládneš to", "každý pád je jen odrazový můstek", "štěstí přeje připraveným", "buď změnou, kterou chceš vidět", "nikdy není pozdě začít znovu", "úspěch je cesta, ne cíl", "sni velké sny", "jen nebe je limit", "to jsem nestihl, protože...", "mělo to logické vysvětlení", "nebyla to moje chyba", "to se prostě stává", "měl jsem hodně práce", "nikdo mi to neřekl", "bral jsem to jako vtip", "myslel jsem, že to víš", "prostě mi to vypadlo", "to je jen nedorozumění", "udělám maximum pro občany", "je to komplexní téma", "na tom teď intenzivně pracujeme", "situaci pečlivě sledujeme", "to je otázka na mého kolegu", "nechci předjímat výsledky", "budeme se tím zabývat", "je potřeba širší diskuze", "stojíme si za svým rozhodnutím", "to není otázka pro dnešek"], "INSTITUCE / ORGANIZACE": ["vláda", "parlament", "ministerstvo", "magistrát", "obecní úřad", "katastr", "matrika", "hasičský sbor", "celní správa", "státní podnik", "policie", "soud", "státní zastupitelství", "vězeňská služba", "armáda", "tajná služba", "hraniční policie", "městská policie", "ombudsman", "exekutorský úřad", "nemocnice", "poliklinika", "pojišťovna", "škola", "univerzita", "školka", "pedagogicko-psychologická poradna", "hygienická stanice", "léková agentura", "veterinární správa", "banka", "centrální banka", "burza", "pojišťovna", "exekutor", "finanční úřad", "investiční fond", "leasingová společnost", "směnárna", "kryptoburza", "televize", "rozhlas", "tisková agentura", "nakladatelství", "divadlo", "galerie", "filmové studio", "streamovací platforma", "tiskové oddělení", "PR agentura"]}, "pairs": ["děti × armáda", "mateřská školka × vězení", "důchodce × influencer", "svatba × pohřeb", "nemocnice × hotel", "politik × školák", "autobus × ponorka", "úředník × kovboj", "instruktor autoškoly × terapeut", "restaurace × operační sál", "armáda × mateřská škola", "vězení × wellness hotel", "soud × seznamka", "policejní výslech × terapeutické sezení", "pohřeb × casting show", "svatba × daňové přiznání", "operační sál × realitní kancelář", "nemocniční pokoj × VIP lounge", "hospic × startup inkubátor", "úřad práce × exorcismus", "finanční úřad × zpovědnice", "banka × pirátská loď", "autoškola × psychoanalýza", "zkouška z řízení × rytířské pasování", "technická kontrola × lékařská prohlídka", "MHD × vesmírná loď", "čekárna u doktora × casting na modelku", "výtah × ponorka", "supermarket × muzeum", "benzínka × chrám", "hospoda × akademie věd", "fitness centrum × klášter", "kadeřnictví × soudní síň", "veterinář × personální pohovor", "mateřská dovolená × vojenský výcvik", "rodičovská schůzka × tisková konference", "škola × mafiánská schůzka", "třídní sraz × summit G7", "maturitní ples × valná hromada akcionářů", "dětské hřiště × burza", "pískoviště × investorská schůzka", "kroužek vaření × chemická laboratoř zbraní", "skautský tábor × bojová základna", "seniorský klub × influencerská agentura", "domov důchodců × reality show", "babiččina kuchyně × Michelinská restaurace", "farmářský trh × aukční síň Sotheby's", "sousedská hádka × mírová konference", "schůze SVJ × zasedání OSN", "rodinná oslava × korporátní teambuilding", "vánoční večeře × obchodní vyjednávání", "křtiny × slavnostní spuštění produktu", "promoce × propuštění z vězení", "pohovor do práce × výslech na hranicích", "zubař × celní kontrola", "očkování × iniciační rituál", "lékárna × alchymistická dílna", "IT podpora × exorcista", "call centrum × modlitební linka", "reklamace v obchodě × mírové rozhovory", "autobazar × aukce umění", "zastupitelstvo × reality show", "tisková konference × zpovědnice", "vládní krize × rozvodové řízení", "koaliční jednání × dělení dědictví", "opoziční poslanec × náctiletý na táboře", "stavební úřad × věštírna", "katastr nemovitostí × archeologické naleziště", "dotační program × loterie", "veřejná zakázka × dražba v aukční síni", "kontrolní výbor × inkviziční tribunál", "parlamentní debata × hospodská hádka o účtu", "volební kampaň × seznamka", "volební slib × novoroční předsevzetí", "sčítání hlasů × sčítání ovcí", "referendum × hlasování o jídelníčku ve školní jídelně", "krizový štáb × improvizované divadlo", "tisková mluvčí × recepční v luxusním hotelu", "diplomatické jednání × vyjednávání s únoscem", "mezinárodní summit × rodinný sjezd", "sankce × trest za pozdní vrácení knihy do knihovny", "inflace × nafukování nafukovacího kruhu", "státní rozpočet × domácí rozpočet na dovolenou", "audit × generální úklid", "dálniční známka × vstupenka na pouť", "silniční kontrola × celní prohlídka na letišti", "technická na MHD × veterinární prohlídka", "jízdní řád × horoskop", "zpoždění vlaku × zpoždění na porod", "dopravní zácpa × fronta na úřadě", "kruhový objezd × bludiště", "radar × past na myši", "přestupek × hřích", "exekuce × exorcismus", "insolvence × terapie", "soudní znalec × věštec z karet", "notář × oltářník", "krizový plán × plán svatby", "požární cvičení × nácvik na maturitu", "bezpečnostní rada × porada rodičů před Vánoci", "tajná služba × drbárna na vsi", "whistleblower × žalobníček ze školky", "lobbista × obchodník s koberci", "think tank × spolek chovatelů", "regulace × dietní plán", "byrokracie × byzantský dvorní ceremoniál", "razítko × pečeť na středověké listině", "formulář × milostný dopis", "podací lístek × vstupenka do nebe"]};
+
+function rollWords(){
+  const cats = Object.keys(LOSOVACKA.categories);
+  const shuffled = [...cats].sort(() => Math.random() - 0.5).slice(0, 3);
+  const picks = shuffled.map(cat => {
+    const words = LOSOVACKA.categories[cat];
+    const word = words[Math.floor(Math.random() * words.length)];
+    return {cat, word};
+  });
+  document.getElementById('diceResult').innerHTML = picks.map(p =>
+    `<span class="dice-tag">${escapeHtml(p.cat)}</span>${escapeHtml(p.word)}`
+  ).join('<br>');
+}
+
+function rollContrast(){
+  const pairs = LOSOVACKA.pairs;
+  const pair = pairs[Math.floor(Math.random() * pairs.length)];
+  document.getElementById('diceResult').innerHTML = `<span class="dice-tag">kontrast</span>${escapeHtml(pair)}`;
+}
+
+document.getElementById('diceWordsBtn').addEventListener('click', rollWords);
+document.getElementById('diceContrastBtn').addEventListener('click', rollContrast);
 const LS_KEY = 'vtipovna_cloud_data';
 let sessions = [];
 let currentId = null;
