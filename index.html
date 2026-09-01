@@ -19,7 +19,7 @@
             overflow: hidden;
         }
         .sidebar {
-            width: 280px;
+            width: 300px;
             background-color: #121314;
             border-right: 1px solid #2a2d32;
             display: flex;
@@ -62,10 +62,33 @@
         }
         .search-input::placeholder { color: #4a4d52; }
 
+        .filter-toggle-box {
+            display: flex;
+            gap: 4px;
+            background-color: #1a1c1e;
+            padding: 3px;
+            border-radius: 6px;
+            border: 1px solid #2a2d32;
+        }
+        .filter-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #8a8d92;
+            padding: 4px 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .filter-btn:hover { color: #e2e2e2; }
+        .filter-btn.active { background-color: #2a2d32; color: #00bfa5; }
+
         .tags-section {
             padding: 10px 15px;
             border-bottom: 1px solid #2a2d32;
-            max-height: 120px;
+            max-height: 100px;
             overflow-y: auto;
             display: flex;
             flex-wrap: wrap;
@@ -85,23 +108,75 @@
         .tag-badge.active { background-color: #009688; color: white; }
 
         .notes-list { flex: 1; overflow-y: auto; }
-        .note-item { padding: 15px 20px; border-bottom: 1px solid #2a2d32; cursor: pointer; transition: background 0.2s; }
+        
+        .list-section-header {
+            padding: 10px 15px 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #6a6d72;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background-color: #151719;
+            border-bottom: 1px solid #22252a;
+        }
+
+        .note-item { 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #22252a; 
+            cursor: pointer; 
+            transition: background 0.2s; 
+            position: relative;
+        }
         .note-item:hover { background-color: #1a1c1e; }
         .note-item.active { background-color: #009688; color: white; }
-        .note-item-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; }
-        .note-item-date { font-size: 0.75rem; color: #8a8d92; margin-top: 5px; }
-        .note-item.active .note-item-date { color: #e0f2f1; }
-        .pin-btn {
-            background: transparent; border: none; cursor: pointer;
-            font-size: 0.85rem; opacity: 0.25; float: right; margin-left: 6px;
-            transition: all 0.2s; padding: 0; filter: grayscale(1);
+        .note-item.archived { opacity: 0.75; }
+        .note-item.archived:hover { opacity: 1; }
+        .note-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
         }
-        .pin-btn:hover { opacity: 0.8; filter: grayscale(0); }
-        .pin-btn.pinned { opacity: 1; filter: grayscale(0); }
-        .note-item.pinned { border-left: 2px solid #ffb74d; }
+        .note-item-title { 
+            font-weight: 600; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            font-size: 0.9rem; 
+            flex: 1;
+        }
+        .note-item-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .note-item-date { 
+            font-size: 0.72rem; 
+            color: #8a8d92; 
+            margin-top: 4px; 
+            display: flex;
+            justify-content: space-between;
+        }
+        .note-item.active .note-item-date { color: #e0f2f1; }
+        .used-label { color: #ffb74d; font-weight: 600; }
+        .note-item.active .used-label { color: #fff3e0; }
+
+        .icon-btn {
+            background: transparent; 
+            border: none; 
+            cursor: pointer;
+            font-size: 0.85rem; 
+            opacity: 0.35; 
+            transition: all 0.2s; 
+            padding: 2px; 
+            filter: grayscale(1);
+        }
+        .icon-btn:hover { opacity: 0.9; filter: grayscale(0); transform: scale(1.1); }
+        .icon-btn.active { opacity: 1; filter: grayscale(0); }
+        .note-item.pinned { border-left: 3px solid #ffb74d; }
 
         .switch-app-box {
-            padding: 15px;
+            padding: 12px 15px;
             border-top: 1px solid #2a2d32;
             background-color: #121314;
         }
@@ -111,9 +186,9 @@
             background-color: #1a1c1e;
             color: #8a8d92;
             border: 1px solid #2a2d32;
-            padding: 10px;
+            padding: 8px;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: bold;
             text-decoration: none;
             transition: all 0.2s;
@@ -128,15 +203,19 @@
         }
         #editor::placeholder { color: #aaa; }
 
-        .meta-info { padding: 5px 40px; font-size: 0.85rem; color: #888; display: flex; gap: 20px; background-color: #ede8df; }
+        .meta-info { padding: 6px 40px; font-size: 0.85rem; color: #777; display: flex; gap: 20px; background-color: #ede8df; align-items: center; }
         .counter-danger { color: #cf6679; font-weight: bold; }
+        .meta-archive-info { margin-left: auto; color: #d97706; font-weight: 600; }
 
-        .footer { padding: 15px 40px; background-color: #e0dbd2; display: flex; gap: 15px; }
-        .footer-btn { padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .footer { padding: 12px 40px; background-color: #e0dbd2; display: flex; gap: 12px; }
+        .footer-btn { padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; }
         .copy-btn { background-color: #009688; color: white; flex: 2; }
         .copy-btn:hover { background-color: #00bfa5; }
         .copy-btn.success { background-color: #4caf50; }
-        .delete-btn { background-color: #cf6679; color: #121314; flex: 1; }
+        .archive-main-btn { background-color: #d97706; color: white; flex: 1.2; }
+        .archive-main-btn:hover { background-color: #f59e0b; }
+        .archive-main-btn.unarchive { background-color: #4b5563; }
+        .delete-btn { background-color: #cf6679; color: #121314; flex: 0.8; }
         .delete-btn:hover { background-color: #ff79c6; }
     </style>
 </head>
@@ -148,7 +227,12 @@
                 <button class="new-btn" onclick="createNewNote()">+ Nová poznámka</button>
                 <div class="sync-status" id="sync-status" title="Stav synchronizace"></div>
             </div>
-            <input type="text" id="search-bar" class="search-input" placeholder="Hledat v poznámkách..." oninput="filterNotes()">
+            <input type="text" id="search-bar" class="search-input" placeholder="Hledat ve všech poznámkách..." oninput="filterNotes()">
+            <div class="filter-toggle-box">
+                <button class="filter-btn active" id="filter-all" onclick="setViewFilter('all')">Vše</button>
+                <button class="filter-btn" id="filter-active" onclick="setViewFilter('active')">Nepoužité</button>
+                <button class="filter-btn" id="filter-archived" onclick="setViewFilter('archived')">Použité</button>
+            </div>
         </div>
         
         <div class="tags-section" id="tags-section"></div>
@@ -164,26 +248,42 @@
         <div class="meta-info">
             <span id="char-count">Znaky: 0 / 280</span>
             <span id="word-count">Slova: 0</span>
+            <span id="archive-status" class="meta-archive-info"></span>
         </div>
         <div class="footer">
             <button class="footer-btn copy-btn" id="copy-btn" onclick="copyText()">ZKOPÍROVAT TEXT</button>
+            <button class="footer-btn archive-main-btn" id="archive-main-btn" onclick="toggleCurrentNoteArchive()">POUŽITO / ARCHIVOVAT</button>
             <button class="footer-btn delete-btn" onclick="deleteCurrentNote()">SMAZAT</button>
         </div>
     </div>
 
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
-        let notes = []; let currentNoteId = null; let saveTimeout = null; let selectedTag = null;
+        let notes = []; 
+        let currentNoteId = null; 
+        let saveTimeout = null; 
+        let selectedTag = null;
+        let viewFilter = 'all'; // 'all' | 'active' | 'archived'
+
         const editor = document.getElementById('editor');
         const notesList = document.getElementById('notes-list');
         const tagsSection = document.getElementById('tags-section');
         const searchBar = document.getElementById('search-bar');
         const copyBtn = document.getElementById('copy-btn');
+        const archiveMainBtn = document.getElementById('archive-main-btn');
+        const archiveStatusEl = document.getElementById('archive-status');
         const syncStatus = document.getElementById('sync-status');
         const charCountEl = document.getElementById('char-count');
         const wordCountEl = document.getElementById('word-count');
 
         function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
+
+        function setViewFilter(filter) {
+            viewFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`filter-${filter}`).classList.add('active');
+            renderNotesList();
+        }
 
         function updateCounters() {
             const text = editor.value;
@@ -200,7 +300,13 @@
             if (local) {
                 try {
                     notes = JSON.parse(local);
-                    if (notes.length > 0) { currentNoteId = notes[0].id; renderTags(); renderNotesList(); loadCurrentNote(); updateCounters(); }
+                    if (notes.length > 0) { 
+                        currentNoteId = notes[0].id; 
+                        renderTags(); 
+                        renderNotesList(); 
+                        loadCurrentNote(); 
+                        updateCounters(); 
+                    }
                 } catch(e) { notes = []; }
             }
             try {
@@ -210,11 +316,13 @@
                     notes = cloudNotes;
                     localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
                     if (!currentNoteId || !notes.find(n => n.id === currentNoteId)) { currentNoteId = notes[0].id; }
-                    renderTags(); renderNotesList(); loadCurrentNote(); updateCounters();
+                    renderTags(); 
+                    renderNotesList(); 
+                    loadCurrentNote(); 
+                    updateCounters();
                 } else if (notes.length === 0) {
                     createNewNote();
                 }
-                // Zelená tečka vždy když cloud odpoví
                 setStatus('online');
             } catch (err) {
                 console.error(err);
@@ -224,13 +332,38 @@
         });
 
         function createNewNote() {
-            const newNote = { id: Date.now().toString(), content: '', updatedAt: new Date().toISOString() };
-            notes.unshift(newNote); currentNoteId = newNote.id; saveAndSync(); renderTags(); renderNotesList(); loadCurrentNote(); updateCounters(); editor.focus();
+            const newNote = { 
+                id: Date.now().toString(), 
+                content: '', 
+                updatedAt: new Date().toISOString(),
+                pinned: false,
+                archivedAt: null
+            };
+            notes.unshift(newNote); 
+            currentNoteId = newNote.id; 
+            saveAndSync(); 
+            renderTags(); 
+            renderNotesList(); 
+            loadCurrentNote(); 
+            updateCounters(); 
+            editor.focus();
         }
 
         function loadCurrentNote() {
             const currentNote = notes.find(n => n.id === currentNoteId);
             editor.value = currentNote ? currentNote.content : '';
+            
+            if (currentNote && currentNote.archivedAt) {
+                const pDate = new Date(currentNote.archivedAt);
+                const dateStr = isNaN(pDate) ? currentNote.archivedAt : pDate.toLocaleDateString('cs-CZ');
+                archiveStatusEl.innerText = `📦 Použito dne: ${dateStr}`;
+                archiveMainBtn.innerText = 'VRÁTIT MEZI NEPOUŽITÉ';
+                archiveMainBtn.classList.add('unarchive');
+            } else {
+                archiveStatusEl.innerText = '';
+                archiveMainBtn.innerText = 'POUŽITO / ARCHIVOVAT';
+                archiveMainBtn.classList.remove('unarchive');
+            }
             updateCounters();
         }
 
@@ -239,10 +372,16 @@
             if (currentNote) {
                 currentNote.content = editor.value;
                 currentNote.updatedAt = new Date().toISOString();
+                
                 notes = [currentNote, ...notes.filter(n => n.id !== currentNoteId)];
-                renderTags(); renderNotesList(); updateCounters();
+                renderTags(); 
+                renderNotesList(); 
+                updateCounters();
+                
                 localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
-                setStatus('syncing'); clearTimeout(saveTimeout); saveTimeout = setTimeout(saveAndSync, 1200);
+                setStatus('syncing'); 
+                clearTimeout(saveTimeout); 
+                saveTimeout = setTimeout(saveAndSync, 1200);
             }
         });
 
@@ -250,20 +389,83 @@
             localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
             try {
                 setStatus('syncing');
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'notes_save', notes: notes }) });
+                await fetch(CLOUD_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ type: 'notes_save', notes: notes }) 
+                });
                 setStatus('online');
-            } catch (err) { console.error(err); setStatus('error'); }
+            } catch (err) { 
+                console.error(err); 
+                setStatus('error'); 
+            }
         }
 
         function deleteCurrentNote() {
             if (notes.length <= 1) {
                 const currentNote = notes.find(n => n.id === currentNoteId);
-                if (currentNote) { currentNote.content = ''; saveAndSync(); renderTags(); renderNotesList(); loadCurrentNote(); updateCounters(); }
+                if (currentNote) { 
+                    currentNote.content = ''; 
+                    currentNote.archivedAt = null;
+                    currentNote.pinned = false;
+                    saveAndSync(); 
+                    renderTags(); 
+                    renderNotesList(); 
+                    loadCurrentNote(); 
+                    updateCounters(); 
+                }
                 return;
             }
             notes = notes.filter(n => n.id !== currentNoteId);
             currentNoteId = notes[0].id;
-            saveAndSync(); renderTags(); renderNotesList(); loadCurrentNote(); updateCounters();
+            saveAndSync(); 
+            renderTags(); 
+            renderNotesList(); 
+            loadCurrentNote(); 
+            updateCounters();
+        }
+
+        function toggleArchive(e, id) {
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                if (note.archivedAt) {
+                    note.archivedAt = null;
+                } else {
+                    note.archivedAt = new Date().toISOString();
+                    note.pinned = false; // Po archivaci odepnout
+                }
+                saveAndSync();
+                renderTags();
+                renderNotesList();
+                loadCurrentNote();
+            }
+        }
+
+        function toggleCurrentNoteArchive() {
+            if (currentNoteId) toggleArchive(null, currentNoteId);
+        }
+
+        function togglePin(e, id) {
+            e.stopPropagation();
+            e.preventDefault();
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                note.pinned = !note.pinned;
+                localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
+                renderTags();
+                renderNotesList();
+                fetch(CLOUD_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ type: 'notes_save', notes: notes }) 
+                }).catch(() => {});
+            }
         }
 
         function getAllTags() {
@@ -276,16 +478,25 @@
         }
 
         function renderTags() {
-            const tags = getAllTags(); tagsSection.innerHTML = '';
-            if (tags.length === 0) { tagsSection.style.display = 'none'; return; }
+            const tags = getAllTags(); 
+            tagsSection.innerHTML = '';
+            if (tags.length === 0) { 
+                tagsSection.style.display = 'none'; 
+                return; 
+            }
             tagsSection.style.display = 'flex';
-            const allBtn = document.createElement('span'); allBtn.classList.add('tag-badge');
-            if (!selectedTag) allBtn.classList.add('active'); allBtn.innerText = '🏷️ Vše';
+            const allBtn = document.createElement('span'); 
+            allBtn.classList.add('tag-badge');
+            if (!selectedTag) allBtn.classList.add('active'); 
+            allBtn.innerText = '🏷️ Vše';
             allBtn.onclick = () => { selectedTag = null; renderTags(); renderNotesList(); };
             tagsSection.appendChild(allBtn);
+            
             tags.forEach(tag => {
-                const badge = document.createElement('span'); badge.classList.add('tag-badge');
-                if (selectedTag === tag) badge.classList.add('active'); badge.innerText = tag;
+                const badge = document.createElement('span'); 
+                badge.classList.add('tag-badge');
+                if (selectedTag === tag) badge.classList.add('active'); 
+                badge.innerText = tag;
                 badge.onclick = () => { selectedTag = (selectedTag === tag) ? null : tag; renderTags(); renderNotesList(); };
                 tagsSection.appendChild(badge);
             });
@@ -293,85 +504,124 @@
 
         function filterNotes() { renderNotesList(); }
 
-        function togglePin(e, id) {
-            e.stopPropagation();
-            e.preventDefault();
-            const note = notes.find(n => n.id === id);
-            if (note) {
-                note.pinned = !note.pinned;
-                // Nepřesouvej připnutou poznámku na začátek pole — jen označ
-                localStorage.setItem('simplenote_vibe_data', JSON.stringify(notes));
-                renderTags();
-                renderNotesList();
-                // Ulož do cloudu bez změny pořadí
-                fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'notes_save', notes: notes }) }).catch(() => {});
+        function createNoteElement(note) {
+            const item = document.createElement('div');
+            item.classList.add('note-item');
+            if (note.pinned) item.classList.add('pinned');
+            if (note.archivedAt) item.classList.add('archived');
+            if (note.id === currentNoteId) item.classList.add('active');
+            
+            item.onclick = () => { 
+                currentNoteId = note.id; 
+                renderNotesList(); 
+                loadCurrentNote(); 
+            };
+
+            const firstLine = note.content.trim().split('\n')[0];
+            const title = firstLine || 'Bez názvu';
+            
+            let displayDate = note.updatedAt;
+            if (note.updatedAt) {
+                const parsed = new Date(note.updatedAt);
+                if (!isNaN(parsed)) displayDate = parsed.toLocaleDateString('cs-CZ');
             }
+
+            let archiveLabel = '';
+            if (note.archivedAt) {
+                const pArch = new Date(note.archivedAt);
+                const archDateStr = !isNaN(pArch) ? pArch.toLocaleDateString('cs-CZ') : '';
+                archiveLabel = `<span class="used-label">Použito: ${archDateStr}</span>`;
+            }
+
+            item.innerHTML = `
+                <div class="note-item-header">
+                    <div class="note-item-title">${title}</div>
+                    <div class="note-item-actions">
+                        ${!note.archivedAt ? `
+                            <button class="icon-btn pin-btn ${note.pinned ? 'active' : ''}" title="${note.pinned ? 'Odepnout' : 'Připnout'}">📌</button>
+                        ` : ''}
+                        <button class="icon-btn archive-btn ${note.archivedAt ? 'active' : ''}" title="${note.archivedAt ? 'Vrátit mezi nepoužité' : 'Označit jako použité'}">📦</button>
+                    </div>
+                </div>
+                <div class="note-item-date">
+                    <span>${displayDate}</span>
+                    ${archiveLabel}
+                </div>
+            `;
+
+            if (!note.archivedAt) {
+                const pinBtn = item.querySelector('.pin-btn');
+                pinBtn.addEventListener('click', (e) => togglePin(e, note.id));
+            }
+            const archiveBtn = item.querySelector('.archive-btn');
+            archiveBtn.addEventListener('click', (e) => toggleArchive(e, note.id));
+
+            return item;
         }
 
         function renderNotesList() {
-            notesList.innerHTML = ''; const query = searchBar.value.toLowerCase().trim();
+            notesList.innerHTML = ''; 
+            const query = searchBar.value.toLowerCase().trim();
 
-            // Připnuté nahoru, pak ostatní (pořadí zachováno)
             const filtered = notes.filter(note => {
                 const contentLower = note.content.toLowerCase();
                 if (query && !contentLower.includes(query)) return false;
                 if (selectedTag && !contentLower.includes(selectedTag)) return false;
                 return true;
             });
-            const pinned = filtered.filter(n => n.pinned);
-            const unpinned = filtered.filter(n => !n.pinned);
-            const sorted = [...pinned, ...unpinned];
 
-            sorted.forEach(note => {
-                const item = document.createElement('div');
-                item.classList.add('note-item');
-                if (note.pinned) item.classList.add('pinned');
-                if (note.id === currentNoteId) item.classList.add('active');
-                item.onclick = () => { currentNoteId = note.id; renderNotesList(); loadCurrentNote(); };
-                const firstLine = note.content.trim().split('\n')[0];
-                const title = firstLine || 'Bez názvu';
-                let displayDate = note.updatedAt;
-                if (note.updatedAt) {
-                    const parsed = new Date(note.updatedAt);
-                    if (!isNaN(parsed)) displayDate = parsed.toLocaleDateString('cs-CZ');
+            const activeNotes = filtered.filter(n => !n.archivedAt);
+            const archivedNotes = filtered.filter(n => !!n.archivedAt);
+
+            const pinnedActive = activeNotes.filter(n => n.pinned);
+            const unpinnedActive = activeNotes.filter(n => !n.pinned);
+            const sortedActive = [...pinnedActive, ...unpinnedActive];
+
+            // Vykreslení aktivních
+            if ((viewFilter === 'all' || viewFilter === 'active') && sortedActive.length > 0) {
+                if (viewFilter === 'all' && archivedNotes.length > 0) {
+                    const secHeader = document.createElement('div');
+                    secHeader.classList.add('list-section-header');
+                    secHeader.innerText = `Aktivní poznámky (${sortedActive.length})`;
+                    notesList.appendChild(secHeader);
                 }
-                item.innerHTML = `
-                    <div class="note-item-title">
-                        <button class="pin-btn ${note.pinned ? 'pinned' : ''}" title="${note.pinned ? 'Odepnout' : 'Připnout'}">📌</button>
-                        ${title}
-                    </div>
-                    <div class="note-item-date">${displayDate}</div>
-                `;
-                // Přidej listener na špendlík
-                const pinBtn = item.querySelector('.pin-btn');
-                pinBtn.addEventListener('click', (e) => togglePin(e, note.id));
-                notesList.appendChild(item);
-            });
+                sortedActive.forEach(note => notesList.appendChild(createNoteElement(note)));
+            }
+
+            // Vykreslení archivovaných / použitých
+            if ((viewFilter === 'all' || viewFilter === 'archived') && archivedNotes.length > 0) {
+                if (viewFilter === 'all') {
+                    const secHeader = document.createElement('div');
+                    secHeader.classList.add('list-section-header');
+                    secHeader.innerText = `Použito / Archiv (${archivedNotes.length})`;
+                    notesList.appendChild(secHeader);
+                }
+                archivedNotes.forEach(note => notesList.appendChild(createNoteElement(note)));
+            }
+
+            if (notesList.children.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.padding = '20px';
+                empty.style.textAlign = 'center';
+                empty.style.color = '#555';
+                empty.style.fontSize = '0.85rem';
+                empty.innerText = 'Žádné poznámky neodpovídají filtru.';
+                notesList.appendChild(empty);
+            }
         }
 
         function fixQuotes(text) {
-            // Nahraď VŠECHNY varianty uvozovek (rovné ", anglické "" '', české „" apod.)
-            // jednotně na české „..."
-            // Sjednotíme všechny varianty na rovnou " a pak rozhodneme open/close
-            const quoteChars = [
-                '"',        // rovná
-                '\u201c',  // " levá anglická
-                '\u201d',  // " pravá anglická
-                '\u201e',  // „ levá česká
-                '\u00ab',  // « francouzská
-                '\u00bb'   // » francouzská
-            ];
-
+            const quoteChars = ['"', '\u201c', '\u201d', '\u201e', '\u00ab', '\u00bb'];
             let result = '';
             let open = false;
             for (let i = 0; i < text.length; i++) {
                 const ch = text[i];
                 if (quoteChars.includes(ch)) {
                     if (!open) {
-                        result += '\u201e'; // „
+                        result += '\u201e';
                         open = true;
                     } else {
-                        result += '\u201c'; // "
+                        result += '\u201c';
                         open = false;
                     }
                 } else {
@@ -386,8 +636,12 @@
             const fixedText = fixQuotes(editor.value);
             navigator.clipboard.writeText(fixedText).then(() => {
                 const originalText = copyBtn.innerText;
-                copyBtn.innerText = 'ZKOPÍROVÁNO!'; copyBtn.classList.add('success');
-                setTimeout(() => { copyBtn.innerText = originalText; copyBtn.classList.remove('success'); }, 1500);
+                copyBtn.innerText = 'ZKOPÍROVÁNO!'; 
+                copyBtn.classList.add('success');
+                setTimeout(() => { 
+                    copyBtn.innerText = originalText; 
+                    copyBtn.classList.remove('success'); 
+                }, 1500);
             });
         }
 
