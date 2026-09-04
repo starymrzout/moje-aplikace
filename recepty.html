@@ -184,7 +184,6 @@
         }
         #editor::placeholder { color: #aaa; }
 
-        /* Režim vaření - větší písmo pro čtení z dálky */
         body.cooking-mode #editor {
             font-size: 1.55rem;
             line-height: 2.0;
@@ -277,7 +276,7 @@
         let currentRecipeId = null; 
         let saveTimeout = null; 
         let selectedTag = null;
-        let activeCategory = 'all'; // 'all' | 'slane' | 'sladke' | 'polevka'
+        let activeCategory = 'all';
         let wakeLock = null;
 
         const editor = document.getElementById('editor');
@@ -358,7 +357,7 @@
             };
             recipes.unshift(newRecipe); 
             currentRecipeId = newRecipe.id; 
-            saveAndSync(); 
+            localStorage.setItem('recipes_app_data', JSON.stringify(recipes));
             renderTags(); 
             renderRecipesList(); 
             loadCurrentRecipe(); 
@@ -372,12 +371,14 @@
         }
 
         editor.addEventListener('input', () => {
-            const current = recipes.find(r => r.id === currentRecipeId);
-            if (current) {
-                current.content = editor.value;
-                current.updatedAt = new Date().toISOString();
+            const recIndex = recipes.findIndex(r => r.id === currentRecipeId);
+            if (recIndex !== -1) {
+                recipes[recIndex].content = editor.value;
+                recipes[recIndex].updatedAt = new Date().toISOString();
                 
-                recipes = [current, ...recipes.filter(r => r.id !== currentRecipeId)];
+                const current = recipes.splice(recIndex, 1)[0];
+                recipes.unshift(current);
+
                 renderTags(); 
                 renderRecipesList(); 
                 updateWordCount();
@@ -385,12 +386,17 @@
                 localStorage.setItem('recipes_app_data', JSON.stringify(recipes));
                 setStatus('syncing'); 
                 clearTimeout(saveTimeout); 
-                saveTimeout = setTimeout(saveAndSync, 1200);
+                saveTimeout = setTimeout(saveAndSync, 1000);
             }
         });
 
         async function saveAndSync() {
+            const current = recipes.find(r => r.id === currentRecipeId);
+            if (current) {
+                current.content = editor.value;
+            }
             localStorage.setItem('recipes_app_data', JSON.stringify(recipes));
+
             try {
                 setStatus('syncing');
                 await fetch(CLOUD_URL, { 
@@ -489,15 +495,12 @@
             const filtered = recipes.filter(rec => {
                 const contentLower = rec.content.toLowerCase();
 
-                // 1. Filtr kategorie
                 if (activeCategory === 'slane' && !contentLower.includes('#slane')) return false;
                 if (activeCategory === 'sladke' && !contentLower.includes('#sladke')) return false;
                 if (activeCategory === 'polevka' && !contentLower.includes('#polevka')) return false;
 
-                // 2. Filtr tagu
                 if (selectedTag && !contentLower.includes(selectedTag)) return false;
 
-                // 3. Vícenásobné vyhledávání slov i hashtagů
                 if (queryWords.length > 0) {
                     const matchesAll = queryWords.every(word => contentLower.includes(word));
                     if (!matchesAll) return false;
