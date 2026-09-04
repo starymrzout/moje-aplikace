@@ -16,6 +16,7 @@
             height: 100vh;
             display: flex;
             overflow: hidden;
+            position: relative;
         }
         .sidebar {
             width: 320px;
@@ -23,6 +24,8 @@
             border-right: 1px solid #2a2d32;
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
+            height: 100%;
         }
         .sidebar-header {
             padding: 15px;
@@ -175,7 +178,31 @@
         }
         .switch-link:hover { background-color: #009688; color: white; border-color: #009688; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; background-color: #f5f0e8; }
+        .main-content { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            background-color: #f5f0e8; 
+            height: 100%;
+        }
+
+        .mobile-header {
+            display: none;
+            padding: 10px 15px;
+            background-color: #ede8df;
+            border-bottom: 1px solid #dcd6cb;
+            align-items: center;
+        }
+        .back-to-list-btn {
+            background-color: #2a2d32;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
         
         #editor {
             flex: 1; width: 100%; background: transparent; border: none; color: #1a1a1a;
@@ -224,6 +251,46 @@
 
         .delete-btn { background-color: #cf6679; color: #121314; flex: 0.8; }
         .delete-btn:hover { background-color: #ff79c6; }
+
+        /* Mobilní optimalizace (pod 768px) */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                display: flex;
+            }
+            .main-content {
+                width: 100%;
+                display: none;
+            }
+
+            /* Když je otevřený editor */
+            body.show-editor .sidebar {
+                display: none;
+            }
+            body.show-editor .main-content {
+                display: flex;
+            }
+
+            .mobile-header {
+                display: flex;
+            }
+            #editor {
+                padding: 20px 16px;
+                font-size: 1.15rem;
+            }
+            .meta-info {
+                padding: 8px 16px;
+                overflow-x: auto;
+            }
+            .footer {
+                padding: 10px 12px;
+                gap: 6px;
+            }
+            .footer-btn {
+                padding: 10px 8px;
+                font-size: 0.75rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -252,7 +319,11 @@
     </div>
 
     <div class="main-content">
-        <textarea id="editor" placeholder="Název receptu (1. řádek)&#10;&#10;Suroviny...&#10;Postup...&#10;&#10;#slane #kruta #rychlovka" autofocus></textarea>
+        <div class="mobile-header">
+            <button class="back-to-list-btn" onclick="showListView()">‹ Recepty</button>
+        </div>
+
+        <textarea id="editor" placeholder="Název receptu (1. řádek)&#10;&#10;Suroviny...&#10;Postup...&#10;&#10;#slane #kruta #rychlovka"></textarea>
         
         <div class="meta-info">
             <span>Rychlý tag:</span>
@@ -263,8 +334,8 @@
         </div>
 
         <div class="footer">
-            <button class="footer-btn copy-btn" id="copy-btn" onclick="copyText()">ZKOPÍROVAT RECEPT</button>
-            <button class="footer-btn cook-mode-btn" id="cook-mode-btn" onclick="toggleCookMode()">💡 NEZHASNÍNAT DISPLEJ</button>
+            <button class="footer-btn copy-btn" id="copy-btn" onclick="copyText()">ZKOPÍROVAT</button>
+            <button class="footer-btn cook-mode-btn" id="cook-mode-btn" onclick="toggleCookMode()">💡 NEZHASNÍNAT</button>
             <button class="footer-btn delete-btn" onclick="deleteCurrentRecipe()">SMAZAT</button>
         </div>
     </div>
@@ -289,6 +360,14 @@
         const cookModeBtn = document.getElementById('cook-mode-btn');
 
         function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
+
+        function showEditorView() {
+            document.body.classList.add('show-editor');
+        }
+
+        function showListView() {
+            document.body.classList.remove('show-editor');
+        }
 
         function setCategoryFilter(cat) {
             activeCategory = cat;
@@ -338,17 +417,17 @@
                     renderRecipesList(); 
                     loadCurrentRecipe(); 
                 } else if (recipes.length === 0) {
-                    createNewRecipe();
+                    createNewRecipe(false);
                 }
                 setStatus('online');
             } catch (err) {
                 console.error(err);
                 setStatus('error');
-                if (recipes.length === 0) createNewRecipe();
+                if (recipes.length === 0) createNewRecipe(false);
             }
         });
 
-        function createNewRecipe() {
+        function createNewRecipe(switchToEditor = true) {
             const newRecipe = { 
                 id: Date.now().toString(), 
                 content: '', 
@@ -361,7 +440,10 @@
             renderTags(); 
             renderRecipesList(); 
             loadCurrentRecipe(); 
-            editor.focus();
+            if (switchToEditor) {
+                showEditorView();
+                editor.focus();
+            }
         }
 
         function loadCurrentRecipe() {
@@ -423,6 +505,7 @@
                     renderRecipesList(); 
                     loadCurrentRecipe(); 
                 }
+                showListView();
                 return;
             }
             recipes = recipes.filter(r => r.id !== currentRecipeId);
@@ -431,6 +514,7 @@
             renderTags(); 
             renderRecipesList(); 
             loadCurrentRecipe(); 
+            showListView();
         }
 
         function togglePin(e, id) {
@@ -523,6 +607,7 @@
                     currentRecipeId = rec.id; 
                     renderRecipesList(); 
                     loadCurrentRecipe(); 
+                    showEditorView();
                 };
 
                 const firstLine = rec.content.trim().split('\n')[0];
@@ -580,13 +665,13 @@
                     if ('wakeLock' in navigator) {
                         wakeLock = await navigator.wakeLock.request('screen');
                         document.body.classList.add('cooking-mode');
-                        cookModeBtn.innerText = '🔥 REŽIM VAŘENÍ: ZAPNUTO';
+                        cookModeBtn.innerText = '🔥 ZAPNUTO';
                         cookModeBtn.classList.add('active');
 
                         wakeLock.addEventListener('release', () => {
                             wakeLock = null;
                             document.body.classList.remove('cooking-mode');
-                            cookModeBtn.innerText = '💡 NEZHASNÍNAT DISPLEJ';
+                            cookModeBtn.innerText = '💡 NEZHASNÍNAT';
                             cookModeBtn.classList.remove('active');
                         });
                     } else {
