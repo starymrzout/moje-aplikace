@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Můj Receptář</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍🍳</text></svg>">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #1a1c1e;
+            color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 320px;
+            background-color: #121314;
+            border-right: 1px solid #2a2d32;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-bottom: 1px solid #2a2d32;
+        }
+        .header-top { display: flex; gap: 10px; align-items: center; }
+        .new-btn {
+            flex: 1;
+            background-color: #2a2d32;
+            color: #e2e2e2;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .new-btn:hover { background-color: #3a3f45; }
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; transition: background-color 0.3s; }
+        .sync-status.syncing { background-color: #ffb74d; }
+        .sync-status.online { background-color: #4caf50; }
+        .sync-status.error { background-color: #cf6679; }
+        
+        .search-input {
+            width: 100%;
+            background-color: #1a1c1e;
+            border: 1px solid #2a2d32;
+            color: #e2e2e2;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .search-input::placeholder { color: #4a4d52; }
+
+        .category-toggle-box {
+            display: flex;
+            gap: 4px;
+            background-color: #1a1c1e;
+            padding: 3px;
+            border-radius: 6px;
+            border: 1px solid #2a2d32;
+        }
+        .cat-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #8a8d92;
+            padding: 5px 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .cat-btn:hover { color: #e2e2e2; }
+        .cat-btn.active { background-color: #2a2d32; color: #00bfa5; }
+
+        .tags-section {
+            padding: 10px 15px;
+            border-bottom: 1px solid #2a2d32;
+            max-height: 90px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tag-badge {
+            background-color: #2a2d32;
+            color: #8a8d92;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .tag-badge:hover { background-color: #3a3f45; color: #e2e2e2; }
+        .tag-badge.active { background-color: #009688; color: white; }
+
+        .notes-list { flex: 1; overflow-y: auto; }
+        
+        .note-item { 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #22252a; 
+            cursor: pointer; 
+            transition: background 0.2s; 
+            position: relative;
+        }
+        .note-item:hover { background-color: #1a1c1e; }
+        .note-item.active { background-color: #009688; color: white; }
+        .note-item.pinned { border-left: 3px solid #ffb74d; }
+
+        .note-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+        }
+        .note-item-title { 
+            font-weight: 600; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            font-size: 0.9rem; 
+            flex: 1;
+        }
+        .icon-btn {
+            background: transparent; 
+            border: none; 
+            cursor: pointer;
+            font-size: 0.85rem; 
+            opacity: 0.35; 
+            transition: all 0.2s; 
+            padding: 2px; 
+            filter: grayscale(1);
+        }
+        .icon-btn:hover { opacity: 0.9; filter: grayscale(0); transform: scale(1.1); }
+        .icon-btn.active { opacity: 1; filter: grayscale(0); }
+
+        .note-item-date { 
+            font-size: 0.72rem; 
+            color: #8a8d92; 
+            margin-top: 4px; 
+            display: flex; 
+            justify-content: space-between; 
+        }
+        .note-item.active .note-item-date { color: #e0f2f1; }
+
+        .switch-app-box {
+            padding: 12px 15px;
+            border-top: 1px solid #2a2d32;
+            background-color: #121314;
+        }
+        .switch-link {
+            display: block;
+            text-align: center;
+            background-color: #1a1c1e;
+            color: #8a8d92;
+            border: 1px solid #2a2d32;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .switch-link:hover { background-color: #009688; color: white; border-color: #009688; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; background-color: #f5f0e8; }
+        
+        #editor {
+            flex: 1; width: 100%; background: transparent; border: none; color: #1a1a1a;
+            font-size: 1.3rem; line-height: 1.8; padding: 35px 50px; resize: none; outline: none; font-weight: 400;
+            font-family: "Georgia", "Times New Roman", serif;
+        }
+        #editor::placeholder { color: #aaa; }
+
+        /* Režim vaření - větší písmo pro čtení z dálky */
+        body.cooking-mode #editor {
+            font-size: 1.55rem;
+            line-height: 2.0;
+            padding: 30px 40px;
+        }
+
+        .meta-info { 
+            padding: 8px 40px; 
+            font-size: 0.82rem; 
+            color: #777; 
+            display: flex; 
+            gap: 12px; 
+            background-color: #ede8df; 
+            align-items: center; 
+        }
+        .quick-tag-btn {
+            background: #dcd6cb;
+            border: 1px solid #c5beaf;
+            color: #444;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .quick-tag-btn:hover { background: #009688; color: white; border-color: #009688; }
+
+        .footer { padding: 12px 40px; background-color: #e0dbd2; display: flex; gap: 12px; }
+        .footer-btn { padding: 12px 18px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; }
+        
+        .copy-btn { background-color: #009688; color: white; flex: 2; }
+        .copy-btn:hover { background-color: #00bfa5; }
+        .copy-btn.success { background-color: #4caf50; }
+
+        .cook-mode-btn { background-color: #3b82f6; color: white; flex: 2; }
+        .cook-mode-btn:hover { background-color: #2563eb; }
+        .cook-mode-btn.active { background-color: #e11d48; }
+
+        .delete-btn { background-color: #cf6679; color: #121314; flex: 0.8; }
+        .delete-btn:hover { background-color: #ff79c6; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="header-top">
+                <button class="new-btn" onclick="createNewRecipe()">+ Nový recept</button>
+                <div class="sync-status" id="sync-status" title="Stav synchronizace"></div>
+            </div>
+            <input type="text" id="search-bar" class="search-input" placeholder="Hledat suroviny, tagy (#maso)..." oninput="filterRecipes()">
+            <div class="category-toggle-box">
+                <button class="cat-btn active" id="cat-all" onclick="setCategoryFilter('all')">Vše</button>
+                <button class="cat-btn" id="cat-slane" onclick="setCategoryFilter('slane')">Slané</button>
+                <button class="cat-btn" id="cat-sladke" onclick="setCategoryFilter('sladke')">Sladké</button>
+                <button class="cat-btn" id="cat-polevka" onclick="setCategoryFilter('polevka')">Polévky</button>
+            </div>
+        </div>
+        
+        <div class="tags-section" id="tags-section"></div>
+        <div class="notes-list" id="recipes-list"></div>
+
+        <div class="switch-app-box">
+            <a href="index.html" class="switch-link">ZPĚT NA POZNÁMKY 📝</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <textarea id="editor" placeholder="Název receptu (1. řádek)&#10;&#10;Suroviny...&#10;Postup...&#10;&#10;#slane #kruta #rychlovka" autofocus></textarea>
+        
+        <div class="meta-info">
+            <span>Rychlý tag:</span>
+            <button class="quick-tag-btn" onclick="appendTag('#slane')">+ Slané</button>
+            <button class="quick-tag-btn" onclick="appendTag('#sladke')">+ Sladké</button>
+            <button class="quick-tag-btn" onclick="appendTag('#polevka')">+ Polévka</button>
+            <span style="margin-left: auto;" id="word-count">Slova: 0</span>
+        </div>
+
+        <div class="footer">
+            <button class="footer-btn copy-btn" id="copy-btn" onclick="copyText()">ZKOPÍROVAT RECEPT</button>
+            <button class="footer-btn cook-mode-btn" id="cook-mode-btn" onclick="toggleCookMode()">💡 NEZHASNÍNAT DISPLEJ</button>
+            <button class="footer-btn delete-btn" onclick="deleteCurrentRecipe()">SMAZAT</button>
+        </div>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        
+        let recipes = []; 
+        let currentRecipeId = null; 
+        let saveTimeout = null; 
+        let selectedTag = null;
+        let activeCategory = 'all'; // 'all' | 'slane' | 'sladke' | 'polevka'
+        let wakeLock = null;
+
+        const editor = document.getElementById('editor');
+        const recipesList = document.getElementById('recipes-list');
+        const tagsSection = document.getElementById('tags-section');
+        const searchBar = document.getElementById('search-bar');
+        const copyBtn = document.getElementById('copy-btn');
+        const syncStatus = document.getElementById('sync-status');
+        const wordCountEl = document.getElementById('word-count');
+        const cookModeBtn = document.getElementById('cook-mode-btn');
+
+        function setStatus(status) { syncStatus.className = 'sync-status ' + status; }
+
+        function setCategoryFilter(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`cat-${cat}`).classList.add('active');
+            renderRecipesList();
+        }
+
+        function updateWordCount() {
+            const text = editor.value;
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+            wordCountEl.innerText = `Slova: ${words.length}`;
+        }
+
+        function appendTag(tag) {
+            if (!editor.value.toLowerCase().includes(tag.toLowerCase())) {
+                editor.value = editor.value.trim() + '\n\n' + tag;
+                editor.dispatchEvent(new Event('input'));
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            setStatus('syncing');
+            const local = localStorage.getItem('recipes_app_data');
+            if (local) {
+                try {
+                    recipes = JSON.parse(local);
+                    if (recipes.length > 0) { 
+                        currentRecipeId = recipes[0].id; 
+                        renderTags(); 
+                        renderRecipesList(); 
+                        loadCurrentRecipe(); 
+                    }
+                } catch(e) { recipes = []; }
+            }
+
+            try {
+                const response = await fetch(`${CLOUD_URL}?mode=recepty`);
+                const cloudRecipes = await response.json();
+                if (Array.isArray(cloudRecipes) && cloudRecipes.length > 0) {
+                    recipes = cloudRecipes;
+                    localStorage.setItem('recipes_app_data', JSON.stringify(recipes));
+                    if (!currentRecipeId || !recipes.find(r => r.id === currentRecipeId)) { 
+                        currentRecipeId = recipes[0].id; 
+                    }
+                    renderTags(); 
+                    renderRecipesList(); 
+                    loadCurrentRecipe(); 
+                } else if (recipes.length === 0) {
+                    createNewRecipe();
+                }
+                setStatus('online');
+            } catch (err) {
+                console.error(err);
+                setStatus('error');
+                if (recipes.length === 0) createNewRecipe();
+            }
+        });
+
+        function createNewRecipe() {
+            const newRecipe = { 
+                id: Date.now().toString(), 
+                content: '', 
+                updatedAt: new Date().toISOString(),
+                pinned: false
+            };
+            recipes.unshift(newRecipe); 
+            currentRecipeId = newRecipe.id; 
+            saveAndSync(); 
+            renderTags(); 
+            renderRecipesList(); 
+            loadCurrentRecipe(); 
+            editor.focus();
+        }
+
+        function loadCurrentRecipe() {
+            const current = recipes.find(r => r.id === currentRecipeId);
+            editor.value = current ? current.content : '';
+            updateWordCount();
+        }
+
+        editor.addEventListener('input', () => {
+            const current = recipes.find(r => r.id === currentRecipeId);
+            if (current) {
+                current.content = editor.value;
+                current.updatedAt = new Date().toISOString();
+                
+                recipes = [current, ...recipes.filter(r => r.id !== currentRecipeId)];
+                renderTags(); 
+                renderRecipesList(); 
+                updateWordCount();
+                
+                localStorage.setItem('recipes_app_data', JSON.stringify(recipes));
+                setStatus('syncing'); 
+                clearTimeout(saveTimeout); 
+                saveTimeout = setTimeout(saveAndSync, 1200);
+            }
+        });
+
+        async function saveAndSync() {
+            localStorage.setItem('recipes_app_data', JSON.stringify(recipes));
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ type: 'recipes_save', recipes: recipes }) 
+                });
+                setStatus('online');
+            } catch (err) { 
+                console.error(err); 
+                setStatus('error'); 
+            }
+        }
+
+        function deleteCurrentRecipe() {
+            if (recipes.length <= 1) {
+                const current = recipes.find(r => r.id === currentRecipeId);
+                if (current) { 
+                    current.content = ''; 
+                    current.pinned = false;
+                    saveAndSync(); 
+                    renderTags(); 
+                    renderRecipesList(); 
+                    loadCurrentRecipe(); 
+                }
+                return;
+            }
+            recipes = recipes.filter(r => r.id !== currentRecipeId);
+            currentRecipeId = recipes[0].id;
+            saveAndSync(); 
+            renderTags(); 
+            renderRecipesList(); 
+            loadCurrentRecipe(); 
+        }
+
+        function togglePin(e, id) {
+            e.stopPropagation();
+            const rec = recipes.find(r => r.id === id);
+            if (rec) {
+                rec.pinned = !rec.pinned;
+                saveAndSync();
+                renderRecipesList();
+            }
+        }
+
+        function getAllTags() {
+            const tags = new Set();
+            recipes.forEach(rec => {
+                const matches = rec.content.match(/#[\wáéíóúýčďěňřšťžůú]+/g);
+                if (matches) {
+                    matches.forEach(t => {
+                        const low = t.toLowerCase();
+                        if (!['#slane', '#sladke', '#polevka'].includes(low)) {
+                            tags.add(low);
+                        }
+                    });
+                }
+            });
+            return Array.from(tags).sort();
+        }
+
+        function renderTags() {
+            const tags = getAllTags(); 
+            tagsSection.innerHTML = '';
+            if (tags.length === 0) { 
+                tagsSection.style.display = 'none'; 
+                return; 
+            }
+            tagsSection.style.display = 'flex';
+            
+            const allBtn = document.createElement('span'); 
+            allBtn.classList.add('tag-badge');
+            if (!selectedTag) allBtn.classList.add('active'); 
+            allBtn.innerText = '🏷️ Vše';
+            allBtn.onclick = () => { selectedTag = null; renderTags(); renderRecipesList(); };
+            tagsSection.appendChild(allBtn);
+            
+            tags.forEach(tag => {
+                const badge = document.createElement('span'); 
+                badge.classList.add('tag-badge');
+                if (selectedTag === tag) badge.classList.add('active'); 
+                badge.innerText = tag;
+                badge.onclick = () => { selectedTag = (selectedTag === tag) ? null : tag; renderTags(); renderRecipesList(); };
+                tagsSection.appendChild(badge);
+            });
+        }
+
+        function filterRecipes() { renderRecipesList(); }
+
+        function renderRecipesList() {
+            recipesList.innerHTML = ''; 
+            const query = searchBar.value.toLowerCase().trim();
+            const queryWords = query ? query.split(/\s+/).filter(Boolean) : [];
+
+            const filtered = recipes.filter(rec => {
+                const contentLower = rec.content.toLowerCase();
+
+                // 1. Filtr kategorie
+                if (activeCategory === 'slane' && !contentLower.includes('#slane')) return false;
+                if (activeCategory === 'sladke' && !contentLower.includes('#sladke')) return false;
+                if (activeCategory === 'polevka' && !contentLower.includes('#polevka')) return false;
+
+                // 2. Filtr tagu
+                if (selectedTag && !contentLower.includes(selectedTag)) return false;
+
+                // 3. Vícenásobné vyhledávání slov i hashtagů
+                if (queryWords.length > 0) {
+                    const matchesAll = queryWords.every(word => contentLower.includes(word));
+                    if (!matchesAll) return false;
+                }
+
+                return true;
+            });
+
+            const pinned = filtered.filter(r => r.pinned);
+            const unpinned = filtered.filter(r => !r.pinned);
+            const sorted = [...pinned, ...unpinned];
+
+            sorted.forEach(rec => {
+                const item = document.createElement('div');
+                item.classList.add('note-item');
+                if (rec.pinned) item.classList.add('pinned');
+                if (rec.id === currentRecipeId) item.classList.add('active');
+                
+                item.onclick = () => { 
+                    currentRecipeId = rec.id; 
+                    renderRecipesList(); 
+                    loadCurrentRecipe(); 
+                };
+
+                const firstLine = rec.content.trim().split('\n')[0];
+                const title = firstLine || 'Nový recept';
+                
+                let displayDate = '';
+                if (rec.updatedAt) {
+                    const parsed = new Date(rec.updatedAt);
+                    if (!isNaN(parsed)) displayDate = parsed.toLocaleDateString('cs-CZ');
+                }
+
+                item.innerHTML = `
+                    <div class="note-item-header">
+                        <div class="note-item-title">${title}</div>
+                        <button class="icon-btn ${rec.pinned ? 'active' : ''}" title="${rec.pinned ? 'Odebrat z oblíbených' : 'Přidat do oblíbených'}">⭐</button>
+                    </div>
+                    <div class="note-item-date">
+                        <span>${displayDate}</span>
+                    </div>
+                `;
+
+                const starBtn = item.querySelector('.icon-btn');
+                starBtn.addEventListener('click', (e) => togglePin(e, rec.id));
+
+                recipesList.appendChild(item);
+            });
+
+            if (recipesList.children.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.padding = '20px';
+                empty.style.textAlign = 'center';
+                empty.style.color = '#555';
+                empty.style.fontSize = '0.85rem';
+                empty.innerText = 'Žádný recept neodpovídá zadání.';
+                recipesList.appendChild(empty);
+            }
+        }
+
+        function copyText() {
+            editor.select();
+            navigator.clipboard.writeText(editor.value).then(() => {
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = 'ZKOPÍROVÁNO!'; 
+                copyBtn.classList.add('success');
+                setTimeout(() => { 
+                    copyBtn.innerText = originalText; 
+                    copyBtn.classList.remove('success'); 
+                }, 1500);
+            });
+        }
+
+        async function toggleCookMode() {
+            if (!wakeLock) {
+                try {
+                    if ('wakeLock' in navigator) {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        document.body.classList.add('cooking-mode');
+                        cookModeBtn.innerText = '🔥 REŽIM VAŘENÍ: ZAPNUTO';
+                        cookModeBtn.classList.add('active');
+
+                        wakeLock.addEventListener('release', () => {
+                            wakeLock = null;
+                            document.body.classList.remove('cooking-mode');
+                            cookModeBtn.innerText = '💡 NEZHASNÍNAT DISPLEJ';
+                            cookModeBtn.classList.remove('active');
+                        });
+                    } else {
+                        alert('Tvůj prohlížeč nepodporuje funkci WakeLock.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+            } else {
+                wakeLock.release();
+                wakeLock = null;
+            }
+        }
+    </script>
+</body>
+</html>
