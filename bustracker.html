@@ -225,7 +225,7 @@
         <header>
             <div class="header-title">🛞 Autoškola & Profesák</div>
             <div class="header-right">
-                <button class="sync-btn" onclick="fetchCloudData()" title="Načíst z cloudu">🔄</button>
+                <button class="sync-btn" onclick="fetchCloudData(true)" title="Načíst z cloudu">🔄</button>
                 <div class="sync-status" id="sync-status" title="Stav synchronizace"></div>
             </div>
         </header>
@@ -340,10 +340,11 @@
             return `${parseInt(parts[2], 10)}. ${parseInt(parts[1], 10)}. ${parts[0]}`;
         }
 
-        async function fetchCloudData() {
+        async function fetchCloudData(force = false) {
             setStatus('syncing');
             try {
-                const res = await fetch(`${CLOUD_URL}?mode=autoskola&_t=${Date.now()}`);
+                // Přidáno náhodné číslo proti kešování
+                const res = await fetch(`${CLOUD_URL}?mode=autoskola&_nocache=${Date.now()}`);
                 const items = await res.json();
                 if (Array.isArray(items)) {
                     items.forEach(it => {
@@ -375,6 +376,16 @@
                     renderGrid();
                 } catch(e) { historyData = {}; }
             }
+            fetchCloudData();
+        });
+
+        // Automatické načtení při přepnutí na aplikaci (např. odemknutí telefonu)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                fetchCloudData();
+            }
+        });
+        window.addEventListener('focus', () => {
             fetchCloudData();
         });
 
@@ -516,7 +527,7 @@
             document.getElementById('total-technika').innerText = totalTechnika;
             document.getElementById('total-profesak').innerText = totalProfesak;
 
-            // Výpočet denní šňůry
+            // Výpočet šňůry
             const todayParts = todayStr.split('-');
             let checkDate = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
             while (true) {
