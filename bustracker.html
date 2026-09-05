@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autoškola Tracker 🚌</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: #121314;
+            color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1a1c1e;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid #2a2d32;
+        }
+        .header-title { font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; transition: background 0.3s; }
+        .sync-status.syncing { background-color: #ffb74d; }
+        .sync-status.online { background-color: #4caf50; }
+        .sync-status.error { background-color: #cf6679; }
+
+        .date-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #1a1c1e;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid #2a2d32;
+        }
+        .date-btn {
+            background: #2a2d32;
+            border: none;
+            color: #e2e2e2;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .current-date-label { font-weight: 700; font-size: 0.95rem; color: #00bfa5; }
+
+        /* Karty cílů */
+        .card {
+            background-color: #1a1c1e;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #2a2d32;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .goal-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #121314;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid #22252a;
+            transition: border-color 0.2s;
+        }
+        .goal-row.completed {
+            border-color: #009688;
+            background-color: #142421;
+        }
+
+        .goal-info { display: flex; flex-direction: column; gap: 2px; }
+        .goal-name { font-weight: 700; font-size: 0.92rem; color: #fff; }
+        .goal-target { font-size: 0.75rem; color: #8a8d92; }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ctrl-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            border: none;
+            background-color: #2a2d32;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+        .ctrl-btn:active { transform: scale(0.95); background-color: #3a3f45; }
+        .ctrl-btn.plus { background-color: #009688; }
+        .ctrl-btn.plus:active { background-color: #00bfa5; }
+
+        .value-badge {
+            min-width: 44px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .goal-row.completed .value-badge { color: #4caf50; }
+
+        /* Progress dne */
+        .day-progress-box {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .day-progress-bar {
+            height: 8px;
+            background-color: #2a2d32;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .day-progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #009688;
+            transition: width 0.3s;
+        }
+        .day-progress-label {
+            font-size: 0.75rem;
+            color: #8a8d92;
+            text-align: right;
+        }
+
+        /* 90denní mřížka */
+        .history-card {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .history-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #8a8d92;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .grid-90 {
+            display: grid;
+            grid-template-columns: repeat(15, 1fr);
+            gap: 5px;
+        }
+        .day-dot {
+            aspect-ratio: 1;
+            border-radius: 3px;
+            background-color: #22252a;
+            border: 1px solid #2a2d32;
+            cursor: pointer;
+            position: relative;
+        }
+        .day-dot.today { border-color: #00bfa5; box-shadow: 0 0 4px #00bfa5; }
+        .day-dot.none { background-color: #1a1c1e; }
+        .day-dot.partial { background-color: #ffb74d; border-color: #ffb74d; }
+        .day-dot.full { background-color: #009688; border-color: #009688; }
+
+        /* Celková statistika */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .stat-box {
+            background-color: #121314;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #22252a;
+            text-align: center;
+        }
+        .stat-val { font-size: 1.2rem; font-weight: 800; color: #00bfa5; }
+        .stat-lbl { font-size: 0.7rem; color: #8a8d92; margin-top: 2px; }
+
+        .back-link {
+            text-align: center;
+            color: #8a8d92;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: bold;
+            padding: 10px;
+            display: block;
+        }
+        .back-link:hover { color: #e2e2e2; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="header-title">🚌 Autoškola & Profesák</div>
+            <div class="sync-status" id="sync-status" title="Stav synchronizace"></div>
+        </header>
+
+        <div class="date-bar">
+            <button class="date-btn" onclick="changeDate(-1)">‹ Včera</button>
+            <span class="current-date-label" id="date-label">Dnes</span>
+            <button class="date-btn" onclick="changeDate(1)">Zítra ›</button>
+        </div>
+
+        <div class="card">
+            <!-- 1. Cvičné testy -->
+            <div class="goal-row" id="row-testy">
+                <div class="goal-info">
+                    <span class="goal-name">🚦 Cvičné testy</span>
+                    <span class="goal-target">Denní cíl: 10 testů</span>
+                </div>
+                <div class="controls">
+                    <button class="ctrl-btn" onclick="updateVal('testy', -1)">−</button>
+                    <span class="value-badge" id="val-testy">0</span>
+                    <button class="ctrl-btn plus" onclick="updateVal('testy', 1)">+</button>
+                </div>
+            </div>
+
+            <!-- 2. Technika -->
+            <div class="goal-row" id="row-technika">
+                <div class="goal-info">
+                    <span class="goal-name">🔧 Otázky z techniky</span>
+                    <span class="goal-target">Denní cíl: 5 otázek</span>
+                </div>
+                <div class="controls">
+                    <button class="ctrl-btn" onclick="updateVal('technika', -1)">−</button>
+                    <span class="value-badge" id="val-technika">0</span>
+                    <button class="ctrl-btn plus" onclick="updateVal('technika', 1)">+</button>
+                </div>
+            </div>
+
+            <!-- 3. Profesní test -->
+            <div class="goal-row" id="row-profesak">
+                <div class="goal-info">
+                    <span class="goal-name">📋 Profesní test</span>
+                    <span class="goal-target">Denní cíl: 1 test</span>
+                </div>
+                <div class="controls">
+                    <button class="ctrl-btn" onclick="updateVal('profesak', -1)">−</button>
+                    <span class="value-badge" id="val-profesak">0</span>
+                    <button class="ctrl-btn plus" onclick="updateVal('profesak', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="day-progress-box">
+                <div class="day-progress-bar">
+                    <div class="day-progress-fill" id="day-progress-fill"></div>
+                </div>
+                <div class="day-progress-label" id="day-progress-label">Dnes splněno: 0 %</div>
+            </div>
+        </div>
+
+        <!-- 90denní plán -->
+        <div class="card history-card">
+            <div class="history-title">
+                <span>3měsíční plán (90 dní)</span>
+                <span id="streak-label">Šňůra: 0 dní</span>
+            </div>
+            <div class="grid-90" id="grid-90"></div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-val" id="total-testy">0</div>
+                    <div class="stat-lbl">Testů celkem</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val" id="total-technika">0</div>
+                    <div class="stat-lbl">Technika celkem</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-val" id="total-profesak">0</div>
+                    <div class="stat-lbl">Profesáků celkem</div>
+                </div>
+            </div>
+        </div>
+
+        <a href="index.html" class="back-link">ZPĚT DO ROZCESTNÍKU 📝</a>
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        
+        const TARGETS = { testy: 10, technika: 5, profesak: 1 };
+        
+        let historyData = {}; // 'YYYY-MM-DD': { testy, technika, profesak }
+        let selectedDate = getTodayStr();
+        let saveTimeout = null;
+
+        const syncStatus = document.getElementById('sync-status');
+        const dateLabel = document.getElementById('date-label');
+        const gridEl = document.getElementById('grid-90');
+
+        function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
+
+        function getTodayStr() {
+            const d = new Date();
+            return d.toISOString().split('T')[0];
+        }
+
+        function formatDisplayDate(dateStr) {
+            const parts = dateStr.split('-');
+            return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            setStatus('syncing');
+            const local = localStorage.getItem('autoskola_tracker_data');
+            if (local) {
+                try {
+                    historyData = JSON.parse(local);
+                    renderCurrentDay();
+                    renderGrid();
+                } catch(e) { historyData = {}; }
+            }
+
+            try {
+                const res = await fetch(`${CLOUD_URL}?mode=autoskola`);
+                const items = await res.json();
+                if (Array.isArray(items)) {
+                    items.forEach(it => {
+                        historyData[it.date] = {
+                            testy: Number(it.testy || 0),
+                            technika: Number(it.technika || 0),
+                            profesak: Number(it.profesak || 0)
+                        };
+                    });
+                    localStorage.setItem('autoskola_tracker_data', JSON.stringify(historyData));
+                    renderCurrentDay();
+                    renderGrid();
+                }
+                setStatus('online');
+            } catch(err) {
+                console.error(err);
+                setStatus('error');
+            }
+        });
+
+        function changeDate(delta) {
+            const d = new Date(selectedDate);
+            d.setDate(d.getDate() + delta);
+            selectedDate = d.toISOString().split('T')[0];
+            renderCurrentDay();
+        }
+
+        function renderCurrentDay() {
+            const isToday = selectedDate === getTodayStr();
+            dateLabel.innerText = isToday ? `Dnes (${formatDisplayDate(selectedDate)})` : formatDisplayDate(selectedDate);
+
+            const dayData = historyData[selectedDate] || { testy: 0, technika: 0, profesak: 0 };
+
+            document.getElementById('val-testy').innerText = dayData.testy;
+            document.getElementById('val-technika').innerText = dayData.technika;
+            document.getElementById('val-profesak').innerText = dayData.profesak;
+
+            // Zelené označení řádků při splnění cíle
+            toggleCompletedClass('row-testy', dayData.testy >= TARGETS.testy);
+            toggleCompletedClass('row-technika', dayData.technika >= TARGETS.technika);
+            toggleCompletedClass('row-profesak', dayData.profesak >= TARGETS.profesak);
+
+            // Progress dne
+            const pctTesty = Math.min(dayData.testy / TARGETS.testy, 1);
+            const pctTech = Math.min(dayData.technika / TARGETS.technika, 1);
+            const pctProf = Math.min(dayData.profesak / TARGETS.profesak, 1);
+            const totalPct = Math.round(((pctTesty + pctTech + pctProf) / 3) * 100);
+
+            document.getElementById('day-progress-fill').style.width = totalPct + '%';
+            document.getElementById('day-progress-label').innerText = `Dnes splněno: ${totalPct} %`;
+        }
+
+        function toggleCompletedClass(id, isCompleted) {
+            const el = document.getElementById(id);
+            if (isCompleted) el.classList.add('completed');
+            else el.classList.remove('completed');
+        }
+
+        function updateVal(key, delta) {
+            if (!historyData[selectedDate]) {
+                historyData[selectedDate] = { testy: 0, technika: 0, profesak: 0 };
+            }
+            let current = (historyData[selectedDate][key] || 0) + delta;
+            if (current < 0) current = 0;
+            historyData[selectedDate][key] = current;
+
+            renderCurrentDay();
+            renderGrid();
+
+            localStorage.setItem('autoskola_tracker_data', JSON.stringify(historyData));
+            setStatus('syncing');
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(saveAndSyncDay, 800);
+        }
+
+        async function saveAndSyncDay() {
+            const itemToSave = {
+                date: selectedDate,
+                testy: historyData[selectedDate]?.testy || 0,
+                technika: historyData[selectedDate]?.technika || 0,
+                profesak: historyData[selectedDate]?.profesak || 0
+            };
+
+            try {
+                setStatus('syncing');
+                await fetch(CLOUD_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'autoskola_save', item: itemToSave })
+                });
+                setStatus('online');
+            } catch(err) {
+                console.error(err);
+                setStatus('error');
+            }
+        }
+
+        // Vykreslení 90denní mřížky
+        function renderGrid() {
+            gridEl.innerHTML = '';
+            const todayStr = getTodayStr();
+
+            // Vygenerujeme 90 dní (30 dní zpět až 60 dní dopředu, případně od data zahájení)
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 14); // 14 dní do minulosti, zbytek do 90 dní
+
+            let totalTesty = 0;
+            let totalTechnika = 0;
+            let totalProfesak = 0;
+            let streak = 0;
+
+            for (let i = 0; i < 90; i++) {
+                const d = new Date(startDate);
+                d.setDate(d.getDate() + i);
+                const dStr = d.toISOString().split('T')[0];
+
+                const dayData = historyData[dStr];
+                const dot = document.createElement('div');
+                dot.classList.add('day-dot');
+
+                if (dStr === todayStr) dot.classList.add('today');
+
+                if (dayData) {
+                    totalTesty += dayData.testy;
+                    totalTechnika += dayData.technika;
+                    totalProfesak += dayData.profesak;
+
+                    const isFull = dayData.testy >= TARGETS.testy && dayData.technika >= TARGETS.technika && dayData.profesak >= TARGETS.profesak;
+                    const isPartial = dayData.testy > 0 || dayData.technika > 0 || dayData.profesak > 0;
+
+                    if (isFull) dot.classList.add('full');
+                    else if (isPartial) dot.classList.add('partial');
+                    else dot.classList.add('none');
+                } else {
+                    dot.classList.add('none');
+                }
+
+                dot.title = `${formatDisplayDate(dStr)}`;
+                dot.onclick = () => {
+                    selectedDate = dStr;
+                    renderCurrentDay();
+                };
+
+                gridEl.appendChild(dot);
+            }
+
+            document.getElementById('total-testy').innerText = totalTesty;
+            document.getElementById('total-technika').innerText = totalTechnika;
+            document.getElementById('total-profesak').innerText = totalProfesak;
+
+            // Spočítat aktuální šňůru plných dnů zpětně od dneška
+            let checkDate = new Date();
+            while (true) {
+                const cStr = checkDate.toISOString().split('T')[0];
+                const dRecord = historyData[cStr];
+                if (dRecord && dRecord.testy >= TARGETS.testy && dRecord.technika >= TARGETS.technika && dRecord.profesak >= TARGETS.profesak) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            document.getElementById('streak-label').innerText = `Šňůra: ${streak} dní`;
+        }
+    </script>
+</body>
+</html>
