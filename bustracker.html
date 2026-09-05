@@ -38,6 +38,17 @@
             border: 1px solid #2a2d32;
         }
         .header-title { font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+        .sync-btn {
+            background: #2a2d32;
+            border: none;
+            color: #8a8d92;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .sync-btn:hover { color: #fff; background: #3a3f45; }
         .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; transition: background 0.3s; }
         .sync-status.syncing { background-color: #ffb74d; }
         .sync-status.online { background-color: #4caf50; }
@@ -64,7 +75,6 @@
         }
         .current-date-label { font-weight: 700; font-size: 0.95rem; color: #00bfa5; }
 
-        /* Karty cílů */
         .card {
             background-color: #1a1c1e;
             border-radius: 12px;
@@ -83,7 +93,7 @@
             padding: 12px 14px;
             border-radius: 10px;
             border: 1px solid #22252a;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background-color 0.2s;
         }
         .goal-row.completed {
             border-color: #009688;
@@ -127,7 +137,6 @@
         }
         .goal-row.completed .value-badge { color: #4caf50; }
 
-        /* Progress dne */
         .day-progress-box {
             display: flex;
             flex-direction: column;
@@ -151,7 +160,6 @@
             text-align: right;
         }
 
-        /* 90denní mřížka */
         .history-card {
             display: flex;
             flex-direction: column;
@@ -177,14 +185,12 @@
             background-color: #22252a;
             border: 1px solid #2a2d32;
             cursor: pointer;
-            position: relative;
         }
         .day-dot.today { border-color: #00bfa5; box-shadow: 0 0 4px #00bfa5; }
         .day-dot.none { background-color: #1a1c1e; }
         .day-dot.partial { background-color: #ffb74d; border-color: #ffb74d; }
         .day-dot.full { background-color: #009688; border-color: #009688; }
 
-        /* Celková statistika */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -218,7 +224,10 @@
     <div class="container">
         <header>
             <div class="header-title">🛞 Autoškola & Profesák</div>
-            <div class="sync-status" id="sync-status" title="Stav synchronizace"></div>
+            <div class="header-right">
+                <button class="sync-btn" onclick="fetchCloudData()" title="Načíst z cloudu">🔄</button>
+                <div class="sync-status" id="sync-status" title="Stav synchronizace"></div>
+            </div>
         </header>
 
         <div class="date-bar">
@@ -308,7 +317,7 @@
         const TARGETS = { testy: 10, technika: 5, profesak: 1 };
         
         let historyData = {};
-        let selectedDate = getTodayStr();
+        let selectedDate = getLocalTodayStr();
         let saveTimeout = null;
 
         const syncStatus = document.getElementById('sync-status');
@@ -317,37 +326,34 @@
 
         function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
 
-        function getTodayStr() {
+        function getLocalTodayStr() {
             const d = new Date();
-            return d.toISOString().split('T')[0];
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function formatDisplayDate(dateStr) {
+            if (!dateStr || !dateStr.includes('-')) return dateStr;
             const parts = dateStr.split('-');
-            return `${parts[2]}. ${parts[1]}. ${parts[0]}`;
+            return `${parseInt(parts[2], 10)}. ${parseInt(parts[1], 10)}. ${parts[0]}`;
         }
 
-        window.addEventListener('DOMContentLoaded', async () => {
+        async function fetchCloudData() {
             setStatus('syncing');
-            const local = localStorage.getItem('autoskola_tracker_data');
-            if (local) {
-                try {
-                    historyData = JSON.parse(local);
-                    renderCurrentDay();
-                    renderGrid();
-                } catch(e) { historyData = {}; }
-            }
-
             try {
-                const res = await fetch(`${CLOUD_URL}?mode=autoskola`);
+                const res = await fetch(`${CLOUD_URL}?mode=autoskola&_t=${Date.now()}`);
                 const items = await res.json();
                 if (Array.isArray(items)) {
                     items.forEach(it => {
-                        historyData[it.date] = {
-                            testy: Number(it.testy || 0),
-                            technika: Number(it.technika || 0),
-                            profesak: Number(it.profesak || 0)
-                        };
+                        if (it.date) {
+                            historyData[it.date] = {
+                                testy: Number(it.testy || 0),
+                                technika: Number(it.technika || 0),
+                                profesak: Number(it.profesak || 0)
+                            };
+                        }
                     });
                     localStorage.setItem('autoskola_tracker_data', JSON.stringify(historyData));
                     renderCurrentDay();
@@ -358,17 +364,35 @@
                 console.error(err);
                 setStatus('error');
             }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const local = localStorage.getItem('autoskola_tracker_data');
+            if (local) {
+                try {
+                    historyData = JSON.parse(local);
+                    renderCurrentDay();
+                    renderGrid();
+                } catch(e) { historyData = {}; }
+            }
+            fetchCloudData();
         });
 
         function changeDate(delta) {
-            const d = new Date(selectedDate);
+            const parts = selectedDate.split('-');
+            const d = new Date(parts[0], parts[1] - 1, parts[2]);
             d.setDate(d.getDate() + delta);
-            selectedDate = d.toISOString().split('T')[0];
+            
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            selectedDate = `${year}-${month}-${day}`;
+            
             renderCurrentDay();
         }
 
         function renderCurrentDay() {
-            const isToday = selectedDate === getTodayStr();
+            const isToday = selectedDate === getLocalTodayStr();
             dateLabel.innerText = isToday ? `Dnes (${formatDisplayDate(selectedDate)})` : formatDisplayDate(selectedDate);
 
             const dayData = historyData[selectedDate] || { testy: 0, technika: 0, profesak: 0 };
@@ -410,7 +434,7 @@
             localStorage.setItem('autoskola_tracker_data', JSON.stringify(historyData));
             setStatus('syncing');
             clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(saveAndSyncDay, 800);
+            saveTimeout = setTimeout(saveAndSyncDay, 600);
         }
 
         async function saveAndSyncDay() {
@@ -438,9 +462,10 @@
 
         function renderGrid() {
             gridEl.innerHTML = '';
-            const todayStr = getTodayStr();
+            const todayStr = getLocalTodayStr();
 
-            const startDate = new Date();
+            const parts = todayStr.split('-');
+            const startDate = new Date(parts[0], parts[1] - 1, parts[2]);
             startDate.setDate(startDate.getDate() - 14);
 
             let totalTesty = 0;
@@ -451,7 +476,11 @@
             for (let i = 0; i < 90; i++) {
                 const d = new Date(startDate);
                 d.setDate(d.getDate() + i);
-                const dStr = d.toISOString().split('T')[0];
+                
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const dStr = `${y}-${m}-${day}`;
 
                 const dayData = historyData[dStr];
                 const dot = document.createElement('div');
@@ -487,9 +516,15 @@
             document.getElementById('total-technika').innerText = totalTechnika;
             document.getElementById('total-profesak').innerText = totalProfesak;
 
-            let checkDate = new Date();
+            // Výpočet denní šňůry
+            const todayParts = todayStr.split('-');
+            let checkDate = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
             while (true) {
-                const cStr = checkDate.toISOString().split('T')[0];
+                const y = checkDate.getFullYear();
+                const m = String(checkDate.getMonth() + 1).padStart(2, '0');
+                const day = String(checkDate.getDate()).padStart(2, '0');
+                const cStr = `${y}-${m}-${day}`;
+
                 const dRecord = historyData[cStr];
                 if (dRecord && dRecord.testy >= TARGETS.testy && dRecord.technika >= TARGETS.technika && dRecord.profesak >= TARGETS.profesak) {
                     streak++;
