@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoškola Tracker 🚌</title>
+    <title>Autoškola Tracker 🛞</title>
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚌</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛞</text></svg>">
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -217,7 +217,7 @@
 
     <div class="container">
         <header>
-            <div class="header-title">🚌 Autoškola & Profesák</div>
+            <div class="header-title">🛞 Autoškola & Profesák</div>
             <div class="sync-status" id="sync-status" title="Stav synchronizace"></div>
         </header>
 
@@ -307,7 +307,7 @@
         
         const TARGETS = { testy: 10, technika: 5, profesak: 1 };
         
-        let historyData = {}; // 'YYYY-MM-DD': { testy, technika, profesak }
+        let historyData = {};
         let selectedDate = getTodayStr();
         let saveTimeout = null;
 
@@ -377,12 +377,10 @@
             document.getElementById('val-technika').innerText = dayData.technika;
             document.getElementById('val-profesak').innerText = dayData.profesak;
 
-            // Zelené označení řádků při splnění cíle
             toggleCompletedClass('row-testy', dayData.testy >= TARGETS.testy);
             toggleCompletedClass('row-technika', dayData.technika >= TARGETS.technika);
             toggleCompletedClass('row-profesak', dayData.profesak >= TARGETS.profesak);
 
-            // Progress dne
             const pctTesty = Math.min(dayData.testy / TARGETS.testy, 1);
             const pctTech = Math.min(dayData.technika / TARGETS.technika, 1);
             const pctProf = Math.min(dayData.profesak / TARGETS.profesak, 1);
@@ -438,14 +436,12 @@
             }
         }
 
-        // Vykreslení 90denní mřížky
         function renderGrid() {
             gridEl.innerHTML = '';
             const todayStr = getTodayStr();
 
-            // Vygenerujeme 90 dní (30 dní zpět až 60 dní dopředu, případně od data zahájení)
             const startDate = new Date();
-            startDate.setDate(startDate.getDate() - 14); // 14 dní do minulosti, zbytek do 90 dní
+            startDate.setDate(startDate.getDate() - 14);
 
             let totalTesty = 0;
             let totalTechnika = 0;
@@ -491,7 +487,6 @@
             document.getElementById('total-technika').innerText = totalTechnika;
             document.getElementById('total-profesak').innerText = totalProfesak;
 
-            // Spočítat aktuální šňůru plných dnů zpětně od dneška
             let checkDate = new Date();
             while (true) {
                 const cStr = checkDate.toISOString().split('T')[0];
