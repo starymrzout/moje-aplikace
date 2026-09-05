@@ -8,26 +8,34 @@
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
+        
+        html, body {
+            height: 100%;
+            height: 100dvh;
             background-color: #1a1c1e;
             color: #e2e2e2;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            height: 100vh;
-            display: flex;
             overflow: hidden;
         }
+
+        body {
+            display: flex;
+            flex-direction: row;
+        }
+
         .sidebar {
             width: 360px;
             background-color: #121314;
             border-right: 1px solid #2a2d32;
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
         .sidebar-header {
-            padding: 14px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
             border-bottom: 1px solid #2a2d32;
         }
         .header-title {
@@ -82,10 +90,14 @@
         .filter-btn:hover { color: #e2e2e2; }
         .filter-btn.active { background-color: #2a2d32; color: #00bfa5; }
 
-        .notes-list { flex: 1; overflow-y: auto; }
+        .notes-list { 
+            flex: 1; 
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch;
+        }
 
         .note-item { 
-            padding: 12px 14px; 
+            padding: 10px 12px; 
             border-bottom: 1px solid #22252a; 
             cursor: pointer; 
             transition: background 0.2s; 
@@ -115,6 +127,7 @@
             padding: 2px 6px;
             border-radius: 4px;
             font-weight: 700;
+            flex-shrink: 0;
         }
         .tag-box-1 { background: rgba(207, 102, 121, 0.2); color: #cf6679; }
         .tag-box-2 { background: rgba(255, 183, 77, 0.2); color: #ffb74d; }
@@ -126,19 +139,22 @@
             flex-direction: column; 
             background-color: #f5f0e8; 
             color: #1a1a1a;
-            overflow-y: auto;
+            height: 100%;
+            min-width: 0;
             position: relative;
         }
 
         .study-view {
             flex: 1;
-            padding: 30px 45px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 24px 30px;
             max-width: 850px;
             margin: 0 auto;
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
         }
 
         .card-meta {
@@ -158,7 +174,7 @@
         }
 
         .card-title {
-            font-size: 1.45rem;
+            font-size: 1.3rem;
             line-height: 1.35;
             color: #121314;
         }
@@ -166,17 +182,17 @@
         .section-box {
             background-color: #ffffff;
             border-radius: 8px;
-            padding: 18px;
+            padding: 16px;
             border: 1px solid #e0dbd2;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .section-header {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: bold;
             text-transform: uppercase;
             color: #00796b;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             letter-spacing: 0.5px;
         }
 
@@ -184,13 +200,13 @@
             list-style-type: none;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .key-points-list li {
             position: relative;
-            padding-left: 22px;
-            font-size: 1rem;
+            padding-left: 20px;
+            font-size: 0.95rem;
             line-height: 1.4;
             color: #2a2d32;
             font-weight: 500;
@@ -199,16 +215,16 @@
         .key-points-list li::before {
             content: "•";
             position: absolute;
-            left: 5px;
+            left: 4px;
             color: #00796b;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             line-height: 1;
         }
 
         .detail-text {
             font-family: "Georgia", "Times New Roman", serif;
-            font-size: 1rem;
-            line-height: 1.7;
+            font-size: 0.95rem;
+            line-height: 1.65;
             color: #222;
             white-space: pre-wrap;
         }
@@ -219,40 +235,45 @@
             background-color: #2a2d32;
             color: #e2e2e2;
             border: none;
-            padding: 12px 16px;
+            padding: 12px 14px;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             transition: background 0.2s;
             text-align: center;
         }
         .reveal-btn:hover { background-color: #3a3f45; }
 
         .footer { 
-            padding: 12px 30px; 
+            flex-shrink: 0;
+            padding: 10px 20px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
             background-color: #e0dbd2; 
             display: flex; 
-            gap: 10px; 
+            gap: 8px; 
             border-top: 1px solid #d5cfc4;
+            z-index: 10;
         }
         .footer-btn { 
-            padding: 12px 10px; 
+            padding: 10px 6px; 
             border: none; 
             border-radius: 6px; 
             font-weight: 700; 
             cursor: pointer; 
             transition: all 0.2s; 
-            font-size: 0.85rem; 
+            font-size: 0.82rem; 
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 2px;
+            text-align: center;
         }
         .footer-btn span {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             font-weight: normal;
-            opacity: 0.85;
+            opacity: 0.9;
         }
         .btn-box-1 { background-color: #cf6679; color: #121314; flex: 1; }
         .btn-box-1:hover { background-color: #e07588; }
@@ -260,16 +281,52 @@
         .btn-box-2:hover { background-color: #ffc470; }
         .btn-box-3 { background-color: #4caf50; color: white; flex: 1.2; }
         .btn-box-3:hover { background-color: #5cba60; }
-        .btn-next { background-color: #2a2d32; color: #e2e2e2; width: 80px; }
+        .btn-next { background-color: #2a2d32; color: #e2e2e2; width: 68px; flex-shrink: 0; }
         .btn-next:hover { background-color: #3a3f45; }
 
         @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { width: 100%; height: 38vh; }
-            .study-view { padding: 16px; }
-            .footer { padding: 8px 10px; gap: 6px; }
-            .footer-btn { padding: 8px 4px; font-size: 0.75rem; }
-            .footer-btn span { display: none; }
+            body { 
+                flex-direction: column; 
+            }
+            .sidebar { 
+                width: 100%; 
+                height: 32vh; 
+                border-right: none;
+                border-bottom: 2px solid #2a2d32;
+            }
+            .sidebar-header {
+                padding: 8px 10px;
+                gap: 6px;
+            }
+            .notes-list {
+                height: 100%;
+            }
+            .main-content {
+                height: 68vh;
+                flex: 1;
+            }
+            .study-view { 
+                padding: 12px 14px; 
+                gap: 10px;
+            }
+            .card-title {
+                font-size: 1.15rem;
+            }
+            .footer { 
+                padding: 8px;
+                padding-bottom: calc(8px + env(safe-area-inset-bottom));
+                gap: 5px; 
+            }
+            .footer-btn { 
+                padding: 8px 4px; 
+                font-size: 0.72rem; 
+            }
+            .footer-btn span { 
+                display: none; 
+            }
+            .btn-next { 
+                width: 54px; 
+            }
         }
     </style>
 </head>
@@ -510,7 +567,7 @@
                     "Regulátor otáček: udržuje motor ve stabilním volnoběhu a chrání před přetočením na maximu",
                     "Při dosažení max. otáček regulátor automaticky sníží/zastaví přívod nafty do válců",
                     "Omezovač rychlosti: zákonné omezení maximální rychlosti (pro autobusy povinně 100 km/h)",
-                    "Pracuje elektronicky: při dosažení 100 km/h odpojí vstřikování bez ohledu na plyn",
+                    "Pracuje elektronicky: při 100 km/h odpojí vstřikování bez ohledu na plyn",
                     "DŮLEŽITÉ: omezovač nebrzdí vozidlo z kopce! Vlivem hmotnosti bus zrychluje, řidič musí brzdit sám"
                 ],
                 detail: "Regulátor otáček vstřikovacího čerpadla:\nMechanické nebo elektronické zařízení řídící dodávku nafty. Výrobce nastaví minimální a maximální otáčky. Při nastartování automaticky dodá přesné množství nafty pro udržení volnoběhu. Při zatížení (např. sepnutí kompresoru či serva) přidá palivo, aby motor nezhasl. Při dosažení maximálních povolených otáček naopak dodávku nafty omezí nebo zcela vypne, takže řidič nemůže motor přetočit ani plným sešlápnutím plynu.\n\nOmezovač rychlosti:\nZajišťuje, aby vozidlo nepřekročilo nejvyšší zákonem povolenou rychlost. U autobusů je ze zákona nastaven přesně na 100 km/h (u nákladních vozů na 90 km/h). Funguje elektronicky: porovnává signál z tachografu s otáčkami motoru. Jakmile vozidlo dosáhne 100 km/h, omezí dodávku paliva.\nVarování pro řidiče: Omezovač rychlosti nereguluje brzdový systém! Při jízdě z prudkého svahu může autobus vlastní vahou snadno překročit 100 km/h – řidič musí rychlost aktivně hlídat a brzdit retardérem či provozní brzdou."
@@ -525,7 +582,7 @@
                     "Údržba výfukové brzdy: kontrola pohybu ovládacích táhel a promazání vysokoteplotním mazivem",
                     "ZÁKAZ násilného otáčení samotnou klapkou na horkém výfukovém potrubí"
                 ],
-                detail: "Výfukový systém zajišťuje bezpečný odvod spalin, tlumení hluku a čištění emisí.\nKontrola a bezpečnost:\nNetěsný výfuk představuje enormní riziko – hrozí vniknutí oxidu uhelnatého (CO) do prostoru pro cestující a kabiny řidiče, což může vést k otravě a ztrátě vědomí řidiče, a rovněž hrozí vznik požáru při kontaktu horkých plynů s instalací vozidla. Kontrolujeme těsnost všech spojů, stav spon, upevnění k rámu a míru koroze potrubí a tlumičů.\n\nVýfuková brzda:\nSoučástí výfukového potrubí je klapka výfukové brzdy ovládaná pneumatickým válcem. Kontrolujeme volný chod ovládacího mechanismu a táhel. Klouby táhel mažeme speciálním vysokoteplotním tukem (např. grafitovým mazivem). Samotnou hřídelku klapky ve výfuku nikdy násilně neotáčíme."
+                detail: "Výfukový systém zajišťuje bezpečný odvod spalin, tlumení hluku a čištění emisí.\nKontrola a bezpečnost:\nNetěsný výfuk představuje enormní riziko – hrozí vniknutí oxidu uhelnatého (CO) do prostoru pro cestující a kabiny řidiče, což může vést k otravě a ztrátě vědomí řidiče, a rovněž hrozí vznik požáru při kontaktu horkých plynů s instalací vozidla. Kontrolujeme těsnost všech spojů, stav spon, upevnění k rámu a míru koroze potrubí a tlumičů.\n\nVýfuková brzda:\nSoučástí výfukového potrubí je klapka výfukové brzdy ovládaná pneumatickým válcem. Kontrolujeme volný chod ovládacího mechanismu a táhel. Klouby táhel mažeme speciálním vysokoteplotním tukem (např. grafitovým mazivem). Samotnou horkou hřídelkou klapky ve výfuku nikdy násilně neotáčíme."
             },
             {
                 id: 17,
