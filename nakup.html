@@ -54,14 +54,12 @@
       text-transform: uppercase;
       font-weight: 700;
     }
-    
-    /* Indikační tečka sync-status */
     .sync-status {
       display: inline-block;
-      width: 10px;
-      height: 10px;
+      width: 11px;
+      height: 11px;
       border-radius: 50%;
-      background-color: #555;
+      background-color: #777;
       transition: background-color 0.3s;
     }
     .sync-status.online { background-color: #4caf50; }
@@ -226,7 +224,7 @@
       </svg>
       <h1>Nákup Globus</h1>
     </div>
-    <span id="sync-status" class="sync-status" title="Stav synchronizace"></span>
+    <span id="sync-status" class="sync-status" title="Stav"></span>
   </header>
 
   <div id="seznam"></div>
@@ -263,13 +261,10 @@
 
     let items = JSON.parse(localStorage.getItem("nakup_items") || "[]");
     let vybranaKategorie = KATEGORIE_TRASA[0];
-    let saveTimeout = null;
 
     function setStatus(status) {
       const el = document.getElementById("sync-status");
-      if (el) {
-        el.className = "sync-status " + status;
-      }
+      if (el) el.className = "sync-status " + status;
     }
 
     function renderTags() {
@@ -293,12 +288,8 @@
         const res = await fetch(API_URL + "?mode=nakup&t=" + Date.now());
         const data = await res.json();
         if (Array.isArray(data)) {
-          if (data.length > 0) {
-            items = data;
-            localStorage.setItem("nakup_items", JSON.stringify(items));
-          } else if (items.length > 0) {
-            ukladatData();
-          }
+          items = data;
+          localStorage.setItem("nakup_items", JSON.stringify(items));
         }
         renderSeznam();
         setStatus("online");
@@ -307,26 +298,6 @@
         setStatus("error");
         renderSeznam();
       }
-    }
-
-    function ukladatData() {
-      localStorage.setItem("nakup_items", JSON.stringify(items));
-      setStatus("syncing");
-
-      clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(() => {
-        fetch(API_URL, {
-          method: "POST",
-          body: JSON.stringify({ type: "nakup_save", items: items })
-        })
-        .then(() => {
-          setStatus("online");
-        })
-        .catch((err) => {
-          console.error(err);
-          setStatus("error");
-        });
-      }, 500);
     }
 
     function renderSeznam() {
@@ -387,8 +358,23 @@
     function prepnoutStav(it) {
       it.koupit = !it.koupit;
       it.updatedAt = new Date().toISOString();
+      localStorage.setItem("nakup_items", JSON.stringify(items));
       renderSeznam();
-      ukladatData();
+
+      setStatus("syncing");
+      fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          type: "nakup_toggle",
+          id: it.id,
+          koupit: it.koupit,
+          updatedAt: it.updatedAt
+        })
+      })
+      .then(() => setStatus("online"))
+      .catch(() => setStatus("error"));
     }
 
     function pridatPolozku() {
@@ -405,15 +391,41 @@
       };
 
       items.push(nova);
+      localStorage.setItem("nakup_items", JSON.stringify(items));
       input.value = "";
       renderSeznam();
-      ukladatData();
+
+      setStatus("syncing");
+      fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          type: "nakup_add",
+          item: nova
+        })
+      })
+      .then(() => setStatus("online"))
+      .catch(() => setStatus("error"));
     }
 
     function smazatPolozku(id) {
       items = items.filter(it => it.id !== id);
+      localStorage.setItem("nakup_items", JSON.stringify(items));
       renderSeznam();
-      ukladatData();
+
+      setStatus("syncing");
+      fetch(API_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          type: "nakup_delete",
+          id: id
+        })
+      })
+      .then(() => setStatus("online"))
+      .catch(() => setStatus("error"));
     }
 
     document.getElementById("novy-nazev").addEventListener("keydown", (e) => {
