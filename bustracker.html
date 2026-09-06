@@ -237,11 +237,11 @@
         </div>
 
         <div class="card">
-            <!-- 1. Cvičné testy -->
+            <!-- 1. Cvičné testy (upraveno na cíl 3) -->
             <div class="goal-row" id="row-testy">
                 <div class="goal-info">
                     <span class="goal-name">🚦 Cvičné testy</span>
-                    <span class="goal-target">Denní cíl: 10 testů</span>
+                    <span class="goal-target">Denní cíl: 3 testy</span>
                 </div>
                 <div class="controls">
                     <button class="ctrl-btn" onclick="updateVal('testy', -1)">−</button>
@@ -314,7 +314,8 @@
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
         
-        const TARGETS = { testy: 10, technika: 5, profesak: 1 };
+        // Změna cíle testů z 10 na 3
+        const TARGETS = { testy: 3, technika: 5, profesak: 1 };
         
         let historyData = {};
         let selectedDate = getLocalTodayStr();
@@ -343,7 +344,6 @@
         async function fetchCloudData(force = false) {
             setStatus('syncing');
             try {
-                // Přidáno náhodné číslo proti kešování
                 const res = await fetch(`${CLOUD_URL}?mode=autoskola&_nocache=${Date.now()}`);
                 const items = await res.json();
                 if (Array.isArray(items)) {
@@ -379,7 +379,6 @@
             fetchCloudData();
         });
 
-        // Automatické načtení při přepnutí na aplikaci (např. odemknutí telefonu)
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 fetchCloudData();
@@ -527,9 +526,7 @@
             document.getElementById('total-technika').innerText = totalTechnika;
             document.getElementById('total-profesak').innerText = totalProfesak;
 
-            // Výpočet šňůry
-            const todayParts = todayStr.split('-');
-            let checkDate = new Date(todayParts[0], todayParts[1] - 1, todayParts[2]);
+            let checkDate = new Date();
             while (true) {
                 const y = checkDate.getFullYear();
                 const m = String(checkDate.getMonth() + 1).padStart(2, '0');
