@@ -196,6 +196,31 @@
             letter-spacing: 0.5px;
         }
 
+        /* 4 základní body */
+        .core-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .core-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border-left: 3px solid #009688;
+            padding-left: 10px;
+        }
+        .core-item-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #00796b;
+            text-transform: uppercase;
+        }
+        .core-item-text {
+            font-size: 0.92rem;
+            color: #222;
+            line-height: 1.35;
+        }
+
         .key-points-list {
             list-style-type: none;
             display: flex;
@@ -235,11 +260,11 @@
             background-color: #2a2d32;
             color: #e2e2e2;
             border: none;
-            padding: 12px 14px;
+            padding: 10px 14px;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             transition: background 0.2s;
             text-align: center;
         }
@@ -290,7 +315,7 @@
             }
             .sidebar { 
                 width: 100%; 
-                height: 32vh; 
+                height: 30vh; 
                 border-right: none;
                 border-bottom: 2px solid #2a2d32;
             }
@@ -302,7 +327,7 @@
                 height: 100%;
             }
             .main-content {
-                height: 68vh;
+                height: 70vh;
                 flex: 1;
             }
             .study-view { 
@@ -358,6 +383,29 @@
             </div>
             <h1 class="card-title" id="q-title">Zvolte otázku ze seznamu</h1>
 
+            <!-- 4 základní body pro komisaře -->
+            <div class="section-box" id="box-core">
+                <div class="section-header">🎯 Praktická kostra (4 otázky pro komisaře)</div>
+                <div class="core-grid">
+                    <div class="core-item">
+                        <span class="core-item-label">1. K čemu to slouží / Co to dělá:</span>
+                        <span class="core-item-text" id="core-what"></span>
+                    </div>
+                    <div class="core-item">
+                        <span class="core-item-label">2. Jak to zkontroluji před jízdou:</span>
+                        <span class="core-item-text" id="core-check"></span>
+                    </div>
+                    <div class="core-item">
+                        <span class="core-item-label">3. Co se může posrat / Projevy:</span>
+                        <span class="core-item-text" id="core-fail"></span>
+                    </div>
+                    <div class="core-item">
+                        <span class="core-item-label">4. Co s tím udělám (Řešení řidiče):</span>
+                        <span class="core-item-text" id="core-fix"></span>
+                    </div>
+                </div>
+            </div>
+
             <button class="reveal-btn" id="btn-points" onclick="togglePoints()">Zobrazit záchytné body (kostru pro komisaře)</button>
             <div class="section-box hidden" id="box-points">
                 <div class="section-header">Klíčové body odpovědi</div>
@@ -395,6 +443,12 @@
             {
                 id: 1,
                 title: "1. Popište úkony kontroly vozidla před jízdou",
+                core: {
+                    what: "Zajištění provozní bezpečnosti, spolehlivosti a provozuschopnosti autobusu před výjezdem s cestujícími.",
+                    check: "4 smysly: Zrak (skla, světla, pneu, louže), Hmat (olej, voda, řemeny, matice kol, odkalení), Čich a Sluch (únik vzduchu, zápach spalin/nafty). Po startu tlak vzduchu 8–10 bar a zkouška brzd.",
+                    fail: "Úniky kapalin/vzduchu, nesvítící světla, uvolněná kola, zápach spalin v salonu, nefunkční brzdy.",
+                    fix: "Doplnit kapaliny, odkalit vzduch, dotáhnout kola, vyměnit žárovku; při úniku vzduchu nebo vadě brzd neodjíždět a hlásit dílně."
+                },
                 points: [
                     "Rozdělení na 4 smysly: Vizuální, Hmatová, Čichová, Sluchová",
                     "Vizuální: skla, zrcátka, světla, pneu, louže pod vozem, interiér",
@@ -407,6 +461,12 @@
             {
                 id: 2,
                 title: "2. Popište kontrolu tlaku vzduchu v pneumatikách a hloubku drážek dezénu pneumatiky",
+                core: {
+                    what: "Zajištění přenosu sil mezi kolem a vozovkou, brzdné dráhy a stability autobusu.",
+                    check: "Tlakoměrem VÝHRADNĚ za studena na zajištěném voze. Hloubka dezénu hloubkoměrem nebo dle TWI můstků (letní min. 1,6 mm, zima pro bus nad 3,5 t min. 6 mm na hnací nápravě).",
+                    fail: "Podhuštění (sjíždění krajů, přehřívání), přehuštění (sjíždění středu), proražení, sjetý dezén pod limit.",
+                    fix: "Dofouknout na předepsaný tlak dle štítku (+0,2 bar v mrazu), při defektu vyměnit kolo, při sjetém dezénu přezout na dílně."
+                },
                 points: [
                     "Tlak měříme tlakoměrem VÝHRADNĚ za studena (vozidlo zajištěno)",
                     "Rezervní kolo tlakujeme na nejvyšší povolený technický tlak pláště",
@@ -419,6 +479,12 @@
             {
                 id: 3,
                 title: "3. Popište obsah kontroly kol a pneumatik a faktory ovlivňující jejich životnost",
+                core: {
+                    what: "Udržení směrové stability, nosnosti a brzdného účinku autobusu.",
+                    check: "Tlak za studena, hloubka dezénu, stav ráfků, dotažení matic momentovým klíčem a prostor mezi koly dvoumontáže na kameny.",
+                    fail: "Trhliny, boule na bočnici, oskákané plošky (vadné tlumiče), sjeté hrany (geometrie), přehřívání ráfku (váznoucí brzda).",
+                    fix: "Vyjmout kámen z dvoumontáže montpákou, dotáhnout matice, vyměnit vadné kolo za rezervu; vadnou geometrii/tlumiče hlásit servisu."
+                },
                 points: [
                     "Kontrola: tlak huštění, hloubka dezénu, stav ráfků a dotažení kolových matic",
                     "Dotahování momentovým klíčem: disková kola do kříže, kola TRILEX po obvodu",
@@ -431,6 +497,12 @@
             {
                 id: 4,
                 title: "4. Jaké jsou nejčastější příčiny poškození plášťů pneumatik a jejich projevy",
+                core: {
+                    what: "Pneumatika přenáší veškerou hmotnost a síly; poškození přímo ohrožuje životy cestujících.",
+                    check: "Prohlídka bočnic a běhounu před jízdou na cizí předměty, trhliny, boule a kontrola prostoru dvoumontáže.",
+                    fail: "Boule na boku (přetržený kord nárazem na obrubník), sjeté plošky (smyk bez ABS), proříznutí kamenem mezi koly, únik vzduchu po defektu.",
+                    fix: "Plášť s boulí nebo obnaženým kordem se NESMÍ používat (okamžitá výměna kola); cizí předmět z dvoumontáže ihned odstranit."
+                },
                 points: [
                     "Provozní podmínky: vniknutí ostrého tělesa, proražení kordu o obrubník (boule)",
                     "Nesprávné huštění: podhuštěná pneu se bortí a přehřívá, přehuštěná je náchylná k průrazu",
@@ -443,6 +515,12 @@
             {
                 id: 5,
                 title: "5. Popište postup při výměně kola",
+                core: {
+                    what: "Nouzový úkon řidiče při defektu na trase pro bezpečné obnovení pojízdnosti.",
+                    check: "Před jízdou prověřit stav rezervního kola, funkčnost zvedáku, klíče na kola a zakládacích klínů.",
+                    fail: "Defekt na trati, uvolnění matic, nestabilní podklad pro hever, sesmeknutí vozidla.",
+                    fix: "Zastavit, 4 blinkry, vesta, cestující ven za svodidla, trojúhelník (50/100 m), klíny pod nápravu, povolit na zemi, zvednout, vyměnit, dotáhnout do kříže, po 50 km zkontrolovat."
+                },
                 points: [
                     "Zajištění a bezpečnost: zastavit u kraje, výstražné 4 blinkry, vesta, cestující ven do bezpečí",
                     "Výstražný trojúhelník: obec min. 50 m (dle situace), dálnice min. 100 m",
@@ -455,6 +533,12 @@
             {
                 id: 6,
                 title: "6. Kontrola množství oleje v motoru, způsob doplňování, intervaly výměny",
+                core: {
+                    what: "Mazání, chlazení, čištění a těsnění pohyblivých částí motoru a turbodmychadla.",
+                    check: "Motor vypnutý, na rovině, po odstavení (olej stečený). Vytáhnout měrku, otřít, zasunout na doraz, hladina mezi MIN a MAX.",
+                    fail: "Málo oleje (zadření motoru/turba, kontrolka mazání), moc oleje nad MAX (spálení oleje, zničení DPF a těsnění).",
+                    fix: "Dolít olej přesné specifikace po kapkách; nepřelít! Intervaly 30 000–60 000 km (nebo 1 rok) dle servisu, vždy měnit i filtr."
+                },
                 points: [
                     "Podmínky měření: motor vypnutý, vozidlo na rovině, počkat na stečení oleje do vany",
                     "Měrka oleje: vytáhnout, otřít hadrem, zasunout na doraz, vytáhnout a odečíst mezi MIN a MAX",
@@ -467,6 +551,12 @@
             {
                 id: 7,
                 title: "7. Signalizace dobíjení a mazání motoru, projevy poruch za jízdy",
+                core: {
+                    what: "Kritické kontrolní okruhy: tlakové mazání motoru a dobíjení palubní 24V sítě alternátorem.",
+                    check: "Před startem po otočení klíčku svítí obě červené kontrolky (baterie i olejnička), po nastartování MUSÍ ihned zhasnout.",
+                    fail: "Prasklý řemen (nedobíjí + netočí vodní pumpu!), zadření motoru při ztrátě mazání, kouř z výfuku (černý, modrý, bílý).",
+                    fix: "Červená olejnička za jízdy = OKAMŽITĚ ZASTAVIT A VYPNOUT MOTOR! Dobíjení = zastavit, zkontrolovat řemen a teplotu vody (nevařit!)."
+                },
                 points: [
                     "Dobíjení: červená kontrolka baterie se rozsvítí po zapnutí klíčku a po nastartování MUSÍ zhasnout",
                     "Svítící kontrolka dobíjení: prasklý řemen (často pohání i vodní pumpu!) nebo vadný alternátor",
@@ -479,6 +569,12 @@
             {
                 id: 8,
                 title: "8. Kontrola a ošetřování kapalinové chladicí soustavy, regulace provozní teploty",
+                core: {
+                    what: "Udržování optimální provozní teploty motoru (80–90 °C) a vytápění salonu pro cestující.",
+                    check: "Hladina v expanzce mezi ryskami za studena, těsnost hadic, čistota žeber chladiče, napnutí řemenů pumpy (otočení o 90° / průhyb 1–1,5 cm).",
+                    fail: "Únik kapaliny (louže), prasklý řemen, zaseknutý termostat, zanesený chladič, zamrznutí kapaliny v zimě.",
+                    fix: "Doplnit nemrznoucí směs, napnout/vyměnit řemeny (vždy oba naráz!), před zimou změřit refraktometrem mrazuvzdornost."
+                },
                 points: [
                     "Kontrola: množství kapaliny v expanzce (mezi ryskami), těsnost hadic, čistota chladiče",
                     "Kontrola řemenů: drážkový řemen lze rukou otočit o 90°, klínový promáčknout o 1–1,5 cm",
@@ -491,6 +587,12 @@
             {
                 id: 9,
                 title: "9. Signalizace teploty chladicí kapaliny a postup při přehřátí motoru",
+                core: {
+                    what: "Ochrana motoru před tepelným zničením, zkroucením hlavy a zadřením pístů.",
+                    check: "Sledovat ručičku teploměru a červenou kontrolku přehřátí na přístrojovém štítu.",
+                    fail: "Ručička v červeném poli, pára z motorového prostoru, prasklá hadice chlazení, spadlý řemen pumpy.",
+                    fix: "1. Podřadit (zvýšit otáčky pumpy), 2. Pustit topení a ventilátory naplno do salonu. Pokud neklesá: zastavit, nechat chvíli na volnoběh, vypnout. NIKDY NEOTEVÍRAT HORKÉ VÍČKO EXPANZKY (opaření!)."
+                },
                 points: [
                     "Signalizace: ručička teploměru v červeném poli nebo rozsvícená červená kontrolka teploměru",
                     "1. krok: pustit topení do kabiny a salonu na plný výkon a ventilátory naplno (odvod tepla)",
@@ -503,6 +605,12 @@
             {
                 id: 10,
                 title: "10. Kontrola a ošetřování vzduchové chladicí soustavy vozidla a regulace teploty",
+                core: {
+                    what: "Přímé chlazení motoru proudem vzduchu od dmychadla bez použití kapaliny (např. Tatra).",
+                    check: "Čistota chladicích žeber válců a hlav, neporušenost usměrňovacích plechů, napnutí řemenů dmychadla.",
+                    fail: "Žebra zalepená prachem a olejem (lokální přehřátí a zadření), prasklý řemen dmychadla, netěsný hydraulický pohon.",
+                    fix: "Očistit a profouknout žebra tlakovým vzduchem/odmašťovačem, napnout řemeny; v zimě nasadit dečku na masku pro zahřátí."
+                },
                 points: [
                     "Konstrukce: vzduchem chlazené motory (např. Tatra) bez chladicí kapaliny",
                     "Kontrola: čistota chladicích žeber válců a hlav, upevnění a těsnost plechů",
@@ -515,6 +623,12 @@
             {
                 id: 11,
                 title: "11. Popište hlavní části palivové soustavy vznětového motoru",
+                core: {
+                    what: "Doprava nafty z nádrže, její filtrace a vstříknutí pod extrémním tlakem do válců motoru.",
+                    check: "Stav paliva v nádrži, těsnost potrubí, čistota skleničky hrubého čističe, absence úniků.",
+                    fail: "Zavzdušnění soustavy, únik nafty na horký výfuk (požár!), ucpané filtry parafinem v mrazu.",
+                    fix: "Nikdy nevyjíždět nádrž do nuly; odkalit hrubý čistič, vyměnit filtrační vložky, odvzdušnit ruční pumpou."
+                },
                 points: [
                     "Nízkotlaká část (tlak cca 2–2,5 bar): nádrž, sací vedení, hrubý filtr s odkalovačem",
                     "Dopravní (podávací) čerpadlo s ruční pumpou + jemný čistič paliva",
@@ -527,6 +641,12 @@
             {
                 id: 12,
                 title: "12. V čem spočívá údržba a ošetřování palivové soustavy vznětového motoru",
+                core: {
+                    what: "Pravidelná péče zajišťující čistotu paliva a prevenci zadření vysokotlakého vstřikování.",
+                    check: "Množství paliva na palivoměru, kontrola průsaku nafty na spojích, stav odkalovací skleničky.",
+                    fail: "Běh vstřikovacího čerpadla 'nasucho' (okamžité vydření!), zanesení DPF bionaftou, zamrznutí parafínu v zimě.",
+                    fix: "Tankovat kvalitní zimní naftu, netankovat bionaftu, NETOČIT startérem při prázdné nádrži, měnit palivové filtry včas."
+                },
                 points: [
                     "Pravidelná kontrola množství nafty (zákaz vyjetí nádrže do nuly – zavzdušnění a zadření)",
                     "ZÁKAZ dlouhého točení startérem 'na sucho': čerpadlo a vstřikovače jsou mazány NAFTOU!",
@@ -539,6 +659,12 @@
             {
                 id: 13,
                 title: "13. Popište postup při odvzdušnění palivové soustavy vznětového motoru",
+                core: {
+                    what: "Odstranění vzduchových bublin po vyjetí nafty nebo výměně filtrů pro umožnění startu motoru.",
+                    check: "Motor točí, ale nechytá, v průhledné skleničce je pěna nebo chybí nafta.",
+                    fail: "Přisávání vzduchu netěsností, vybití baterií zbytečným točením startérem bez odvzdušnění.",
+                    fix: "Dolít naftu, povolit šroub na filtru, pumpovat ruční pumpou do vytlačení čisté nafty bez bublin a utáhnout; povolit matice u vstřikovačů, protočit startérem, dotáhnout."
+                },
                 points: [
                     "1. Zjištění a odstranění příčiny (doplnění nafty, oprava netěsnosti, výměna filtru)",
                     "2. Povolit madlo ručního podávacího čerpadla a odvzdušňovací šroubek na filtru",
@@ -551,6 +677,12 @@
             {
                 id: 14,
                 title: "14. Postup při hledání příčiny zavzdušnění palivové soustavy (dopravní čerpadlo)",
+                core: {
+                    what: "Lokalizace netěsnosti, kudy se do palivového systému dostává falešný vzduch.",
+                    check: "Rozdělit systém na sací větev (před čerpadlem - podtlak) a výtlačnou větev (za čerpadlem - přetlak).",
+                    fail: "V sací větvi nafta neteče ven, ale vzduch se saje dovnitř (prasklé těsnění skleničky, uvolněný holendr).",
+                    fix: "Pumpovat ruční pumpou: pokud sklenička nenatáhne naftu, je vada od nádrže k pumpě (ucpané sítko, prasklá hadice). Vyměnit těsnění, dotáhnout spoje."
+                },
                 points: [
                     "Rozlišení větví: sací potrubí (od nádrže k čerpadlu) vs. výtlačné potrubí (za čerpadlem)",
                     "V sací větvi je podtlak: netěsnost neroní naftu ven, ale neviditelně nasává vzduch dovnitř!",
@@ -563,6 +695,12 @@
             {
                 id: 15,
                 title: "15. Funkce regulátoru otáček vstřikovacího čerpadla a funkce omezovače rychlosti",
+                core: {
+                    what: "Regulátor chrání motor před zhasnutím a přetočením; omezovač hlídá zákonný limit 100 km/h u autobusu.",
+                    check: "Volnoběh drží stabilně při zátěži; při plném plynu na neutrál otáčky nepřekročí maximum.",
+                    fail: "Překročení 100 km/h z kopce (OMEZOVAČ NEBRZDÍ!), kolísání volnoběhu, přetočení motoru.",
+                    fix: "Při jízdě z kopce musí řidič aktivně brzdit sám retardérem/provozní brzdou; závadu regulátoru řeší autorizovaný servis."
+                },
                 points: [
                     "Regulátor otáček: udržuje motor ve stabilním volnoběhu a chrání před přetočením na maximu",
                     "Při dosažení max. otáček regulátor automaticky sníží/zastaví přívod nafty do válců",
@@ -575,6 +713,12 @@
             {
                 id: 16,
                 title: "16. Popište kontrolu a údržbu výfukového systému motoru",
+                core: {
+                    what: "Odvod a čištění spalin, tlumení hluku a funkce motorové výfukové brzdy.",
+                    check: "Vizuálně koroze, praskliny, závěsy; sluchem a čichem netěsnosti a průnik spalin do salonu; pohyb táhel klapky.",
+                    fail: "Průnik jedovatého CO do salonu (otrava cestujících!), nebezpečí požáru od horkých plynů, váznoucí klapka motorové brzdy.",
+                    fix: "Při zápachu spalin v salonu ihned zastavit a vyvětrat; táhla klapky mazat vysokoteplotním tukem; neotáčet klapkou násilím."
+                },
                 points: [
                     "Riziko netěsnosti: vniknutí jedovatých spalin do kabiny a salonu cestujících (ztráta vědomí!)",
                     "Kontrola: těsnost potrubí, neporušenost tlumičů hluku, stav koroze a pružných závěsů",
@@ -587,6 +731,12 @@
             {
                 id: 17,
                 title: "17. Funkce filtru pevných částic (DPF) a systému SCR (AdBlue), vliv na životnost",
+                core: {
+                    what: "Ekologické čištění emisí: DPF zachycuje a spaluje saze; SCR s močovinou rozkládá jedovaté NOx na dusík a páru.",
+                    check: "Kontrolka hladiny AdBlue (modré víčko), kontrolka regenerace DPF na přístrojové desce.",
+                    fail: "Ucpaný DPF filtr (nouzový režim motoru), zamrznutí nebo nedostatek AdBlue (omezení výkonu motoru dle zákona).",
+                    fix: "Dolévat včas AdBlue; DPF vyžaduje delší jízdy pod zátěží k regeneraci (nepodtáčet motor); přísný ZÁKAZ tankování bionafty."
+                },
                 points: [
                     "DPF (filtr pevných částic): keramické těleso zachycující saze ze spalování nafty",
                     "Regenerace DPF: automatické spalování sazí na CO2 při vysokých teplotách (600–650 °C)",
@@ -599,6 +749,12 @@
             {
                 id: 18,
                 title: "18. Činnost turbodmychadla, funkce mezichladiče (intercooleru) a způsoby ošetřování",
+                core: {
+                    what: "Zvýšení výkonu motoru stlačováním nasávaného vzduchu (až 300 000 ot/min na olejovém filmu); intercooler vzduch chladí.",
+                    check: "Poslechem (pískání, syčení), těsnost hadic sání, kontrola tlaku oleje.",
+                    fail: "Zadření hřídelky při náhlém vypnutí rozpáleného motoru, poškození lopatek nasátým bordelem, modrý kouř (únik oleje do sání).",
+                    fix: "Po startu za studena nevytáčet; po vysoké zátěži NECHAT BĚŽET 3–5 MIN NA VOLNOBĚH k dochlazení; hlídat těsnost sání."
+                },
                 points: [
                     "Princip: výfukové plyny točí turbínu, ta přes hřídelku roztáčí dmychadlo stlačující vzduch do válců",
                     "Otáčky dosahují 100 000 až 300 000 ot/min! Hřídelka plave na tenkém hydrodynamickém olejovém filmu",
@@ -611,6 +767,12 @@
             {
                 id: 19,
                 title: "19. Ošetřování čističe vzduchu (suchý, mokrý) a údržba plnicího systému motoru",
+                core: {
+                    what: "Odstranění prachu a nečistot ze vzduchu před vstupem do turbodmychadla a motoru.",
+                    check: "Indikátor zanesení filtru (podtlakový mechanický budík u filtru), těsnost a dotažení spon na hadicích.",
+                    fail: "Prasklá hadice za filtrem (nasátí prachu zničí lopatky turba i motor), zanesená vložka (ztráta výkonu, černý kouř).",
+                    fix: "Suchou papírovou vložku profouknout PROTI směru sání nebo vyměnit; mokrý čistič vyprat a vyměnit olej po rysku; dotáhnout spony."
+                },
                 points: [
                     "Suchý čistič (papírová vložka): profouknout stlačeným vzduchem PROTI směru sání, při zanesení vyměnit",
                     "Mokrý čistič (olejová lázeň): drátěnou vložku vyprat v naftě/benzínu a vyměnit olej po rysku",
@@ -623,6 +785,12 @@
             {
                 id: 20,
                 title: "20. Funkce spojky u vozidla a způsoby ovlivnění její životnosti",
+                core: {
+                    what: "Přenáší a krátkodobě přerušuje točivý moment mezi motorem a převodovkou při rozjezdu, řazení a zastavení.",
+                    check: "Chod pedálu, hladina kapaliny v nádobce ovládání spojky, absence prokluzu a zápachu spáleniny.",
+                    fail: "Prokluzující spojka (motor točí, bus nezrychluje), spálené obložení, zničené vypínací ložisko.",
+                    fix: "NEstát na spojce na semaforu (řadit neutrál!), neodkládat nohu na pedál za jízdy, nerozjíždět se na vysoké otáčky; opotřebenou lamelu mění servis."
+                },
                 points: [
                     "Umístění a funkce: mezi motorem a převodovkou, přenáší točivý moment a umožňuje jeho přerušení",
                     "Použití: rozjezd vozidla, řazení převodových stupňů a zastavení se zařazenou rychlostí",
@@ -635,6 +803,12 @@
             {
                 id: 21,
                 title: "21. Funkce převodového ústrojí: převodovka, rozdělovací převodovka, kardan, rozvodovka, diferenciál, redukce",
+                core: {
+                    what: "Přenos a úprava točivého momentu od motoru až na hnací kola autobusu.",
+                    check: "Těsnost skříní (únik oleje), dotažení přírub kardanu, vůle v křížových čepech.",
+                    fail: "Vylomené zuby, hučení v rozvodovce/diferenciálu, vibrace kardanu při uvolnění šroubů.",
+                    fix: "Pravidelně mazat kříže kardanu tukem, kontrolovat olej v převodovce a diferenciálu kontrolním šroubem; při vibracích zastavit."
+                },
                 points: [
                     "Převodovka: mění převodový poměr (sílu/rychlost), směr jízdy (zpátečka) a neutrál",
                     "Rozdělovací převodovka: dělí točivý moment na přední a zadní nápravu (u pohonu všech kol)",
@@ -647,6 +821,12 @@
             {
                 id: 22,
                 title: "22. Rozdíl mezi synchronizovanou a nesynchronizovanou převodovkou, ovládání a použití",
+                core: {
+                    what: "Způsob srovnání otáček kol a hřídelů při řazení rychlostních stupňů.",
+                    check: "Vyzkoušet řazení za klidu i za jízdy – hladkost chodu páky bez počítání zubů.",
+                    fail: "Opotřebení synchronních kroužků při řazení násilím, vylámání zubů při špatném meziplynu.",
+                    fix: "Synchronizovaná: řadit plynulým tlakem bez trhání. Nesynchronizovaná (staré vozy): nahoru 2x spojka, dolů s MEZIPLYNEM."
+                },
                 points: [
                     "Nesynchronizovaná (V3S, starý Liaz): ozuby zapadnou jen při shodných otáčkách kol a hřídele",
                     "Řazení nahoru (nesynchron.): 2× spojka (sešlápnout – neutrál – pustit – sešlápnout – zařadit)",
@@ -659,6 +839,12 @@
             {
                 id: 23,
                 title: "23. Význam kombinovaných (půlených) převodovek a funkce uzávěrky diferenciálu",
+                core: {
+                    what: "Půlené převodovky jemně dělí stupně pro optimální otáčky; uzávěrka spojí kola nápravy napevno pro vyproštění na kluzku.",
+                    check: "Funkce přepínače půlek na páce; kontrolka sepnutí uzávěrky na přístrojové desce.",
+                    fail: "Ukroucení poloosy při zapnuté uzávěrce na pevném asfaltu nebo při prudkém škubnutí za plyn.",
+                    fix: "Uzávěrku řadit VÝHRADNĚ za klidu před vjezdem na kluzko, po vyproštění ji IHNED vypnout; půlky řadit plynule se spojkou."
+                },
                 points: [
                     "Půlená převodovka: předřazený převod (půlky / želva-zajíc) rozdělí každý rychlostní stupeň na dva",
                     "Převodovka s rozsahovou redukcí: přiřazený převod zdvojnásobí počet stupňů (ze 4 na 8)",
@@ -671,6 +857,12 @@
             {
                 id: 24,
                 title: "24. Funkce tlumičů pérování a stabilizátoru, projevy nesprávné činnosti",
+                core: {
+                    what: "Tlumiče drží kola na vozovce a tlumí kmity; stabilizátor brání naklánění a převrácení vysokého autobusu v zatáčce.",
+                    check: "Vizuálně těsnost tlumičů (žádný mastný únik oleje), upevnění silentbloků a celistvost tyče stabilizátoru.",
+                    fail: "Odskakování kol, plošky na pneumatikách, prodloužení brzdné dráhy, nebezpečné houpání a náklon autobusu v zatáčce.",
+                    fix: "Tekoucí tlumič nebo prasklý stabilizátor se musí vyměnit na dílně; za jízdy okamžitě zvolnit a jet opatrně."
+                },
                 points: [
                     "Tlumiče pérování: brání rozkmitání nápravy, tlačí kolo k vozovce pro stálou přilnavost",
                     "Vadné tlumiče: odskakování kol, plošky na dezénu pneu, prodloužení brzdné dráhy, nebezpečí smyku",
@@ -683,6 +875,12 @@
             {
                 id: 25,
                 title: "25. Účel posilovače brzd a řízení, proč se nesmí za jízdy vypínat motor",
+                core: {
+                    what: "Znásobení lidské síly: hydraulické servořízení a pneumatický posilovač brzd umožňují lehké ovládání 18t autobusu.",
+                    check: "Hladina oleje v nádobce serva, těsnost hadic, tlak vzduchu v soustavě na manometru (8–10 bar).",
+                    fail: "Při vypnutí motoru okamžitě ztuhne volant (15t bus nelze lidskou silou utočit!), kompresor netlakuje a pružiny zablokují kola.",
+                    fix: "PŘÍSNÝ ZÁKAZ VYPNUTÍ MOTORU ZA JÍZDY! Při samovolném zhasnutí ihned brzdit a zastavit na rovném úseku."
+                },
                 points: [
                     "Účel: posilovače snižují fyzickou námahu řidiče a umožňují lehké ovládání těžkého autobusu",
                     "ZÁKAZ vypínání motoru za jízdy: pohon čerpadla serva i kompresoru vzduchu závisí na chodu motoru!",
@@ -695,6 +893,12 @@
             {
                 id: 26,
                 title: "26. Účel antiblokovacího systému (ABS) na vozidle a kontrola správné funkce",
+                core: {
+                    what: "Zabraňuje zablokování kol při intenzivním brzdění, udržuje autobus plně řiditelný a směrově stabilní.",
+                    check: "Žlutá kontrolka ABS se rozsvítí po zapnutí klíčku a po nastartování / rozjezdu na 5–10 km/h MUSÍ zhasnout.",
+                    fail: "Trvale svítící kontrolka ABS za jízdy = systém je vyřazen z činnosti z důvodu poruchy.",
+                    fix: "Při poruše ABS vozidlo brzdí dál běžným způsobem bez asistence – přizpůsobit jízdu, brzdit s citem a nahlásit servisu."
+                },
                 points: [
                     "Účel: zabránit zablokování kol při intenzivním brzdění a zachovat plnou řiditelnost vozidla",
                     "Funkce: snímače otáček na každém kole, řídicí jednotka a elektromagnetické ventily",
@@ -707,6 +911,12 @@
             {
                 id: 27,
                 title: "27. Účel systému regulace prokluzu hnacích kol (ASR) a kontrola správné funkce",
+                core: {
+                    what: "Zabraňuje protáčení hnacích zadních kol při rozjezdu a akceleraci na sněhu, ledu či mokru.",
+                    check: "Kontrolka ASR zhasne 1–2 s po zapnutí zapalování; při aktivním zásahu za jízdy bliká.",
+                    fail: "Protáčení kol, ztráta boční stability zadku autobusu, trvale svítící kontrolka (chyba systému).",
+                    fix: "Systém reaguje sám (ubere plyn a přibrzdí protáčející se kolo); v hlubokém sněhu lze ASR tlačítkem dočasně omezit pro rozhoupání."
+                },
                 points: [
                     "Účel: zabránit protáčení hnacích kol při rozjezdu a akceleraci na kluzkém povrchu",
                     "Zajišťuje směrovou stabilitu a rozjezd do svahu bez smyku hnací nápravy",
@@ -719,6 +929,12 @@
             {
                 id: 28,
                 title: "28. Funkce provozní, parkovací, pomocné (odlehčovací) a nouzové brzdy",
+                core: {
+                    what: "Čtyři zákonem dané brzdné funkce: Provozní (pedál), Parkovací (ruční páka), Pomocná (retardér), Nouzová (zastavení při poruše).",
+                    check: "Provozní zkouška brzd rozjezdem před garáží, parkovací brzda drží ve svahu, tlakoměr vzduchu 8–10 bar.",
+                    fail: "Únik vzduchu (syčení), propad tlaku pod 6 bar, rozsvícení červeného vykřičníku brzd, přehřátí obložení.",
+                    fix: "Při úniku vzduchu ihned zastavit (pružiny zabrzdí samy); z kopce šetřit provozní brzdy a používat retardér."
+                },
                 points: [
                     "Provozní brzda: pedálová, působí na všechna kola, slouží k běžnému zpomalení a zastavení",
                     "Parkovací brzda: zajišťovací, působí na zadní kola, mechanicky zajištěna pružinami",
@@ -731,6 +947,12 @@
             {
                 id: 29,
                 title: "29. Princip pomocné brzdy: motorová brzda, elektromagnetický a hydrodynamický retardér",
+                core: {
+                    what: "Beztřecí brzdění autobusu při dlouhých klesáních bez opotřebení a přehřívání brzdových destiček.",
+                    check: "Páčka pod volantem (stupně retardéru), kontrolka sepnutí, funkčnost motorové brzdy při sešlápnutí pedálu/tlačítka.",
+                    fail: "Přehřátí retardéru při dlouhém použití (elektromagnetický vzduchem, hydrodynamický vodou motoru), neúčinnost.",
+                    fix: "Sledovat teplotu chladicí kapaliny u hydrodynamického retardéru; včas podřadit pro zvýšení chladicího výkonu."
+                },
                 points: [
                     "Motorová brzda: klapka uzavře výfuk + válec nastaví čerpadlo na nulovou naftu (motor kompresorem)",
                     "Elektromagnetický retardér: ocelové kotouče na kardanu brzděny vířivými proudy elektromagnetů",
@@ -743,6 +965,12 @@
             {
                 id: 30,
                 title: "30. Princip činnosti kapalinové brzdy a vzduchokapalinové brzdy",
+                core: {
+                    what: "Kapalinová přenáší tlak přímo kapalinou (osobní vozy); vzduchokapalinová kombinuje vzduchový pedál s hydraulickým převodníkem v kolech.",
+                    check: "Hladina brzdové kapaliny v nádobce, těsnost trubek (žádný únik kapaliny), tlak vzduchu na budíku.",
+                    fail: "Únik brzdové kapaliny (pedál propadá k podlaze), uvaření kapaliny v dlouhém klesání (bubliny páry = nebrzdí).",
+                    fix: "Dolít brzdovou kapalinu (DOT 4), odvzdušnit; měnit kapalinu po 2 letech; při propadu pedálu okamžitě zastavit ruční brzdou."
+                },
                 points: [
                     "Kapalinová brzda: tlak pedálu tlačí kapalinu v hlavním válci přímo do kolových válečků (osobní auta)",
                     "Posilovač u kapalinových: podtlakový membránový posilovač (využívá podtlaku ve sběrném sacím potrubí)",
@@ -755,6 +983,12 @@
             {
                 id: 31,
                 title: "31. Princip činnosti vzduchové brzdy, vyjmenujte její hlavní části",
+                core: {
+                    what: "Čistě přetlakový systém těžkých vozidel, kde brzdnou sílu vyvozuje stlačený vzduch (8–10 bar) ze zásobníků.",
+                    check: "Tlakoměr na palubce (min. 8 bar), doba plnění kompresorem po startu, zkouška těsnosti poslechem (syčení).",
+                    fail: "Únik vzduchu netěsností, zamrznutí kondenzátu ve ventilech v zimě, prasklá hadice brzdového válce.",
+                    fix: "Pravidelně odkalovat vzduchojemy ventilem na dně, měnit patronu vysoušeče; při poklesu pod 6 bar vozidlo neodbrzdí (pružiny)."
+                },
                 points: [
                     "Čistě přetlakový systém: síla brzdění vychází ze stlačeného vzduchu (tlak cca 8–10 bar)",
                     "Zdroje: kompresor, regulátor tlaku, vysoušeč vzduchu, čtyřcestný jisticí ventil",
@@ -767,6 +1001,12 @@
             {
                 id: 32,
                 title: "32. Postup při ošetřování a údržbě jednotlivých částí vzduchové brzdy",
+                core: {
+                    what: "Zajištění stoprocentní těsnosti a odstranění vody z tlakového vzduchu, aby systém v zimě nezamrzl.",
+                    check: "Po nafoukání zatažením za kroužek odkalit vzduchojemy (nesmí stříkat voda), sledovat pokles tlaku po vypnutí motoru.",
+                    fail: "Voda ve vzduchojemech (zamrznutí brzd v mrazu), zanesená patrona vysoušeče, netěsné manžety válců.",
+                    fix: "Denně odkalovat vzduchojemy, před zimou vyměnit patronu vysoušeče vzduchu; u starších vozů dolít líh do protimrazové pumpy."
+                },
                 points: [
                     "Základní požadavek: nulový nebo minimální únik vzduchu ze spojů a potrubí",
                     "Kompresor: kontrola napnutí klínového řemene, těsnost mazání a čistota žeber",
@@ -779,6 +1019,12 @@
             {
                 id: 33,
                 title: "33. Rozdíl mezi kotoučovou a bubnovou brzdou, jejich výhody a nevýhody",
+                core: {
+                    what: "Konstrukční provedení třecích brzd na nápravách (kotouč s destičkami vs. buben s čelistmi).",
+                    check: "Vizuálně tloušťka destiček/obložení přes kontrolní otvory, stav kotoučů (trhliny, rýhy).",
+                    fail: "Vadnutí brzd (fading) u bubnů při přehřátí z kopce; mokré brzdy po průjezdu hlubokou louží nebrzdí.",
+                    fix: "Po projetí vody brzdy za pomalé jízdy lehkým přibrzděním vysušit; z kopce používat retardér; opotřebené destičky měnit na dílně."
+                },
                 points: [
                     "Kotoučová: brzdící účinek vyvolán přitlačováním destiček na boky brzdového kotouče",
                     "Výhody kotoučové: kratší brzdná dráha, skvělý odvod tepla, stálý účinek bez vadnutí (fadingu)",
@@ -791,6 +1037,12 @@
             {
                 id: 34,
                 title: "34. Vysvětlete, co se rozumí pod pojmem geometrie řídicí nápravy vozidla",
+                core: {
+                    what: "Konstrukční úhly nastavení kol a rejdových čepů pro snadné řízení, stabilitu a samovolné vracení volantu.",
+                    check: "Rovnoměrnost sjetí předních pneumatik, samovolné vracení volantu do roviny po projetí zatáčky.",
+                    fail: "Vozidlo táhne k jedné straně, volant se nevrací, autobus na rovině 'plave', zvýšená spotřeba nafty.",
+                    fix: "Nastavení geometrie (sbíhavost, odklon, záklon čepu) je práce pro specializovaný servis s laserovou stolicí."
+                },
                 points: [
                     "Geometrie řídicí nápravy určuje základní postavení řízených kol a rejdových čepů",
                     "Důležitá pro: lehké řízení, samovolné vracení kol do přímého směru a stabilitu vozidla",
@@ -803,6 +1055,12 @@
             {
                 id: 35,
                 title: "35. Popište nejčastější projevy nesprávné geometrie řídicí nápravy vozidla",
+                core: {
+                    what: "Vizuální a jízdní signály vadného seřízení nápravy ničící pneumatiky a stabilitu autobusu.",
+                    check: "Hmatem přejet dezén předních pneumatik (ostré otřepy) a sledovat chování volantu za jízdy na rovině.",
+                    fail: "Sbíhavost: ojetý vnější kraj běhounu. Rozbíhavost: ojetý vnitřní kraj. Vozidlo nedrží stopu.",
+                    fix: "Při zjištění nepravidelného opotřebení neprodleně nahlásit dílně k seřízení spojovací tyče řízení."
+                },
                 points: [
                     "Nadměrné a nestejnoměrné opotřebení běhounu pneumatik (hlavní vizuální signál)",
                     "Malá sbíhavost (rozbíhavost): pneumatiky se sjíždějí z vnitřní strany",
@@ -815,6 +1073,12 @@
             {
                 id: 36,
                 title: "36. Postup při ošetřování akumulátoru a faktory ovlivňující jeho životnost",
+                core: {
+                    what: "Zdroj elektrické energie pro startér a palubní síť při vypnutém motoru (u busů 24 V).",
+                    check: "Čistota a sucho na povrchu, dotažení svorek a jejich namazání vazelínou, upevnění v rámu, výška elektrolytu.",
+                    fail: "Sulfatace desek hlubokým vybitím, zamrznutí vybité baterie, zkrat, exploze vodíku při jiskře.",
+                    fix: "Dolévat VÝHRADNĚ destilovanou vodu (10–15 mm nad desky); svorky očistit drátěným kartáčem a máznout vazelínou; ZÁKAZ OHNĚ."
+                },
                 points: [
                     "Kontrola: pevné uchycení, povrch suchý a čistý, čistota a dotažení svorek chráněných vazelínou",
                     "Kontrola výšky elektrolytu u údržbových typů (doplňovat VÝHRADNĚ destilovanou vodou)",
@@ -827,6 +1091,12 @@
             {
                 id: 37,
                 title: "37. Rozdíl mezi paralelním a sériovým zapojením akumulátorů a postup zapojení/odpojení",
+                core: {
+                    what: "Sériové zapojení (+ na -) sčítá napětí (12V + 12V = 24V u busů); paralelní sčítá kapacitu při 12V.",
+                    check: "Správnost propojení pólů a pevnost spojovacího mezikusu mezi bateriemi.",
+                    fail: "Masivní zkrat klíčem o kostru při špatném postupu odpojování (roztavení nářadí, popálení, exploze).",
+                    fix: "ODPOJOVÁNÍ: NEJPRVE MÍNUS (-) KOSTRU, PAK PLUS (+). PŘIPOJOVÁNÍ: NEJPRVE PLUS (+), AŽ NAKONEC MÍNUS (-) KOSTRU!"
+                },
                 points: [
                     "Sériové zapojení (+ na -): napětí se sčítá (12V + 12V = 24V), kapacita stejná (standard busů)",
                     "Paralelní zapojení (+ na +, - na -): napětí zůstává 12V, kapacita akumulátorů se sčítá",
@@ -839,6 +1109,12 @@
             {
                 id: 38,
                 title: "38. Popište funkci pojistek v elektrické soustavě vozidla a jejich umístění",
+                core: {
+                    what: "Ochrana elektrického vedení a spotřebičů před nadproudem, zkratem a vznikem požáru autobusu.",
+                    check: "Před jízdou mít v povinné výbavě náhradní pojistky od každé hodnoty po jednom kusu; kontrola tavného drátku.",
+                    fail: "Přepálení drátku pojistky při zkratu (spotřebič přestane fungovat), požár kabeláže při nevhodném překlenutí.",
+                    fix: "Odstranit příčinu zkratu, nahradit pojistkou STEJNÉ hodnoty (ampérů); PŘÍSNÝ ZÁKAZ dávat silnější pojistku nebo hřebík/drát!"
+                },
                 points: [
                     "Úkol pojistek: chránit elektrický obvod při poruchách, zkratech či přetížení před požárem",
                     "Funkce: při stoupnutí proudu nad stanovenou mez se drátek pojistky teplem přepálí",
@@ -851,6 +1127,12 @@
             {
                 id: 39,
                 title: "39. Jakým způsobem se provádí výměna žárovek vnějšího osvětlení vozidla",
+                core: {
+                    what: "Zajištění viditelnosti autobusu a bezpečné orientace řidiče za tmy a snížené viditelnosti.",
+                    check: "Před jízdou obejít autobus a zkontrolovat funkčnost všech světel; mít náhradní žárovky 24 V v zásobě.",
+                    fail: "Prasklé vlákno, spálení halogenové baňky otiskem mastného prstu, vniknutí vody do paraboly.",
+                    fix: "Vypnout světla, halogenku brát VÝHRADNĚ přes čistý hadr za patici (nesahat na sklo!), dodržet napětí 24 V a správný příkon (W)."
+                },
                 points: [
                     "Všechna světelná zařízení musí být funkční, čistá a světlomety správně seřízené",
                     "Povinnost vozit náhradní žárovky: od každého použitého druhu po jednom kuse",
@@ -863,6 +1145,12 @@
             {
                 id: 40,
                 title: "40. Vysvětlete symboly kontrolek a ovladačů na přístrojové desce (volantu) vozidla",
+                core: {
+                    what: "Informační rozhraní: barevné kontrolky varují před poruchou a informují o stavu systémů autobusu.",
+                    check: "Test kontrolek po zapnutí zapalování – funkční žárovky a diody v palubním štítu.",
+                    fail: "ČERVENÁ = okamžité zastavení (olej, dobíjení, brzdy, dveře). ŽLUTÁ = výstraha (ABS, ASR, DPF, palivo).",
+                    fix: "Při červené ihned bezpečně zastavit a vypnout motor; při žluté zvýšit opatrnost a závadu řešit při nejbližší příležitosti."
+                },
                 points: [
                     "Červené kontrolky: kritické – mazání, dobíjení, teplota motoru, parkovací brzda, závada brzd",
                     "Oranžové / Žluté: výstražné – ABS, ASR, opotřebení brzd, žhavení, filtr pevných částic, palivo",
@@ -875,6 +1163,12 @@
             {
                 id: 41,
                 title: "41. Postup při připojení tažného lana a tažné tyče a možnosti jejich použití",
+                core: {
+                    what: "Nouzové odtažení nepojízdného vozidla (autobus se smí vléci VÝHRADNĚ BEZ CESTUJÍCÍCH!).",
+                    check: "Stav závěsu, zajištění čepu pojistkou, označení tyče pruhy (tyč 1–6 m, lano 2,5–6 m s praporkem).",
+                    fail: "Přetržení lana, zadření převodovky vlečením (nutno sundat kardan!), zablokování kol bez vzduchu.",
+                    fix: "Při vadných brzdách POUZE TYČ; max. rychlost 60 km/h; mechanicky odbrzdit pružinové brzdové válce šrouby a demontovat kardan."
+                },
                 points: [
                     "Rychlost vlečení nejvýše 60 km/h; řidiči si předem dohodnou způsob dorozumívání",
                     "ZVLÁŠTNÍ USTANOVENÍ: AUTOBUS SE SMÍ VLÉCI POUZE BEZ PŘEPRAVOVANÝCH OSOB!",
@@ -887,6 +1181,12 @@
             {
                 id: 42,
                 title: "42. Popište postup při montáži sněhových řetězů",
+                core: {
+                    what: "Zajištění trakce a brzdění na souvislé vrstvě sněhu a ledu montáží na hnací (zadní) nápravu.",
+                    check: "Ověřit velikost řetězů k rozměru pneu před zimou, stav napínacích pák a neporušenost článků.",
+                    fail: "Uvolnění řetězu (rozbití brzdových hadic a podběhu), prasknutí řetězu na holém asfaltu (max. 50 km/h!).",
+                    fix: "Rozložit, najet, spojit vnitřní háček, napnout vnější pákou a zajistit; PO 50–100 METRECH ZASTAVIT A ZNOVU DOPNOUT."
+                },
                 points: [
                     "Montáž: nejméně na kola poháněné nápravy (u autobusu kola zadní nápravy)",
                     "Přípustnost: pouze na vozovkách pokrytých souvislou vrstvou sněhu nebo ledu",
@@ -899,6 +1199,12 @@
             {
                 id: 43,
                 title: "43. Základní funkce tachografu a v čem spočívá jeho obsluha",
+                core: {
+                    what: "Státní kontrolní zařízení zaznamenávající rychlost, vzdálenost a režimy práce řidiče (Nařízení ES 561/2006).",
+                    check: "Platnost kalibrace tachografu (štítek), zásoba papíru v tiskárně, vložení karty řidiče do slotu 1.",
+                    fail: "Jízda bez karty (hrubý přestupek), špatně zadaná výchozí země, vyčerpaný papír v tiskárně při kontrole policií.",
+                    fix: "Zasouvat kartu čipem nahoru před směnou, potvrdit odpočinek, zadat symbol země (CZ), při kontrole vytisknout denní výtisk."
+                },
                 points: [
                     "Tachograf ukazuje a zaznamenává: ujetou vzdálenost, rychlost jízdy a časové režimy činnosti",
                     "Režimy činnosti: doba řízení (volant), jiná práce (kladívka), pohotovost (čtverec), odpočinek (postýlka)",
@@ -911,6 +1217,12 @@
             {
                 id: 44,
                 title: "44. Postup při připojování a odpojování přívěsu",
+                core: {
+                    what: "Bezpečné spojení soupravy vozidla a vleku (např. cyklovlek nebo zavazadlový přívěs za autobusem).",
+                    check: "Pojistný kolík závěsu zacvaknutý, vůle do 5 mm, čistota těsnění brzdových hlavic.",
+                    fail: "Smrtelný úraz při ručním navádění odbrzděného vleku; rozpojení soupravy za jízdy; únik vzduchu z brzd.",
+                    fix: "VŽDY najíždět busem k zabržděnému vleku! Hadice: NEJPRVE ŽLUTÁ (ovládací), PAK ČERVENÁ (plnicí). Odpojování OBRÁCENĚ."
+                },
                 points: [
                     "VŽDY najíždíme tažným vozidlem na zajištěný přívěs (ZÁKAZ navádět odbrzděný přívěs ručně!)",
                     "Nacouvat na cca 20 cm od oje, seřídit výšku oje na hubici závěsu, otevřít čep závěsu",
@@ -923,6 +1235,12 @@
             {
                 id: 45,
                 title: "45. Vyjmenujte povinné vybavení vozidla (se zaměřením na autobus)",
+                core: {
+                    what: "Zákonem stanovená nouzová a bezpečnostní výbava pro záchranu cestujících a řešení nehod (kategorie M2, M3).",
+                    check: "Platná roční revize hasicích přístrojů (min. 6 kg náplně), autolékárnička velikosti II/III, přítomnost únikových kladívek.",
+                    fail: "Prošlá revize hasičáku, chybějící kladívka u nouzových oken, absence zakládacích klínů (pokuta a zákaz jízdy).",
+                    fix: "Před výjezdem zkontrolovat: hasicí přístroje 6 kg s plombou, lékárničku, vestu, trojúhelník, min. 2 klíny, žárovky a pojistky."
+                },
                 points: [
                     "Hasicí přístroje: u autobusu hasicí přístroj s celkovou náplní min. 6 kg (platná roční revize!)",
                     "Autolékárnička pro hromadnou přepravu: velikost II (do 80 osob) nebo velikost III (nad 80 osob)",
@@ -1031,6 +1349,14 @@
                 badge.innerText = 'Hromádka 3 (Týdně / Umím)';
                 badge.style.background = 'rgba(76, 175, 80, 0.2)';
                 badge.style.color = '#4caf50';
+            }
+
+            // Vyplnění 4 klíčových bodů pro komisaře
+            if (q.core) {
+                document.getElementById('core-what').innerText = q.core.what;
+                document.getElementById('core-check').innerText = q.core.check;
+                document.getElementById('core-fail').innerText = q.core.fail;
+                document.getElementById('core-fix').innerText = q.core.fix;
             }
 
             const pointsEl = document.getElementById('q-points');
