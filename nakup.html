@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nákup Globus</title>
   
-  <!-- Ikona pro záložku prohlížeče i plochu telefonu (SVG nákupní košík) -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364b5f6'><path d='M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z'/></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364b5f6'><path d='M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z'/></svg>">
 
@@ -60,7 +59,6 @@
       color: var(--text-dim);
     }
     
-    /* Kategorie */
     .kategorie-blok {
       background-color: var(--card-bg);
       border: 1px solid var(--border);
@@ -82,7 +80,6 @@
       flex-direction: column;
     }
 
-    /* Řádek položky */
     .polozka {
       display: flex;
       align-items: center;
@@ -125,7 +122,6 @@
       line-height: 1.3;
     }
 
-    /* Šedý stav (hotovo / v košíku) */
     .polozka.koupeno {
       color: var(--text-dim);
       background-color: rgba(0, 0, 0, 0.15);
@@ -145,7 +141,6 @@
     }
     .btn-del:hover { color: #e53935; }
 
-    /* Spodní lišta pro přidání */
     .form-panel {
       position: fixed;
       bottom: 0;
@@ -236,10 +231,9 @@
   </div>
 
   <script>
-    // VLOŽ SVOJI URL Z GOOGLE APPS SCRIPTU
+    // SEM VLOŽ SVOJI STÁVAJÍCÍ URL Z APPS SCRIPTU
     const API_URL = "TVOJE_APPS_SCRIPT_URL_ZDE";
 
-    // Trasa Globusem + OSTATNÍ na konci
     const KATEGORIE_TRASA = [
       "NÁPOJE",
       "DOMÁCNOST",
@@ -258,9 +252,10 @@
       "OSTATNÍ"
     ];
 
-    let items = [];
+    let items = JSON.parse(localStorage.getItem("nakup_backup") || "[]");
     let vybranaKategorie = KATEGORIE_TRASA[0];
-    let saveTimeout = null;
+    let isSaving = false;
+    let pendingSave = false;
 
     function renderTags() {
       const container = document.getElementById("tags-list");
@@ -278,33 +273,55 @@
     }
 
     async function nactiPolozky() {
-      document.getElementById("status").innerText = "Načítám...";
+      const statusEl = document.getElementById("status");
+      statusEl.innerText = "Načítám...";
       try {
-        const res = await fetch(API_URL + "?mode=nakup");
+        const res = await fetch(API_URL + "?mode=nakup&nocache=" + new Date().getTime());
         const data = await res.json();
-        items = Array.isArray(data) ? data : [];
+        if (Array.isArray(data)) {
+          if (data.length > 0) {
+            items = data;
+            localStorage.setItem("nakup_backup", JSON.stringify(items));
+          } else if (items.length > 0) {
+            triggerSave();
+          }
+        }
         renderSeznam();
-        document.getElementById("status").innerText = "OK";
+        statusEl.innerText = "OK";
       } catch (err) {
-        document.getElementById("status").innerText = "Chyba sítě";
+        statusEl.innerText = "Offline";
+        renderSeznam();
       }
     }
 
     function triggerSave() {
-      document.getElementById("status").innerText = "Ukládám...";
-      clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(async () => {
-        try {
-          await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({ type: "nakup_save", items: items })
-          });
-          document.getElementById("status").innerText = "Uloženo";
-        } catch (err) {
-          document.getElementById("status").innerText = "Chyba zápisu";
+      localStorage.setItem("nakup_backup", JSON.stringify(items));
+      const statusEl = document.getElementById("status");
+      statusEl.innerText = "Ukládám...";
+
+      if (isSaving) {
+        pendingSave = true;
+        return;
+      }
+
+      isSaving = true;
+      pendingSave = false;
+
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ type: "nakup_save", items: items })
+      })
+      .then(function() {
+        statusEl.innerText = "Uloženo";
+        isSaving = false;
+        if (pendingSave) {
+          triggerSave();
         }
-      }, 500);
+      })
+      .catch(function(err) {
+        statusEl.innerText = "Chyba zápisu";
+        isSaving = false;
+      });
     }
 
     function renderSeznam() {
@@ -399,6 +416,7 @@
     });
 
     renderTags();
+    renderSeznam();
     nactiPolozky();
   </script>
 </body>
