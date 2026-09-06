@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trenažér Techniky Bus (D) 🎯</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        html, body {
+            height: 100%;
+            background-color: #121314;
+            color: #e2e2e2;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 720px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #1a1c1e;
+            border-left: 1px solid #2a2d32;
+            border-right: 1px solid #2a2d32;
+        }
+
+        header {
+            padding: 14px 16px;
+            background-color: #151719;
+            border-bottom: 1px solid #2a2d32;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #00bfa5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-badge {
+            font-size: 0.75rem;
+            background: #2a2d32;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .stat-h1 { color: #cf6679; }
+        .stat-h2 { color: #ffb74d; }
+        .stat-h3 { color: #4caf50; }
+
+        .filter-toggle-box {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            background-color: #121314;
+            padding: 3px;
+            border-radius: 6px;
+            border: 1px solid #2a2d32;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: none;
+            color: #8a8d92;
+            padding: 6px 2px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .filter-btn.active { background-color: #2a2d32; color: #00bfa5; }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 18px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .question-card {
+            background-color: #151719;
+            border: 1px solid #2a2d32;
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .q-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #8a8d92;
+            font-weight: bold;
+        }
+
+        .q-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #fff;
+        }
+
+        .instruction-box {
+            font-size: 0.8rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 4px;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item {
+            background-color: #212428;
+            border: 1px solid #2d3138;
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 0.88rem;
+            line-height: 1.35;
+            cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .option-item:hover { background-color: #2a2d32; border-color: #3e444d; }
+
+        .checkbox-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #5a6069;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: transparent;
+            margin-top: 1px;
+        }
+
+        .option-item.selected {
+            border-color: #00bfa5;
+            background-color: #172d29;
+        }
+        .option-item.selected .checkbox-box {
+            border-color: #00bfa5;
+            background-color: #00bfa5;
+            color: #121314;
+        }
+
+        /* Stavy po kontrole */
+        .option-item.correct-hit {
+            border-color: #4caf50 !important;
+            background-color: #152b18 !important;
+            color: #a5d6a7;
+        }
+        .option-item.correct-hit .checkbox-box {
+            border-color: #4caf50 !important;
+            background-color: #4caf50 !important;
+            color: white;
+        }
+
+        .option-item.wrong-hit {
+            border-color: #cf6679 !important;
+            background-color: #33161c !important;
+            color: #ef9a9a;
+        }
+        .option-item.wrong-hit .checkbox-box {
+            border-color: #cf6679 !important;
+            background-color: #cf6679 !important;
+            color: white;
+        }
+
+        .option-item.missed {
+            border-color: #ffb74d !important;
+            background-color: #332712 !important;
+            color: #ffe082;
+            border-style: dashed;
+        }
+        .option-item.missed .checkbox-box {
+            border-color: #ffb74d !important;
+            color: #ffb74d;
+        }
+
+        .result-box {
+            background-color: #151719;
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #2a2d32;
+            text-align: center;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+
+        footer {
+            padding: 12px 16px;
+            background-color: #151719;
+            border-top: 1px solid #2a2d32;
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn-check { background-color: #009688; color: white; }
+        .btn-check:hover { background-color: #00bfa5; }
+
+        .btn-next { background-color: #3b82f6; color: white; }
+        .btn-next:hover { background-color: #2563eb; }
+
+        .btn-prev {
+            width: 70px;
+            background-color: #2a2d32;
+            color: #e2e2e2;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <div class="header-top">
+                <div class="header-title">🎯 Trenažér otázek (D)</div>
+                <div class="stats-badge" id="stats-badge">
+                    <span class="stat-h1" id="st-h1">H1: 45</span> | 
+                    <span class="stat-h2" id="st-h2">H2: 0</span> | 
+                    <span class="stat-h3" id="st-h3">H3: 0</span>
+                </div>
+            </div>
+            <div class="filter-toggle-box">
+                <button class="filter-btn active" id="f-all" onclick="setFilter('all')">Vše (45)</button>
+                <button class="filter-btn" id="f-box1" onclick="setFilter('box1')">❌ Neumím</button>
+                <button class="filter-btn" id="f-box2" onclick="setFilter('box2')">⚡ Váhám</button>
+                <button class="filter-btn" id="f-box3" onclick="setFilter('box3')">✅ Umím</button>
+            </div>
+        </header>
+
+        <div class="content" id="content-area">
+            <div class="question-card">
+                <div class="q-meta">
+                    <span id="q-number">Otázka 1 z 45</span>
+                    <span id="q-status-badge">Stav: Nezařazeno</span>
+                </div>
+                <div class="q-title" id="q-title">Načítání otázky...</div>
+            </div>
+
+            <div class="instruction-box">
+                <span>Označ 5 správných bodů (záchytných témat):</span>
+                <span id="selected-counter" style="color: #00bfa5; font-weight: bold;">0 / 5 vybráno</span>
+            </div>
+
+            <div class="options-list" id="options-list"></div>
+
+            <div class="result-box" id="result-box" style="display: none;"></div>
+        </div>
+
+        <footer>
+            <button class="action-btn btn-prev" onclick="prevQuestion()">‹ Zpět</button>
+            <button class="action-btn btn-check" id="main-btn" onclick="handleMainAction()">ZKONTROLOVAT</button>
+        </footer>
+    </div>
+
+    <script>
+        // Data převzatá z technika.html
+        const questionsData = [
+            { id: 1, title: "1. Popište úkony kontroly vozidla před jízdou", points: [ "Rozdělení na 4 smysly: Vizuální, Hmatová, Čichová, Sluchová", "Vizuální: skla, zrcátka, světla, pneu, louže pod vozem, interiér", "Hmatová: měrka oleje, chladicí kapalina, řemeny, dotažení kol, odkalení vzduchojemů", "Čichová a Sluchová: zápach spalin/nafty v kabině a salonu, syčení vzduchu, rány", "Po nastartování: plnění vzduchu (8–10 bar), zkouška těsnosti a provozní zkouška brzd" ] },
+            { id: 2, title: "2. Popište kontrolu tlaku vzduchu v pneumatikách a hloubku drážek dezénu pneumatiky", points: [ "Tlak měříme tlakoměrem VÝHRADNĚ za studena (vozidlo zajištěno)", "Rezervní kolo tlakujeme na nejvyšší povolený technický tlak pláště", "Zimní dofukování: v chladu připočítat cca +0,2 baru k letní hodnotě", "Minimální dezén: letní min. 1,6 mm (bezpečná hranice pro těžká vozidla je 3 mm)", "Zimní pneumatiky (nad 3,5 t): povinně min. 6 mm na hnané nápravě (6 kol = 6 mm)" ] },
+            { id: 3, title: "3. Popište obsah kontroly kol a pneumatik a faktory ovlivňující jejich životnost", points: [ "Kontrola: tlak huštění, hloubka dezénu, stav ráfků a dotažení kolových matic", "Dotahování momentovým klíčem: disková kola do kříže, kola TRILEX po obvodu", "Kontrola zadní dvoumontáže na vzpříčený cizí předmět (kámen mezi koly)", "Vliv podvozku: vadné tlumiče vytvářejí plošky, špatná geometrie sjíždí hrany", "Vliv brzd: váznoucí brzda přehřívá ráfek a patku pláště, blokování vytváří plochy" ] },
+            { id: 4, title: "4. Jaké jsou nejčastější příčiny poškození plášťů pneumatik a jejich projevy", points: [ "Provozní podmínky: vniknutí ostrého tělesa, proražení kordu o obrubník (boule)", "Nesprávné huštění: podhuštěná pneu se bortí a přehřívá, přehuštěná je náchylná k průrazu", "Technické závady: nesprávná geometrie, vadné tlumiče pérování, váznoucí brzdy", "Vzpříčený kámen ve dvoumontáži: třením prořeže bočnice obou pneumatik", "Styl jízdy: prudké brzdění se smykem bez ABS vybrousí plošku na běhounu" ] },
+            { id: 5, title: "5. Popište postup při výměně kola", points: [ "Zajištění a bezpečnost: zastavit u kraje, výstražné 4 blinkry, vesta, cestující ven do bezpečí", "Výstražný trojúhelník: obec min. 50 m (dle situace), dálnice min. 100 m", "Parkovací brzda + zakládací klíny na nápravu, která se NEzvedá", "Postup: povolit matice na zemi, hever pod určené místo nápravy, zvednout, vyměnit", "Dotažení matic do kříže, po spuštění dotáhnout předepsaným momentem, po 50 km kontrola" ] },
+            { id: 6, title: "6. Kontrola množství oleje v motoru, způsob doplňování, intervaly výměny", points: [ "Podmínky měření: motor vypnutý, vozidlo na rovině, počkat na stečení oleje do vany", "Měrka oleje: vytáhnout, otřít hadrem, zasunout na doraz, vytáhnout a odečíst mezi MIN a MAX", "Doplňování: čisté plnicí hrdlo s piktogramem olejničky, olej přesné normy výrobce", "ZÁKAZ přelití nad MAX: olej se napění, motor ho spálí, hrozí poškození těsnění a DPF", "Intervaly výměny: dle výrobce (u busů obvykle 30 000 – 60 000 km nebo 1 rok); vždy i filtr" ] },
+            { id: 7, title: "7. Signalizace dobíjení a mazání motoru, projevy poruch za jízdy", points: [ "Dobíjení: červená kontrolka baterie se rozsvítí po zapnutí klíčku a po nastartování MUSÍ zhasnout", "Svítící kontrolka dobíjení: prasklý řemen (často pohání i vodní pumpu!) nebo vadný alternátor", "Mazání: červená kontrolka olejničky musí po startu ihned zhasnout (náběh tlaku)", "Rozsvícení mazání za jízdy: OKAMŽITĚ ZASTAVIT A VYPNOUT MOTOR (hrozí zadření!)", "Kouř: černý (nafta/vzduch), modrý (spalování oleje – písty/turbo), bílý za tepla (voda v motoru)" ] },
+            { id: 8, title: "8. Kontrola a ošetřování kapalinové chladicí soustavy, regulace provozní teploty", points: [ "Kontrola: množství kapaliny v expanzce (mezi ryskami), těsnost hadic, čistota chladiče", "Kontrola řemenů: drážkový řemen lze rukou otočit o 90°, klínový promáčknout o 1–1,5 cm", "Při použití dvou řemenů se vždy mění OBA současně!", "Regulace: termostat zavřený = malý okruh (rychlý ohřev); při 80–90 °C otevírá velký okruh do chladiče", "Chladicí kapalina se mění cca po 2–3 letech, před zimou kontrola mrazuvzdornosti refraktometrem" ] },
+            { id: 9, title: "9. Signalizace teploty chladicí kapaliny a postup při přehřátí motoru", points: [ "Signalizace: ručička teploměru v červeném poli nebo rozsvícená červená kontrolka teploměru", "1. krok: pustit topení do kabiny a salonu na plný výkon a ventilátory naplno (odvod tepla)", "2. krok: podřadit na nižší stupeň pro zvýšení otáček a výkonu vodní pumpy", "Pokud teplota neklesá: zastavit na bezpečném místě, nechat motor na volnoběh, pak vypnout", "PŘÍSNÝ ZÁKAZ otevírat víčko horké expanzní nádobky – nebezpečí těžkého opaření párou!" ] },
+            { id: 10, title: "10. Kontrola a ošetřování vzduchové chladicí soustavy vozidla a regulace teploty", points: [ "Konstrukce: vzduchem chlazené motory (např. Tatra) bez chladicí kapaliny", "Kontrola: čistota chladicích žeber válců a hlav, upevnění a těsnost plechů", "Kontrola pohonu dmychadla: napnutí klínových řemenů nebo těsnost hydropohonu", "Regulace teploty: žaluziemi škrtícími průtok vzduchu nebo hydraulickou spojkou dmychadla", "Zimní provoz: montáž krycí dečky na čelo motoru pro rychlejší ohřátí" ] },
+            { id: 11, title: "11. Popište hlavní části palivové soustavy vznětového motoru", points: [ "Nízkotlaká část (tlak cca 2–2,5 bar): nádrž, sací vedení, hrubý filtr s odkalovačem", "Dopravní (podávací) čerpadlo s ruční pumpou + jemný čistič paliva", "Vysokotlaká část: vstřikovací čerpadlo (u Common-Railu tlak až 2500 bar)", "Vysokotlaké trubky, vstřikovače v hlavách válců rozprašující naftu pod tlakem", "Přepadové (vratné) potrubí přebytku nafty zpět do nádrže (chladí čerpadlo a ohřívá nádrž)" ] },
+            { id: 12, title: "12. V čem spočívá údržba a ošetřování palivové soustavy vznětového motoru", points: [ "Pravidelná kontrola množství nafty (zákaz vyjetí nádrže do nuly – zavzdušnění a zadření)", "ZÁKAZ dlouhého točení startérem 'na sucho': čerpadlo a vstřikovače jsou mazány NAFTOU!", "Kontrola těsnosti všech spojů (nízkotlak přisává vzduch, vysokotlak hrozí požárem)", "Kontrola a odkalení skleničky hrubého čističe a pravidelná výměna jemných filtrů", "Kvalita nafty: letní vs. zimní nafta, zákaz tankování bionafty do vozidel s DPF" ] },
+            { id: 13, title: "13. Popište postup při odvzdušnění palivové soustavy vznětového motoru", points: [ "1. Zjištění a odstranění příčiny (doplnění nafty, oprava netěsnosti, výměna filtru)", "2. Povolit madlo ručního podávacího čerpadla a odvzdušňovací šroubek na filtru", "3. Pumpovat ručně, dokud z filtru nevychází čistá nafta bez vzduchových bublin, a utáhnout", "4. Obdobně odvzdušnit vstřikovací čerpadlo přes jeho odvzdušňovací šroubek", "5. Vysokotlaká část: povolit převlečné matice u vstřikovačů, protočit startérem, utáhnout" ] },
+            { id: 14, title: "14. Postup při hledání příčiny zavzdušnění palivové soustavy (dopravní čerpadlo)", points: [ "Rozlišení větví: sací potrubí (od nádrže k čerpadlu) vs. výtlačné potrubí (za čerpadlem)", "V sací větvi je podtlak: netěsnost neroní naftu ven, ale neviditelně nasává vzduch dovnitř!", "Kontrola těsnění skleničky hrubého filtru, dotažení holendrů a stavu sacího koše", "Zkouška ruční pumpou: pokud nenasaje naftu do skleničky, je problém před čerpadlem", "Pokud pumpa naftu nasaje, ale systém padá, je netěsnost mezi čerpadlem a vstřikováním" ] },
+            { id: 15, title: "15. Funkce regulátoru otáček vstřikovacího čerpadla a funkce omezovače rychlosti", points: [ "Regulátor otáček: udržuje motor ve stabilním volnoběhu a chrání před přetočením na maximu", "Při dosažení max. otáček regulátor automaticky sníží/zastaví přívod nafty do válců", "Omezovač rychlosti: zákonné omezení maximální rychlosti (pro autobusy povinně 100 km/h)", "Pracuje elektronicky: při 100 km/h odpojí vstřikování bez ohledu na plyn", "DŮLEŽITÉ: omezovač nebrzdí vozidlo z kopce! Vlivem hmotnosti bus zrychluje, řidič musí brzdit sám" ] },
+            { id: 16, title: "16. Popište kontrolu a údržbu výfukového systému motoru", points: [ "Riziko netěsnosti: vniknutí jedovatých spalin do kabiny a salonu cestujících (ztráta vědomí!)", "Kontrola: těsnost potrubí, neporušenost tlumičů hluku, stav koroze a pružných závěsů", "Výfuková motorová brzda: pneumatická škrticí klapka umístěná v potrubí blízko motoru", "Údržba výfukové brzdy: kontrola pohybu ovládacích táhel a promazání vysokoteplotním mazivem", "ZÁKAZ násilného otáčení samotnou klapkou na horkém výfukovém potrubí" ] },
+            { id: 17, title: "17. Funkce filtru pevných částic (DPF) a systému SCR (AdBlue), vliv na životnost", points: [ "DPF (filtr pevných částic): keramické těleso zachycující saze ze spalování nafty", "Regenerace DPF: automatické spalování sazí na CO2 při vysokých teplotách (600–650 °C)", "Životnost DPF: ničí ho krátké trasy za studena, podtáčení motoru a bionafta (zákaz tankování!)", "Systém SCR (AdBlue): vstřikování kapalné močoviny z modré nádrže do výfukového reaktoru", "Princip SCR: močovina se teplem mění na amoniak, který rozkládá jedovaté NOx na dusík a vodní páru" ] },
+            { id: 18, title: "18. Činnost turbodmychadla, funkce mezichladiče (intercooleru) a způsoby ošetřování", points: [ "Princip: výfukové plyny točí turbínu, ta přes hřídelku roztáčí dmychadlo stlačující vzduch do válců", "Otáčky dosahují 100 000 až 300 000 ot/min! Hřídelka plave na tenkém hydrodynamickém olejovém filmu", "Intercooler (mezichladič): ochlazuje stlačený horký vzduch před vstupem do motoru (zvýší hustotu)", "Zásada studeného motoru: po startu nevytáčet do vysokých otáček (olej musí dorazit do ložisek)", "Zásada horkého motoru: po zátěži nechat 3–5 min běžet na volnoběh pro dochlazení turba!" ] },
+            { id: 19, title: "19. Ošetřování čističe vzduchu (suchý, mokrý) a údržba plnicího systému motoru", points: [ "Suchý čistič (papírová vložka): profouknout stlačeným vzduchem PROTI směru sání, při zanesení vyměnit", "Mokrý čistič (olejová lázeň): drátěnou vložku vyprat v naftě/benzínu a vyměnit olej po rysku", "Plnicí systém: potrubí a hadice od filtru přes turbo a mezichladič až do sání hlavy motoru", "Údržba plnicího systému: kontrola těsnosti všech hadic a dotažení stahovacích pásků", "Nasátí nečistot přes prasklou hadici za filtrem znamená okamžité zničení lopatek turba a motoru" ] },
+            { id: 20, title: "20. Funkce spojky u vozidla a způsoby ovlivnění její životnosti", points: [ "Umístění a funkce: mezi motorem a převodovkou, přenáší točivý moment a umožňuje jeho přerušení", "Použití: rozjezd vozidla, řazení převodových stupňů a zastavení se zařazenou rychlostí", "Pedál sešlápnut = spojka VYPNUTA (rozpojena); Pedál uvolněn = spojka ZAPNUTA", "Co spojku ničí: stání na spojce na křižovatce, opírání nohy o pedál za jízdy, rozjezdy na vysoké otáčky", "Životnost prodlužuje: rychlé a plynulé pouštění pedálu, na semaforu vyřadit do neutrálu" ] },
+            { id: 21, title: "21. Funkce převodového ústrojí: převodovka, rozdělovací převodovka, kardan, rozvodovka, diferenciál, redukce", points: [ "Převodovka: mění převodový poměr (sílu/rychlost), směr jízdy (zpátečka) a neutrál", "Rozdělovací převodovka: dělí točivý moment na přední a zadní nápravu (u pohonu všech kol)", "Spojovací hřídel (kardan): přenáší točivý moment na nápravu; má proměnnou délku kvůli propružení", "Rozvodovka a diferenciál: stálý převod do síly + vyrovnání rozdílu otáček kol v zatáčce", "Kolové redukce: planetové převody v nábojích kol zvyšující tažnou sílu a světlou výšku" ] },
+            { id: 22, title: "22. Rozdíl mezi synchronizovanou a nesynchronizovanou převodovkou, ovládání a použití", points: [ "Nesynchronizovaná (V3S, starý Liaz): ozuby zapadnou jen při shodných otáčkách kol a hřídele", "Řazení nahoru (nesynchron.): 2× spojka (sešlápnout – neutrál – pustit – sešlápnout – zařadit)", "Řazení dolů (nesynchron.): s meziplynem (sešlápnout – neutrál – pustit – meziplyn – spojka – zařadit)", "Synchronizovaná: synchronní kuželové spojky automaticky vyrovnají otáčky ozubených kol třením", "Ovládání synchronizované: běžné plynulé řazení bez meziplynu; nesmí se řadit násilím a trháním" ] },
+            { id: 23, title: "23. Význam kombinovaných (půlených) převodovek a funkce uzávěrky diferenciálu", points: [ "Půlená převodovka: předřazený převod (půlky / želva-zajíc) rozdělí každý rychlostní stupeň na dva", "Převodovka s rozsahovou redukcí: přiřazený převod zdvojnásobí počet stupňů (ze 4 na 8)", "Kombinovaná převodovka: má oba systémy – ze 4 základních rychlostí vytvoří 16 jemně odstupňovaných", "Uzávěrka diferenciálu: mechanicky spojí obě kola nápravy 'napevno' proti protáčení na kluzku", "Riziko uzávěrky: celou váhu táhne jen jedno kolo na pevném povrchu – nebezpečí ukroucení poloosy!" ] },
+            { id: 24, title: "24. Funkce tlumičů pérování a stabilizátoru, projevy nesprávné činnosti", points: [ "Tlumiče pérování: brání rozkmitání nápravy, tlačí kolo k vozovce pro stálou přilnavost", "Vadné tlumiče: odskakování kol, plošky na dezénu pneu, prodloužení brzdné dráhy, nebezpečí smyku", "Stabilizátor: příčná torzní tyč vyrovnávající propérování a bránící naklánění vozidla v zatáčce", "Vadný stabilizátor: nebezpečný náklon nástavby v zatáčce a riziko převrácení vysokého autobusu!", "Kontrola: vizuálně únik oleje z tlumičů, uvolnění silentbloků a prasknutí tyče stabilizátoru" ] },
+            { id: 25, title: "25. Účel posilovače brzd a řízení, proč se nesmí za jízdy vypínat motor", points: [ "Účel: posilovače snižují fyzickou námahu řidiče a umožňují lehké ovládání těžkého autobusu", "ZÁKAZ vypínání motoru za jízdy: pohon čerpadla serva i kompresoru vzduchu závisí na chodu motoru!", "Při zhasnutí motoru: okamžitý výpadek hydraulického posilovače řízení (volant ztuhne)", "Ovládání bez motoru: zatočit 15tunový autobus bez serva je fyzicky téměř nemožné!", "Ztráta vzduchu: kompresor netlakuje, po vyčerpání zásobníků nastane zablokování pružinových brzd" ] },
+            { id: 26, title: "26. Účel antiblokovacího systému (ABS) na vozidle a kontrola správné funkce", points: [ "Účel: zabránit zablokování kol při intenzivním brzdění a zachovat plnou řiditelnost vozidla", "Funkce: snímače otáček na každém kole, řídicí jednotka a elektromagnetické ventily", "Vozidlo zůstává směrově stabilní; řidič může brzdit a zároveň bezpečně zatáčet", "Kontrola: žlutá kontrolka ABS se po zapnutí klíčku rozsvítí a po nastartování/rozjezdu zhasne", "Svítící kontrolka ABS za jízdy: systém je vyřazen z činnosti, brzdy brzdí jako běžné bez ABS" ] },
+            { id: 27, title: "27. Účel systému regulace prokluzu hnacích kol (ASR) a kontrola správné funkce", points: [ "Účel: zabránit protáčení hnacích kol při rozjezdu a akceleraci na kluzkém povrchu", "Zajišťuje směrovou stabilitu a rozjezd do svahu bez smyku hnací nápravy", "Způsob zásahu: přibrzdí protáčející se kolo a omezuje výkon motoru (ubere plyn)", "Kontrola: kontrolka ASR zhasne 1–2 s po zapnutí zapalování; při zásahu za jízdy bliká", "Možnost dočasného vypnutí tlačítkem pro rozhoupání vozidla v hlubokém sněhu" ] },
+            { id: 28, title: "28. Funkce provozní, parkovací, pomocné (odlehčovací) a nouzové brzdy", points: [ "Provozní brzda: pedálová, působí na všechna kola, slouží k běžnému zpomalení a zastavení", "Parkovací brzda: zajišťovací, působí na zadní kola, mechanicky zajištěna pružinami", "Pomocná (odlehčovací) brzda: retardér/motorová brzda pro dlouhá klesání bez opotřebení obložení", "Nouzová brzda: zastaví vozidlo při selhání provozní brzdy (odstupňované vypouštění pružin)", "Dvouokruhové uspořádání zajišťuje brzdění alespoň jedné nápravy i při prasknutí hadice" ] },
+            { id: 29, title: "29. Princip pomocné brzdy: motorová brzda, elektromagnetický a hydrodynamický retardér", points: [ "Motorová brzda: klapka uzavře výfuk + válec nastaví čerpadlo na nulovou naftu (motor kompresorem)", "Elektromagnetický retardér: ocelové kotouče na kardanu brzděny vířivými proudy elektromagnetů", "Hydrodynamický retardér (Intarder): brzdění odporem oleje vháněného mezi stator a rotor", "Výhoda retardérů: neopotřebovávají brzdové obložení, provozní brzdy zůstávají studené", "Elektromagnetický vyžaduje chlazení vzduchem; hydrodynamický je chlazen vodou motoru" ] },
+            { id: 30, title: "30. Princip činnosti kapalinové brzdy a vzduchokapalinové brzdy", points: [ "Kapalinová brzda: tlak pedálu tlačí kapalinu v hlavním válci přímo do kolových válečků (osobní auta)", "Posilovač u kapalinových: podtlakový membránový posilovač (využívá podtlaku ve sběrném sacím potrubí)", "Vzduchokapalinová brzda: kombinace – pedál ovládá vzduchový ventil, vzduch tlačí na kapalinu", "Využití vzduchokapalinových: střední nákladní vozy a starší autobusy (např. Avia, Karosa 700)", "Převodník tlaku mění tlak stlačeného vzduchu na hydraulický tlak brzdové kapaliny" ] },
+            { id: 31, title: "31. Princip činnosti vzduchové brzdy, vyjmenujte její hlavní části", points: [ "Čistě přetlakový systém: síla brzdění vychází ze stlačeného vzduchu (tlak cca 8–10 bar)", "Zdroje: kompresor, regulátor tlaku, vysoušeč vzduchu, čtyřcestný jisticí ventil", "Zásobníky: vzduchojemy jednotlivých okruhů s odvodňovacími ventily", "Ovládání: dvouokruhový pedálový brzdič, ruční brzdič parkovací brzdy, zátěžový regulátor", "Výkonné prvky: membránové válce na nápravách, brzdové klíče, čelisti nebo kotoučové třmeny" ] },
+            { id: 32, title: "32. Postup při ošetřování a údržbě jednotlivých částí vzduchové brzdy", points: [ "Základní požadavek: nulový nebo minimální únik vzduchu ze spojů a potrubí", "Kompresor: kontrola napnutí klínového řemene, těsnost mazání a čistota žeber", "Vysoušeč vzduchu: výměna vysoušecí patrony (cca po 1–2 letech nebo 100 000 km)", "Vzduchojemy: pravidelné ruční odkalování zatažením za kroužek ventilu na dně", "Brzdové válce: kontrola neporušenosti manžet, zdvihu pístnic a samostavů vůle" ] },
+            { id: 33, title: "33. Rozdíl mezi kotoučovou a bubnovou brzdou, jejich výhody a nevýhody", points: [ "Kotoučová: brzdící účinek vyvolán přitlačováním destiček na boky brzdového kotouče", "Výhody kotoučové: kratší brzdná dráha, skvělý odvod tepla, stálý účinek bez vadnutí (fadingu)", "Bubnová: čelisti přitlačovány zevnitř na rotující buben (uzavřená konstrukce)", "Nevýhody bubnové: náchylnost k vadnutí brzd při zahřátí, pracnější kontrola a seřizování", "POZOR: Mokré nebo znečištěné brzdy nebrzdí! Po mytí či vodě je nutno je za jízdy vysušit" ] },
+            { id: 34, title: "34. Vysvětlete, co se rozumí pod pojmem geometrie řídicí nápravy vozidla", points: [ "Geometrie řídicí nápravy určuje základní postavení řízených kol a rejdových čepů", "Důležitá pro: lehké řízení, samovolné vracení kol do přímého směru a stabilitu vozidla", "Sbíhavost kol: vyrovnává vůle a deformace kol řídicí nápravy za jízdy", "Odklon kola: snižuje zatížení ložisek náboje a ulehčuje otáčení kol", "Příklon a záklon rejdového čepu: ztěžuje řízení do zatáčky a pomáhá vracet kola do přímého směru" ] },
+            { id: 35, title: "35. Popište nejčastější projevy nesprávné geometrie řídicí nápravy vozidla", points: [ "Nadměrné a nestejnoměrné opotřebení běhounu pneumatik (hlavní vizuální signál)", "Malá sbíhavost (rozbíhavost): pneumatiky se sjíždějí z vnitřní strany", "Velká sbíhavost: pneumatiky se sjíždějí z vnější strany běhounu", "Špatná ovladatelnost a vedení vozidla (vozidlo nedrží stopu, 'plave')", "Zvýšená spotřeba nafty a opotřebení mechanických částí řízení a ložisek kol" ] },
+            { id: 36, title: "36. Postup při ošetřování akumulátoru a faktory ovlivňující jeho životnost", points: [ "Kontrola: pevné uchycení, povrch suchý a čistý, čistota a dotažení svorek chráněných vazelínou", "Kontrola výšky elektrolytu u údržbových typů (doplňovat VÝHRADNĚ destilovanou vodou)", "Bezpečnost: zákaz přibližování se s otevřeným ohněm (tvorba třaskavého vodíku)", "Co akumulátoru škodí: zkraty, opačná polarita, otřesy, mráz při vybitém stavu", "Škodí mu dlouhé vybíjení velkým proudem a ponechání ve vybitém stavu (sulfatace)" ] },
+            { id: 37, title: "37. Rozdíl mezi paralelním a sériovým zapojením akumulátorů a postup zapojení/odpojení", points: [ "Sériové zapojení (+ na -): napětí se sčítá (12V + 12V = 24V), kapacita stejná (standard busů)", "Paralelní zapojení (+ na +, - na -): napětí zůstává 12V, kapacita akumulátorů se sčítá", "Při ODPOJOVÁNÍ: NEJDŘÍVE ODPOJIT MÍNUS (-) PÓL (kostru), POTOM PLUS (+) PÓL", "Při PŘIPOJOVÁNÍ: NEJDŘÍVE PŘIPOJIT PLUS (+) PÓL, POTOM MÍNUS (-) PÓL (kostru)", "Důvod: prevence masivního zkratu klíče o kovovou kostru vozidla při montáži" ] },
+            { id: 38, title: "38. Popište funkci pojistek v elektrické soustavě vozidla a jejich umístění", points: [ "Úkol pojistek: chránit elektrický obvod při poruchách, zkratech či přetížení před požárem", "Funkce: při stoupnutí proudu nad stanovenou mez se drátek pojistky teplem přepálí", "Pravidlo výměny: přepálenou pojistku nahrazujeme pojistkou o stejné hodnotě (nebo menší)", "PŘÍSNÝ ZÁKAZ: nikdy nepoužívat silnější pojistku ani ji nepropojovat drátkem", "Umístění: v centrální skříňce elektrické instalace (v kabině vozidla)" ] },
+            { id: 39, title: "39. Jakým způsobem se provádí výměna žárovek vnějšího osvětlení vozidla", points: [ "Všechna světelná zařízení musí být funkční, čistá a světlomety správně seřízené", "Povinnost vozit náhradní žárovky: od každého použitého druhu po jednom kuse", "ZÁSADNÍ PRAVIDLO pro halogeny: nesmíme rukou uchopit její skleněnou část (tuk ji zničí)", "U dvouvláknových žárovek: nutno dodržet jejich správnou polohu v objímce", "Dodržovat předepsaný výkon žárovky (Watty) a napětí (u autobusu zásadně 24 V!)" ] },
+            { id: 40, title: "40. Vysvětlete symboly kontrolek a ovladačů na přístrojové desce (volantu) vozidla", points: [ "Červené kontrolky: kritické – mazání, dobíjení, teplota motoru, parkovací brzda, závada brzd", "Oranžové / Žluté: výstražné – ABS, ASR, opotřebení brzd, žhavení, filtr pevných částic, palivo", "Zelené / Modré: informační – směrová světla, potkávací světla, dálková světla (modrá)", "U autobusů: kontrolky otevření dveří pro cestující, zastávkové brzdy a kneeling (poklek)", "Ovladače: páčky pod volantem (směrovky, stěrače, retardér), spínače dveří a osvětlení" ] },
+            { id: 41, title: "41. Postup při připojení tažného lana a tažné tyče a možnosti jejich použití", points: [ "Rychlost vlečení nejvýše 60 km/h; řidiči si předem dohodnou způsob dorozumívání", "ZVLÁŠTNÍ USTANOVENÍ: AUTOBUS SE SMÍ VLÉCI POUZE BEZ PŘEPRAVOVANÝCH OSOB!", "Tažné lano: délka 2,5–6 m + červený praporek 300×300 mm (funkční řízení i účinné brzdy)", "Tažná tyč: délka 1–6 m s červeno-bílými pruhy 75 mm (POVINNÁ při neúčinných brzdách)", "Při neúčinných brzdách nesmí hmotnost vlečeného vozu převýšit hmotnost vlečného vozu" ] },
+            { id: 42, title: "42. Popište postup při montáži sněhových řetězů", points: [ "Montáž: nejméně na kola poháněné nápravy (u autobusu kola zadní nápravy)", "Přípustnost: pouze na vozovkách pokrytých souvislou vrstvou sněhu nebo ledu", "Rychlost: s namontovanými řetězy je dovoleno jet rychlostí maximálně 50 km/h", "Postup: položit před kolo, najet na ně, spojit vnitřní háček, napnout vnější pákou a zajistit", "Kontrola: po krátkém popojetí (50–100 m) zkontrolovat napnutí řetězů a zajistit páky" ] },
+            { id: 43, title: "43. Základní funkce tachografu a v čem spočívá jeho obsluha", points: [ "Tachograf ukazuje a zaznamenává: ujetou vzdálenost, rychlost jízdy a časové režimy činnosti", "Režimy činnosti: doba řízení (volant), jiná práce (kladívka), pohotovost (čtverec), odpočinek (postýlka)", "Digitální tachograf: obsluha čipovou kartou řidiče zasunutou do slotu 1 (čipem nahoru)", "Začátek a konec směny: zadání symbolu výchozí země (CZ) a cílové země (CZ)", "Povinnost výtisku denních činností z tiskárny na vyžádání kontrolního orgánu" ] },
+            { id: 44, title: "44. Postup při připojování a odpojování přívěsu", points: [ "VŽDY najíždíme tažným vozidlem na zajištěný přívěs (ZÁKAZ navádět odbrzděný přívěs ručně!)", "Nacouvat na cca 20 cm od oje, seřídit výšku oje na hubici závěsu, otevřít čep závěsu", "Opatrně nacouvat až do automatického zacvaknutí, zkontrolovat zasunutí pojistného kolíku závěsu", "Propojení: brzdové hadice (NEJPRVE ŽLUTÁ OVLÁDACÍ, PAK ČERVENÁ PLNICÍ), elektrika, ABS kabel", "Odstranit klíny, odbrzdit vlek; Při odpojování OBRÁCENÝ postup (nejdříve zabrzdit vlek a založit klíny)" ] },
+            { id: 45, title: "45. Vyjmenujte povinné vybavení vozidla (se zaměřením na autobus)", points: [ "Hasicí přístroje: u autobusu hasicí přístroj s celkovou náplní min. 6 kg (platná roční revize!)", "Autolékárnička pro hromadnou přepravu: velikost II (do 80 osob) nebo velikost III (nad 80 osob)", "Kladívka pro nouzový únik: umístěná v dosahu označených nouzových oken", "Výstražný trojúhelník, reflexní vesta pro řidiče, min. 2 zakládací klíny", "Náhradní žárovky a pojistky po 1 ks od druhu, příruční zvedák a klíč na kola (pokud není asistence)" ] }
+        ];
+
+        const STORAGE_KEY = 'bus_technika_quiz_progress';
+
+        let questions = [];
+        let currentFilter = 'all';
+        let currentQIndex = 0;
+        let currentOptions = [];
+        let selectedIndices = new Set();
+        let isEvaluated = false;
+
+        function init() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            const progress = saved ? JSON.parse(saved) : {};
+
+            questions = questionsData.map(q => ({
+                ...q,
+                box: progress[q.id] || 1 // 1 = Neumím, 2 = Váhám, 3 = Perfektně
+            }));
+
+            updateStats();
+            loadQuestion();
+        }
+
+        function saveProgress() {
+            const progress = {};
+            questions.forEach(q => { progress[q.id] = q.box; });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+            updateStats();
+        }
+
+        function updateStats() {
+            const h1 = questions.filter(q => q.box === 1).length;
+            const h2 = questions.filter(q => q.box === 2).length;
+            const h3 = questions.filter(q => q.box === 3).length;
+
+            document.getElementById('st-h1').innerText = `H1: ${h1}`;
+            document.getElementById('st-h2').innerText = `H2: ${h2}`;
+            document.getElementById('st-h3').innerText = `H3: ${h3}`;
+
+            document.getElementById('f-all').innerText = `Vše (${questions.length})`;
+            document.getElementById('f-box1').innerText = `❌ Neumím (${h1})`;
+            document.getElementById('f-box2').innerText = `⚡ Váhám (${h2})`;
+            document.getElementById('f-box3').innerText = `✅ Umím (${h3})`;
+        }
+
+        function getFilteredQuestions() {
+            if (currentFilter === 'box1') return questions.filter(q => q.box === 1);
+            if (currentFilter === 'box2') return questions.filter(q => q.box === 2);
+            if (currentFilter === 'box3') return questions.filter(q => q.box === 3);
+            return questions;
+        }
+
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`f-${filter}`).classList.add('active');
+            currentQIndex = 0;
+            loadQuestion();
+        }
+
+        function getRandomDistractors(currentQId, count = 5) {
+            const otherPoints = [];
+            questionsData.forEach(q => {
+                if (q.id !== currentQId) {
+                    otherPoints.push(...q.points);
+                }
+            });
+            // Zamíchat ostatní body
+            otherPoints.sort(() => Math.random() - 0.5);
+            return otherPoints.slice(0, count);
+        }
+
+        function loadQuestion() {
+            const activeList = getFilteredQuestions();
+            if (activeList.length === 0) {
+                document.getElementById('q-title').innerText = "V této kategorii nemáte žádné otázky!";
+                document.getElementById('options-list').innerHTML = "";
+                document.getElementById('result-box').style.display = 'none';
+                document.getElementById('main-btn').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('main-btn').style.display = 'block';
+
+            if (currentQIndex >= activeList.length) currentQIndex = 0;
+            const q = activeList[currentQIndex];
+
+            document.getElementById('q-number').innerText = `Otázka ${q.id} ze 45 (filtr: ${currentQIndex + 1}/${activeList.length})`;
+            document.getElementById('q-title').innerText = q.title;
+
+            const badge = document.getElementById('q-status-badge');
+            if (q.box === 1) {
+                badge.innerText = 'Stav: ❌ Neumím';
+                badge.style.color = '#cf6679';
+            } else if (q.box === 2) {
+                badge.innerText = 'Stav: ⚡ Váhám';
+                badge.style.color = '#ffb74d';
+            } else {
+                badge.innerText = 'Stav: ✅ Umím perfektně';
+                badge.style.color = '#4caf50';
+            }
+
+            // Příprava 5 správných + 5 chytáků
+            const correct = q.points.map(text => ({ text, isCorrect: true }));
+            const distractors = getRandomDistractors(q.id, 5).map(text => ({ text, isCorrect: false }));
+            
+            currentOptions = [...correct, ...distractors].sort(() => Math.random() - 0.5);
+            selectedIndices.clear();
+            isEvaluated = false;
+
+            document.getElementById('result-box').style.display = 'none';
+            document.getElementById('main-btn').innerText = "ZKONTROLOVAT";
+            document.getElementById('main-btn').className = "action-btn btn-check";
+
+            renderOptions();
+            updateSelectedCounter();
+        }
+
+        function renderOptions() {
+            const listEl = document.getElementById('options-list');
+            listEl.innerHTML = '';
+
+            currentOptions.forEach((opt, idx) => {
+                const item = document.createElement('div');
+                item.className = `option-item ${selectedIndices.has(idx) ? 'selected' : ''}`;
+                
+                if (isEvaluated) {
+                    const isSelected = selectedIndices.has(idx);
+                    if (isSelected && opt.isCorrect) {
+                        item.classList.add('correct-hit');
+                    } else if (isSelected && !opt.isCorrect) {
+                        item.classList.add('wrong-hit');
+                    } else if (!isSelected && opt.isCorrect) {
+                        item.classList.add('missed');
+                    }
+                }
+
+                item.onclick = () => toggleSelect(idx);
+
+                const chk = document.createElement('div');
+                chk.className = 'checkbox-box';
+                chk.innerText = selectedIndices.has(idx) ? '✓' : '';
+
+                const textSpan = document.createElement('span');
+                textSpan.innerText = opt.text;
+
+                item.appendChild(chk);
+                item.appendChild(textSpan);
+                listEl.appendChild(item);
+            });
+        }
+
+        function toggleSelect(idx) {
+            if (isEvaluated) return; // Po vyhodnocení už nelze měnit
+
+            if (selectedIndices.has(idx)) {
+                selectedIndices.delete(idx);
+            } else {
+                if (selectedIndices.size < 5) {
+                    selectedIndices.add(idx);
+                }
+            }
+            renderOptions();
+            updateSelectedCounter();
+        }
+
+        function updateSelectedCounter() {
+            document.getElementById('selected-counter').innerText = `${selectedIndices.size} / 5 vybráno`;
+        }
+
+        function handleMainAction() {
+            if (!isEvaluated) {
+                checkAnswers();
+            } else {
+                nextQuestion();
+            }
+        }
+
+        function checkAnswers() {
+            if (selectedIndices.size === 0) {
+                alert("Označ alespoň nějaké odpovědi!");
+                return;
+            }
+
+            isEvaluated = true;
+
+            let correctHits = 0;
+            let wrongHits = 0;
+
+            selectedIndices.forEach(idx => {
+                if (currentOptions[idx].isCorrect) correctHits++;
+                else wrongHits++;
+            });
+
+            const activeList = getFilteredQuestions();
+            const currentQ = activeList[currentQIndex];
+
+            // Automatické zatřídění do hromádek
+            let newBox = 1;
+            let resultMessage = "";
+
+            if (correctHits === 5 && wrongHits === 0) {
+                newBox = 3;
+                resultMessage = "🏆 PERFEKTNÍ! Všech 5 bodů správně. Přesunuto do: UMÍM";
+            } else if (correctHits >= 3 && wrongHits <= 1) {
+                newBox = 2;
+                resultMessage = `⚡ DOBRÝ ZÁKLAD (${correctHits}/5 správně). Přesunuto do: VÁHÁM`;
+            } else {
+                newBox = 1;
+                resultMessage = `❌ SLABÉ (${correctHits}/5 správně). Přesunuto do: NEUMÍM`;
+            }
+
+            currentQ.box = newBox;
+            saveProgress();
+
+            const resBox = document.getElementById('result-box');
+            resBox.style.display = 'block';
+            resBox.innerText = resultMessage;
+            resBox.style.color = newBox === 3 ? '#4caf50' : (newBox === 2 ? '#ffb74d' : '#cf6679');
+
+            renderOptions();
+
+            const btn = document.getElementById('main-btn');
+            btn.innerText = "DALŠÍ OTÁZKA ➔";
+            btn.className = "action-btn btn-next";
+        }
+
+        function nextQuestion() {
+            const activeList = getFilteredQuestions();
+            if (activeList.length > 0) {
+                currentQIndex = (currentQIndex + 1) % activeList.length;
+            }
+            loadQuestion();
+        }
+
+        function prevQuestion() {
+            const activeList = getFilteredQuestions();
+            if (activeList.length > 0) {
+                currentQIndex = (currentQIndex - 1 + activeList.length) % activeList.length;
+            }
+            loadQuestion();
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
