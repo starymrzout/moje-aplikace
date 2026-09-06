@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Nákup Globus</title>
+  <style>
+    :root {
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --text: #f0f0f0;
+      --text-dim: #6e6e6e;
+      --accent: #2e7d32;
+      --accent-active: #1b5e20;
+      --border: #2c2c2c;
+      --cat-header: #262626;
+      --cat-title: #64b5f6;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 12px;
+      padding-bottom: 120px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .status {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+    
+    /* Kategorie */
+    .kategorie-blok {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .kategorie-nazev {
+      background-color: var(--cat-header);
+      padding: 8px 12px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: var(--cat-title);
+      letter-spacing: 0.8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .polozky-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Řádek položky */
+    .polozka {
+      display: flex;
+      align-items: center;
+      padding: 13px 12px;
+      border-bottom: 1px solid #252525;
+      cursor: pointer;
+      font-size: 1.05rem;
+      user-select: none;
+    }
+    .polozka:last-child { border-bottom: none; }
+    
+    .chk {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      border: 2px solid #555;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .polozka.koupit .chk {
+      border-color: #888;
+      background: transparent;
+    }
+    .polozka.koupeno .chk {
+      border-color: #444;
+      background: #333;
+    }
+    .polozka.koupeno .chk::after {
+      content: "✓";
+      font-size: 14px;
+      color: #888;
+    }
+
+    .nazev-text {
+      flex: 1;
+      line-height: 1.3;
+    }
+
+    /* Šedý stav (hotovo / v košíku) */
+    .polozka.koupeno {
+      color: var(--text-dim);
+      background-color: rgba(0, 0, 0, 0.15);
+    }
+    .polozka.koupeno .nazev-text {
+      text-decoration: line-through;
+    }
+
+    .btn-del {
+      color: #555;
+      font-size: 1.2rem;
+      padding: 4px 8px;
+      margin-left: 8px;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+    .btn-del:hover { color: #e53935; }
+
+    /* Spodní lišta pro přidání */
+    .form-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #1a1a1a;
+      border-top: 1px solid var(--border);
+      padding: 8px 12px 12px 12px;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.6);
+    }
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    input[type="text"] {
+      flex: 1;
+      background-color: #262626;
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #fff;
+      padding: 10px 12px;
+      font-size: 1rem;
+      outline: none;
+    }
+    input[type="text"]:focus {
+      border-color: #64b5f6;
+    }
+    button.btn-add {
+      background-color: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0 18px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.btn-add:active {
+      background-color: var(--accent-active);
+    }
+    .tags-container {
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .tags-container::-webkit-scrollbar { display: none; }
+    .tag-btn {
+      background-color: #292929;
+      border: 1px solid #444;
+      color: #aaa;
+      border-radius: 14px;
+      padding: 5px 11px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .tag-btn.active {
+      background-color: #1565c0;
+      border-color: #1976d2;
+      color: #fff;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Nákup Globus</h1>
+    <span id="status" class="status">Načítám...</span>
+  </header>
+
+  <div id="seznam"></div>
+
+  <div class="form-panel">
+    <div class="input-group">
+      <input type="text" id="novy-nazev" placeholder="Nová položka..." autocomplete="off">
+      <button class="btn-add" onclick="pridatPolozku()">+</button>
+    </div>
+    <div class="tags-container" id="tags-list"></div>
+  </div>
+
+  <script>
+    // VLOŽ SVOJI URL Z GOOGLE APPS SCRIPTU
+    const API_URL = "TVOJE_APPS_SCRIPT_URL_ZDE";
+
+    // Trasa Globusem
+    const KATEGORIE_TRASA = [
+      "NÁPOJE",
+      "DOMÁCNOST",
+      "KOŘENÍ A TĚSTOVINY",
+      "MOUKY A CUKRY",
+      "SÝRY",
+      "ZELENINA",
+      "MASO A UZENINY",
+      "PEČIVO",
+      "MLÉČNÉ VÝROBKY",
+      "MRAŽENÉ",
+      "CUKROVINKY, KÁVA, ČAJ",
+      "DROGERIE",
+      "HOTOVKY",
+      "LÉKÁRNA"
+    ];
+
+    let items = [];
+    let vybranaKategorie = KATEGORIE_TRASA[0];
+    let saveTimeout = null;
+
+    function renderTags() {
+      const container = document.getElementById("tags-list");
+      container.innerHTML = "";
+      KATEGORIE_TRASA.forEach(kat => {
+        const btn = document.createElement("button");
+        btn.className = `tag-btn ${kat === vybranaKategorie ? 'active' : ''}`;
+        btn.innerText = kat;
+        btn.onclick = () => {
+          vybranaKategorie = kat;
+          renderTags();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    async function nactiPolozky() {
+      document.getElementById("status").innerText = "Načítám...";
+      try {
+        const res = await fetch(API_URL + "?mode=nakup");
+        const data = await res.json();
+        items = Array.isArray(data) ? data : [];
+        renderSeznam();
+        document.getElementById("status").innerText = "OK";
+      } catch (err) {
+        document.getElementById("status").innerText = "Chyba sítě";
+      }
+    }
+
+    function triggerSave() {
+      document.getElementById("status").innerText = "Ukládám...";
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        try {
+          await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({ type: "nakup_save", items: items })
+          });
+          document.getElementById("status").innerText = "Uloženo";
+        } catch (err) {
+          document.getElementById("status").innerText = "Chyba zápisu";
+        }
+      }, 500);
+    }
+
+    function renderSeznam() {
+      const container = document.getElementById("seznam");
+      container.innerHTML = "";
+
+      KATEGORIE_TRASA.forEach(kat => {
+        const polozkyVKategorii = items.filter(it => (it.kategorie || "").toUpperCase() === kat);
+        if (polozkyVKategorii.length === 0) return;
+
+        // Aktivní (koupit: true) nahoře, koupené (koupit: false) dole
+        polozkyVKategorii.sort((a, b) => (b.koupit === true ? 1 : 0) - (a.koupit === true ? 1 : 0));
+
+        const blok = document.createElement("div");
+        blok.className = "kategorie-blok";
+
+        const header = document.createElement("div");
+        header.className = "kategorie-nazev";
+        header.innerText = kat;
+        blok.appendChild(header);
+
+        const list = document.createElement("div");
+        list.className = "polozky-list";
+
+        polozkyVKategorii.forEach(it => {
+          const row = document.createElement("div");
+          row.className = `polozka ${it.koupit ? 'koupit' : 'koupeno'}`;
+          row.onclick = (e) => {
+            if (e.target.classList.contains("btn-del")) return;
+            prepnoutStav(it);
+          };
+
+          const chk = document.createElement("div");
+          chk.className = "chk";
+
+          const text = document.createElement("span");
+          text.className = "nazev-text";
+          text.innerText = it.nazev;
+
+          const del = document.createElement("button");
+          del.className = "btn-del";
+          del.innerText = "×";
+          del.onclick = (e) => {
+            e.stopPropagation();
+            smazatPolozku(it.id);
+          };
+
+          row.appendChild(chk);
+          row.appendChild(text);
+          row.appendChild(del);
+          list.appendChild(row);
+        });
+
+        blok.appendChild(list);
+        container.appendChild(blok);
+      });
+    }
+
+    function prepnoutStav(it) {
+      it.koupit = !it.koupit;
+      it.updatedAt = new Date().toISOString();
+      renderSeznam();
+      triggerSave();
+    }
+
+    function pridatPolozku() {
+      const input = document.getElementById("novy-nazev");
+      const nazev = input.value.trim();
+      if (!nazev) return;
+
+      const nova = {
+        id: "nakup_" + Date.now(),
+        nazev: nazev,
+        kategorie: vybranaKategorie,
+        koupit: true,
+        updatedAt: new Date().toISOString()
+      };
+
+      items.push(nova);
+      input.value = "";
+      renderSeznam();
+      triggerSave();
+    }
+
+    function smazatPolozku(id) {
+      items = items.filter(it => it.id !== id);
+      renderSeznam();
+      triggerSave();
+    }
+
+    document.getElementById("novy-nazev").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") pridatPolozku();
+    });
+
+    renderTags();
+    nactiPolozky();
+  </script>
+</body>
+</html>
