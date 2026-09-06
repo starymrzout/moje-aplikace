@@ -54,10 +54,19 @@
       text-transform: uppercase;
       font-weight: 700;
     }
-    .status {
-      font-size: 0.8rem;
-      color: var(--text-dim);
+    
+    /* Indikační tečka sync-status */
+    .sync-status {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #555;
+      transition: background-color 0.3s;
     }
+    .sync-status.online { background-color: #4caf50; }
+    .sync-status.syncing { background-color: #ff9800; }
+    .sync-status.error { background-color: #f44336; }
     
     .kategorie-blok {
       background-color: var(--card-bg);
@@ -217,7 +226,7 @@
       </svg>
       <h1>Nákup Globus</h1>
     </div>
-    <span id="status" class="status">Načítám...</span>
+    <span id="sync-status" class="sync-status" title="Stav synchronizace"></span>
   </header>
 
   <div id="seznam"></div>
@@ -231,7 +240,7 @@
   </div>
 
   <script>
-    // SEM VLOŽ SVOJI STÁVAJÍCÍ URL Z APPS SCRIPTU
+    // VLOŽ ZDE SVOU PŘESNOU URL APPS SCRIPTU
     const API_URL = "TVOJE_APPS_SCRIPT_URL_ZDE";
 
     const KATEGORIE_TRASA = [
@@ -252,10 +261,16 @@
       "OSTATNÍ"
     ];
 
-    let items = JSON.parse(localStorage.getItem("nakup_backup") || "[]");
+    let items = JSON.parse(localStorage.getItem("nakup_items") || "[]");
     let vybranaKategorie = KATEGORIE_TRASA[0];
-    let isSaving = false;
-    let pendingSave = false;
+    let saveTimeout = null;
+
+    function setStatus(status) {
+      const el = document.getElementById("sync-status");
+      if (el) {
+        el.className = "sync-status " + status;
+      }
+    }
 
     function renderTags() {
       const container = document.getElementById("tags-list");
@@ -272,56 +287,46 @@
       });
     }
 
-    async function nactiPolozky() {
-      const statusEl = document.getElementById("status");
-      statusEl.innerText = "Načítám...";
+    async function nactiData() {
+      setStatus("syncing");
       try {
-        const res = await fetch(API_URL + "?mode=nakup&nocache=" + new Date().getTime());
+        const res = await fetch(API_URL + "?mode=nakup&t=" + Date.now());
         const data = await res.json();
         if (Array.isArray(data)) {
           if (data.length > 0) {
             items = data;
-            localStorage.setItem("nakup_backup", JSON.stringify(items));
+            localStorage.setItem("nakup_items", JSON.stringify(items));
           } else if (items.length > 0) {
-            triggerSave();
+            ukladatData();
           }
         }
         renderSeznam();
-        statusEl.innerText = "OK";
+        setStatus("online");
       } catch (err) {
-        statusEl.innerText = "Offline";
+        console.error(err);
+        setStatus("error");
         renderSeznam();
       }
     }
 
-    function triggerSave() {
-      localStorage.setItem("nakup_backup", JSON.stringify(items));
-      const statusEl = document.getElementById("status");
-      statusEl.innerText = "Ukládám...";
+    function ukladatData() {
+      localStorage.setItem("nakup_items", JSON.stringify(items));
+      setStatus("syncing");
 
-      if (isSaving) {
-        pendingSave = true;
-        return;
-      }
-
-      isSaving = true;
-      pendingSave = false;
-
-      fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ type: "nakup_save", items: items })
-      })
-      .then(function() {
-        statusEl.innerText = "Uloženo";
-        isSaving = false;
-        if (pendingSave) {
-          triggerSave();
-        }
-      })
-      .catch(function(err) {
-        statusEl.innerText = "Chyba zápisu";
-        isSaving = false;
-      });
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify({ type: "nakup_save", items: items })
+        })
+        .then(() => {
+          setStatus("online");
+        })
+        .catch((err) => {
+          console.error(err);
+          setStatus("error");
+        });
+      }, 500);
     }
 
     function renderSeznam() {
@@ -383,7 +388,7 @@
       it.koupit = !it.koupit;
       it.updatedAt = new Date().toISOString();
       renderSeznam();
-      triggerSave();
+      ukladatData();
     }
 
     function pridatPolozku() {
@@ -402,13 +407,13 @@
       items.push(nova);
       input.value = "";
       renderSeznam();
-      triggerSave();
+      ukladatData();
     }
 
     function smazatPolozku(id) {
       items = items.filter(it => it.id !== id);
       renderSeznam();
-      triggerSave();
+      ukladatData();
     }
 
     document.getElementById("novy-nazev").addEventListener("keydown", (e) => {
@@ -417,7 +422,7 @@
 
     renderTags();
     renderSeznam();
-    nactiPolozky();
+    nactiData();
   </script>
 </body>
 </html>
