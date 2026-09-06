@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Nákup Globus</title>
+  
+  <!-- Ikona pro záložku prohlížeče i plochu telefonu (SVG nákupní košík) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364b5f6'><path d='M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z'/></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364b5f6'><path d='M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z'/></svg>">
+
   <style>
     :root {
       --bg: #121212;
@@ -32,6 +37,16 @@
       margin-bottom: 12px;
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand svg {
+      width: 26px;
+      height: 26px;
+      fill: #64b5f6;
     }
     h1 {
       font-size: 1.25rem;
@@ -201,7 +216,12 @@
 <body>
 
   <header>
-    <h1>Nákup Globus</h1>
+    <div class="brand">
+      <svg viewBox="0 0 24 24">
+        <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+      </svg>
+      <h1>Nákup Globus</h1>
+    </div>
     <span id="status" class="status">Načítám...</span>
   </header>
 
@@ -219,7 +239,7 @@
     // VLOŽ SVOJI URL Z GOOGLE APPS SCRIPTU
     const API_URL = "TVOJE_APPS_SCRIPT_URL_ZDE";
 
-    // Trasa Globusem
+    // Trasa Globusem + OSTATNÍ na konci
     const KATEGORIE_TRASA = [
       "NÁPOJE",
       "DOMÁCNOST",
@@ -234,7 +254,8 @@
       "CUKROVINKY, KÁVA, ČAJ",
       "DROGERIE",
       "HOTOVKY",
-      "LÉKÁRNA"
+      "LÉKÁRNA",
+      "OSTATNÍ"
     ];
 
     let items = [];
@@ -294,7 +315,6 @@
         const polozkyVKategorii = items.filter(it => (it.kategorie || "").toUpperCase() === kat);
         if (polozkyVKategorii.length === 0) return;
 
-        // Aktivní (koupit: true) nahoře, koupené (koupit: false) dole
         polozkyVKategorii.sort((a, b) => (b.koupit === true ? 1 : 0) - (a.koupit === true ? 1 : 0));
 
         const blok = document.createElement("div");
