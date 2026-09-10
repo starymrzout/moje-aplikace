@@ -8,7 +8,7 @@
 <style>
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111827;background:#f3f4f6}
 *{box-sizing:border-box} body{margin:0} main{max-width:620px;margin:auto;padding:18px 14px 40px}
-h1{margin:2px 0 3px;font-size:30px}.sub{color:#6b7280;margin-bottom:16px}
+h1{margin:2px 0 3px;font-size:30px;display:flex;align-items:center;gap:8px}.trolley{display:inline-flex;width:46px;height:32px}.trolley svg{width:100%;height:100%}.sub{color:#6b7280;margin-bottom:16px}
 .tabs,.days{display:grid;gap:7px;margin:10px 0}.tabs{grid-template-columns:1fr 1fr 1fr}.days{grid-template-columns:1fr 1fr}
 button{border:0;border-radius:12px;padding:11px 7px;font-weight:700;background:#e5e7eb;color:#374151}
 button.active{background:#111827;color:white}.card{background:white;border-radius:18px;padding:16px;box-shadow:0 3px 18px #00000012}
@@ -22,11 +22,21 @@ button.active{background:#111827;color:white}.card{background:white;border-radiu
 </style>
 </head>
 <body><main>
-<h1>🚎 201</h1>
+<h1><span class="trolley" aria-hidden="true">
+<svg viewBox="0 0 90 58" role="img">
+  <path d="M25 12 L42 1 M56 12 L72 1" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  <rect x="10" y="11" width="70" height="36" rx="8" fill="none" stroke="currentColor" stroke-width="4"/>
+  <rect x="17" y="17" width="18" height="12" rx="2" fill="currentColor" opacity=".25"/>
+  <rect x="39" y="17" width="18" height="12" rx="2" fill="currentColor" opacity=".25"/>
+  <rect x="61" y="17" width="12" height="12" rx="2" fill="currentColor" opacity=".25"/>
+  <path d="M16 35 H74" stroke="currentColor" stroke-width="3"/>
+  <circle cx="25" cy="48" r="6" fill="currentColor"/>
+  <circle cx="65" cy="48" r="6" fill="currentColor"/>
+</svg></span> 201</h1>
 <div class="sub">Náš jízdní řád · 4:50–19:00</div>
 <div class="tabs">
 <button data-route="home" class="active">Z DOMU</button>
-<button data-route="wife">ŽENA DOMŮ</button>
+<button data-route="wife">JITKA DOMŮ</button>
 <button data-route="me">JÁ DOMŮ</button>
 </div>
 <div class="days">
@@ -70,8 +80,12 @@ function render(){
   }); box.appendChild(row);
  });
  const nb=document.getElementById("next");
- if(next){next.el.classList.add("next"); nb.textContent=`Nejbližší dnes: ${next.dt.toLocaleTimeString("cs-CZ",{hour:"2-digit",minute:"2-digit"})}`;}
- else nb.textContent="Zobrazené odjezdy 4:50–19:00";
+ if(next){
+   next.el.classList.add("next");
+   const diff=Math.max(0,Math.ceil((next.dt-now)/60000));
+   const clock=next.dt.toLocaleTimeString("cs-CZ",{hour:"2-digit",minute:"2-digit"});
+   nb.textContent=`Nejbližší: ${clock} · za ${diff} min`;
+ } else nb.textContent="Zobrazené odjezdy 4:50–19:00";
 }
 document.querySelectorAll("[data-route]").forEach(b=>b.onclick=()=>{route=b.dataset.route;document.querySelectorAll("[data-route]").forEach(x=>x.classList.toggle("active",x===b));render()});
 document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{day=b.dataset.day;document.querySelectorAll("[data-day]").forEach(x=>x.classList.toggle("active",x===b));render()});
