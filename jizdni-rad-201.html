@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>201 – náš jízdní řád</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111827;background:#f3f4f6}
+*{box-sizing:border-box} body{margin:0} main{max-width:620px;margin:auto;padding:18px 14px 40px}
+h1{margin:2px 0 3px;font-size:30px}.sub{color:#6b7280;margin-bottom:16px}
+.tabs,.days{display:grid;gap:7px;margin:10px 0}.tabs{grid-template-columns:1fr 1fr 1fr}.days{grid-template-columns:1fr 1fr}
+button{border:0;border-radius:12px;padding:11px 7px;font-weight:700;background:#e5e7eb;color:#374151}
+button.active{background:#111827;color:white}.card{background:white;border-radius:18px;padding:16px;box-shadow:0 3px 18px #00000012}
+.route{font-size:20px;font-weight:800;margin-bottom:2px}.dir{color:#6b7280;margin-bottom:14px}
+.row{display:grid;grid-template-columns:42px 1fr;gap:8px;padding:8px 0;border-top:1px solid #eee;align-items:center}
+.hour{font-size:20px;font-weight:800}.mins{display:flex;gap:7px;flex-wrap:wrap}
+.time{padding:7px 9px;background:#f3f4f6;border-radius:9px;font-variant-numeric:tabular-nums}
+.time.next{background:#111827;color:white;font-weight:800}.nextbox{background:#ecfdf5;border-radius:14px;padding:12px 14px;margin:0 0 12px;font-weight:700}
+.small{font-size:12px;color:#6b7280;margin-top:14px;line-height:1.4}
+@media(max-width:430px){.tabs button{font-size:12px}.time{padding:6px 8px}.row{grid-template-columns:38px 1fr}}
+</style>
+</head>
+<body><main>
+<h1>🚎 201</h1>
+<div class="sub">Náš jízdní řád · 4:50–19:00</div>
+<div class="tabs">
+<button data-route="home" class="active">Z DOMU</button>
+<button data-route="wife">ŽENA DOMŮ</button>
+<button data-route="me">JÁ DOMŮ</button>
+</div>
+<div class="days">
+<button data-day="work" class="active">Pracovní den</button>
+<button data-day="weekend">So / Ne / svátek</button>
+</div>
+<div class="card">
+<div class="route" id="route"></div><div class="dir" id="dir"></div>
+<div id="next" class="nextbox"></div><div id="times"></div>
+<div class="small">Zdroj: jízdní řád linky 201 MDPO dodaný uživatelem. Letní pracovní jízdní řád 1. 7.–31. 8. není zahrnut.</div>
+</div>
+</main>
+<script>
+const data={
+home:{name:"U soudu → Kylešovice",dir:"směr Kylešovice, Bílovecká",
+ work:{"05":[5,17,29,41,53],"06":[5,17,29,40,52],"07":[4,16,28,40,52],"08":[7,22,37,52],"09":[7,22,37,52],"10":[7,22,37,52],"11":[7,22,37,52],"12":[7,22,37,52],"13":[4,16,28,41,53],"14":[5,17,29,41,53],"15":[5,17,29,41,53],"16":[5,17,29,41,53],"17":[5,17,29,41,53],"18":[5,17,29,43]},
+ weekend:{"05":[8,28,48],"06":[8,28,48],"07":[8,28,48],"08":[8,28,48],"09":[8,28,48],"10":[8,28,48],"11":[8,28,48],"12":[8,28,48],"13":[8,28,48],"14":[8,28,48],"15":[8,28,48],"16":[8,28,48],"17":[8,28,48],"18":[8,28,58]}},
+wife:{name:"Východní nádraží → domů",dir:"směr Městský hřbitov · výstup U soudu",
+ work:{"05":[2,14,26,38,50],"06":[2,14,25,37,49],"07":[1,13,25,37,49],"08":[4,19,34,49],"09":[4,19,34,49],"10":[4,19,34,49],"11":[4,19,34,49],"12":[4,19,34,38,49],"13":[1,13,25,37,49],"14":[1,13,25,37,49],"15":[1,13,25,37,49],"16":[1,13,25,37,49],"17":[1,13,25,37,49],"18":[1,13,39,59]},
+ weekend:{"05":[5,25,45],"06":[5,25,44],"07":[4,24,44],"08":[4,24,44],"09":[4,24,44],"10":[4,24,44],"11":[4,24,44],"12":[4,24,44],"13":[4,24,44],"14":[4,24,44],"15":[4,24,44],"16":[4,24,44],"17":[4,24,44],"18":[4,24,54]}},
+me:{name:"Kylešovice, Bílovecká → domů",dir:"směr Městský hřbitov · výstup U soudu",
+ work:{"04":[57],"05":[8,19,31,43,55],"06":[7,19,31,43,58],"07":[14,29,44,59],"08":[14,29,44,59],"09":[14,29,44,59],"10":[14,29,44,59],"11":[14,29,33,44,56],"12":[7,19,31,43,55],"13":[7,19,31,43,55],"14":[7,19,31,43,55],"15":[7,19,31,43,55],"16":[7,19,31,43,55],"17":[8,34,55],"18":[25,55]},
+ weekend:{"05":[0,20,39,59],"06":[19,39,59],"07":[19,39,59],"08":[19,39,59],"09":[19,39,59],"10":[19,39,59],"11":[19,39,59],"12":[19,39,59],"13":[19,39,59],"14":[19,39,59],"15":[19,39,59],"16":[19,39,59],"17":[19,39,59],"18":[19,50]}}
+};
+let route="home", day="work";
+function render(){
+ document.getElementById("route").textContent=data[route].name;
+ document.getElementById("dir").textContent=data[route].dir;
+ const d=data[route][day], box=document.getElementById("times"); box.innerHTML="";
+ const now=new Date(), todayWork=now.getDay()>=1&&now.getDay()<=5;
+ let next=null;
+ Object.entries(d).forEach(([h,mins])=>{
+  const row=document.createElement("div"); row.className="row";
+  row.innerHTML=`<div class="hour">${h}</div><div class="mins"></div>`;
+  mins.forEach(m=>{
+   const t=document.createElement("span"); t.className="time";
+   t.textContent=String(m).padStart(2,"0");
+   const dt=new Date(now); dt.setHours(+h,m,0,0);
+   if(!next && dt>=now && ((day==="work"&&todayWork)||(day==="weekend"&&!todayWork))){next={el:t,dt};}
+   row.lastChild.appendChild(t);
+  }); box.appendChild(row);
+ });
+ const nb=document.getElementById("next");
+ if(next){next.el.classList.add("next"); nb.textContent=`Nejbližší dnes: ${next.dt.toLocaleTimeString("cs-CZ",{hour:"2-digit",minute:"2-digit"})}`;}
+ else nb.textContent="Zobrazené odjezdy 4:50–19:00";
+}
+document.querySelectorAll("[data-route]").forEach(b=>b.onclick=()=>{route=b.dataset.route;document.querySelectorAll("[data-route]").forEach(x=>x.classList.toggle("active",x===b));render()});
+document.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>{day=b.dataset.day;document.querySelectorAll("[data-day]").forEach(x=>x.classList.toggle("active",x===b));render()});
+const dow=new Date().getDay(); if(dow===0||dow===6){day="weekend";document.querySelectorAll("[data-day]").forEach(x=>x.classList.toggle("active",x.dataset.day===day))}
+render();
+</script></body></html>
