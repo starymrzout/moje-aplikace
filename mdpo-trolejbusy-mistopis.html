@@ -117,6 +117,12 @@ function grade(ok){
   q=(screen==="mix")?weightedQuestion("all"):(screen==="weak")?weakQuestion():weightedQuestion("line");
   reveal=false; render();
 }
+function setDirection(d){
+  dir=d;
+  save();
+  routeStep=0;
+  render();
+}
 function topControls(){
   return `<div class="card">
     <div class="label">Linka</div>
@@ -124,8 +130,8 @@ function topControls(){
     <div class="sep"></div>
     <div class="label">Směr</div>
     <div class="row">
-      <button class="${dir===0?'on':''}" onclick="dir=0;save();routeStep=0;render()">→ ${ROUTES[line].at(-1)}</button>
-      <button class="${dir===1?'on':''}" onclick="dir=1;save();routeStep=0;render()">→ ${ROUTES[line][0]}</button>
+      <button class="${dir===0?'on':''}" onclick="setDirection(0)">→ ${ROUTES[line].at(-1)}</button>
+      <button class="${dir===1?'on':''}" onclick="setDirection(1)">→ ${ROUTES[line][0]}</button>
     </div>
   </div>`
 }
