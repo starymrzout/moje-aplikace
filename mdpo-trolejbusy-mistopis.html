@@ -171,6 +171,7 @@ function cardView(mode){
  let a=arr(q.l,q.d), from=a[q.i], to=a[q.i+1], title=mode==="mix"?"MIX VŠECH LINEK":mode==="weak"?"SLABÁ MÍSTA":`LINKA ${q.l}`;
  return `<div class="card">
    <div class="label">${title}</div>
+   ${mode==="mix"?`<div style="font-size:32px;font-weight:950;line-height:1;margin:5px 0 8px">LINKA ${q.l}</div>`:""}
    <div class="tiny">Směr: ${a[0]} → ${a.at(-1)}</div>
    <div class="q">Co následuje po zastávce<br><b>„${from}“</b>?</div>
    ${reveal?`<div class="answer">${to}</div>
