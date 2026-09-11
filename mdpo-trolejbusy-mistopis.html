@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="MDPO trenér">
+<title>MDPO Trolejbusy – trenér místopisu</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23111827'/><path d='M34 26l9-16M66 26L57 10' stroke='white' stroke-width='5' stroke-linecap='round'/><rect x='15' y='25' width='70' height='42' rx='10' fill='none' stroke='white' stroke-width='5'/><rect x='23' y='34' width='16' height='13' rx='2' fill='white'/><rect x='43' y='34' width='16' height='13' rx='2' fill='white'/><rect x='63' y='34' width='14' height='13' rx='2' fill='white'/><circle cx='30' cy='70' r='7' fill='white'/><circle cx='70' cy='70' r='7' fill='white'/></svg>">
+<style>
+:root{--ink:#111827;--muted:#6b7280;--bg:#f3f4f6;--card:#fff;--line:#e5e7eb;--good:#166534;--bad:#991b1b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:620px;margin:auto;padding:16px 14px 45px}
+header{display:flex;align-items:center;gap:11px;margin:2px 2px 15px}
+.logo{width:48px;height:38px;display:block}
+h1{font-size:25px;line-height:1.05;margin:0}
+.sub{color:var(--muted);font-size:13px;margin-top:4px}
+.card{background:var(--card);border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 2px 12px #0000000d}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{appearance:none;border:0;border-radius:12px;padding:12px 14px;font:inherit;font-weight:750;background:#e5e7eb;color:var(--ink);cursor:pointer}
+button:active{transform:translateY(1px)}
+button.on,button.primary{background:var(--ink);color:#fff}
+button.good{background:var(--good);color:#fff}
+button.bad{background:var(--bad);color:#fff}
+button.ghost{background:#fff;border:1px solid var(--line)}
+button.full{width:100%}
+.linebtn{min-width:58px;font-size:18px}
+.label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:9px}
+.route-title{font-weight:850;font-size:18px;line-height:1.2}
+.route-sub{font-size:13px;color:var(--muted);margin-top:4px}
+.stop{padding:8px 4px;border-bottom:1px solid #eee;display:flex;gap:8px}
+.stop:last-child{border-bottom:0}
+.n{width:28px;color:#9ca3af;flex:0 0 28px}
+.q{font-size:22px;font-weight:850;line-height:1.3;margin:11px 0 18px}
+.answer{font-size:22px;font-weight:850;text-align:center;padding:20px 12px;background:#f3f4f6;border-radius:14px}
+.tiny{font-size:13px;color:var(--muted)}
+.scoreline{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:11px;font-size:13px;color:var(--muted)}
+.bar{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:7px}
+.fill{height:100%;background:var(--ink);border-radius:999px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.homebtn{padding:15px 12px;text-align:left;background:white;border:1px solid var(--line)}
+.homebtn b{display:block;font-size:18px;margin-bottom:2px}
+.homebtn span{font-size:12px;color:var(--muted)}
+.bigstat{font-size:30px;font-weight:900}
+.center{text-align:center}
+.hidden{display:none}
+.sep{height:1px;background:#eee;margin:14px 0}
+.pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#f3f4f6;font-size:12px;font-weight:800;margin:2px 3px 2px 0}
+@media(max-width:390px){.grid{grid-template-columns:1fr}.q{font-size:20px}}
+</style>
+</head>
+<body><main>
+<header>
+<svg class="logo" viewBox="0 0 100 78" aria-hidden="true">
+<path d="M34 25L44 5M66 25L56 5" stroke="#111827" stroke-width="6" stroke-linecap="round"/>
+<rect x="10" y="23" width="80" height="42" rx="10" fill="none" stroke="#111827" stroke-width="6"/>
+<rect x="20" y="33" width="18" height="14" rx="2" fill="#111827"/><rect x="42" y="33" width="18" height="14" rx="2" fill="#111827"/><rect x="64" y="33" width="16" height="14" rx="2" fill="#111827"/>
+<circle cx="28" cy="67" r="7" fill="#111827"/><circle cx="72" cy="67" r="7" fill="#111827"/>
+</svg>
+<div><h1>MDPO Trolejbusy</h1><div class="sub">trenér místopisu · 201–204</div></div>
+</header>
+
+<div id="app"></div>
+
+<script>
+const ROUTES = {"201": ["Kylešovice, Bílovecká", "Kylešovice, Vaníčkova", "Stadion", "Východní nádraží", "Praskova", "Dolní náměstí", "Divadlo", "U soudu", "Horovo náměstí", "Nemocnice", "Zem. tech. škola", "Městský hřbitov"], "202": ["Malé Hoštice", "Malé Hoštice, rest.", "Kateřinky", "Švédská kaple", "Ratibořská", "Holasická", "Dolní náměstí", "Divadlo", "U soudu", "Horovo náměstí", "Nemocnice", "Psychiatrická léčebna", "Albert hypermarket"], "203": ["Globus", "Ostroj", "Jatky", "Těšínská", "Anenská", "Zimní stadion", "Praskova", "Dolní náměstí", "Divadlo", "SME", "Stará silnice", "Šeděnkova", "Jaktař, U Jaktarky", "Jaktař"], "204": ["Kylešovice, škola", "Kylešovice, Hlavní", "Kylešovice, Bílovecká", "Kylešovice, Vaníčkova", "Stadion", "Východní nádraží", "Praskova", "Holasická", "Ratibořská", "Vrchní", "U Cukrovaru", "Pekařská", "Divadlo", "U soudu", "Horovo náměstí", "Nemocnice", "Psychiatrická léčebna", "Albert hypermarket", "Zem. tech. škola", "Englišova"]};
+const LSKEY="mdpo_mistopis_v2";
+let S=JSON.parse(localStorage.getItem(LSKEY)||'null')||{scores:{},ok:0,bad:0,lastLine:"201",dir:0};
+let line=S.lastLine||"201", dir=S.dir||0, screen="home", q=null, reveal=false, routeStep=0, drillLeft=0, drillTotal=0, drillOK=0;
+
+function save(){S.lastLine=line;S.dir=dir;localStorage.setItem(LSKEY,JSON.stringify(S))}
+function arr(l=line,d=dir){let a=[...ROUTES[l]];return d?a.reverse():a}
+function edgeKey(l,d,i){return `${l}|${d}|${i}`}
+function score(l,d,i){return S.scores[edgeKey(l,d,i)]||0}
+function mastery(l){
+  let sum=0,count=0;
+  [0,1].forEach(d=>{
+    let a=arr(l,d);
+    for(let i=0;i<a.length-1;i++){sum+=score(l,d,i);count++}
+  });
+  return count?Math.round(sum/(count*5)*100):0
+}
+function totalMastery(){
+  let vals=Object.keys(ROUTES).map(mastery);
+  return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length)
+}
+function weightedQuestion(scope="line"){
+  let pool=[];
+  let lines=scope==="line"?[line]:Object.keys(ROUTES);
+  lines.forEach(l=>[0,1].forEach(d=>{
+    let a=arr(l,d);
+    for(let i=0;i<a.length-1;i++){
+      let sc=score(l,d,i);
+      let weight=Math.max(1,7-sc); // slabší hrany častěji
+      for(let w=0;w<weight;w++) pool.push({l,d,i});
+    }
+  }));
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function weakQuestion(){
+  let pool=[];
+  Object.keys(ROUTES).forEach(l=>[0,1].forEach(d=>{
+    let a=arr(l,d);
+    for(let i=0;i<a.length-1;i++) if(score(l,d,i)<3) pool.push({l,d,i});
+  }));
+  return pool.length?pool[Math.floor(Math.random()*pool.length)]:weightedQuestion("all");
+}
+function grade(ok){
+  let k=edgeKey(q.l,q.d,q.i), old=S.scores[k]||0;
+  S.scores[k]=ok?Math.min(5,old+1):Math.max(0,old-2);
+  S[ok?"ok":"bad"]++;
+  if(drillLeft>0){if(ok)drillOK++;drillLeft--}
+  save();
+  if(drillTotal && drillLeft===0){screen="drilldone";render();return}
+  q=(screen==="mix")?weightedQuestion("all"):(screen==="weak")?weakQuestion():weightedQuestion("line");
+  reveal=false; render();
+}
+function topControls(){
+  return `<div class="card">
+    <div class="label">Linka</div>
+    <div class="row">${Object.keys(ROUTES).map(l=>`<button class="linebtn ${l===line?'on':''}" onclick="line='${l}';save();screen='learn';routeStep=0;render()">${l}</button>`).join("")}</div>
+    <div class="sep"></div>
+    <div class="label">Směr</div>
+    <div class="row">
+      <button class="${dir===0?'on':''}" onclick="dir=0;save();routeStep=0;render()">→ ${ROUTES[line].at(-1)}</button>
+      <button class="${dir===1?'on':''}" onclick="dir=1;save();routeStep=0;render()">→ ${ROUTES[line][0]}</button>
+    </div>
+  </div>`
+}
+function home(){
+ return `<div class="card center">
+   <div class="label">Celkově naučeno</div>
+   <div class="bigstat">${totalMastery()} %</div>
+   <div class="bar"><div class="fill" style="width:${totalMastery()}%"></div></div>
+   <div class="scoreline"><span>✓ ${S.ok} věděl</span><span>× ${S.bad} nevěděl</span></div>
+ </div>
+ <div class="grid">
+ ${Object.keys(ROUTES).map(l=>`<button class="homebtn" onclick="line='${l}';screen='learn';save();render()"><b>Linka ${l}</b><span>${ROUTES[l][0]} ↔ ${ROUTES[l].at(-1)}</span><div class="bar"><div class="fill" style="width:${mastery(l)}%"></div></div><span>${mastery(l)} %</span></button>`).join("")}
+ </div>
+ <div class="card">
+   <div class="label">Rychlý trénink</div>
+   <div class="grid">
+    <button class="primary" onclick="startDrill(20)">20 OTÁZEK · MIX</button>
+    <button onclick="startWeak()">SLABÁ MÍSTA</button>
+   </div>
+ </div>`;
+}
+function learn(){
+ let a=arr();
+ return topControls()+`<div class="card">
+   <div class="route-title">${line}: ${a[0]} → ${a.at(-1)}</div>
+   <div class="route-sub">${a.length} zastávek · čistý místopis</div>
+   <div style="margin-top:10px">${a.map((x,i)=>`<div class="stop"><span class="n">${i+1}.</span><span>${x}</span></div>`).join("")}</div>
+ </div>
+ <div class="card"><div class="grid">
+   <button class="primary" onclick="screen='cards';q=weightedQuestion('line');reveal=false;render()">KARTIČKY</button>
+   <button onclick="startChoice()">KVÍZ 5 ODPOVĚDÍ</button>
+   <button onclick="screen='route';routeStep=0;render()">CELÁ TRASA</button>
+ </div></div>
+ <button class="ghost full" onclick="screen='home';render()">← Přehled</button>`;
+}
+function cardView(mode){
+ let a=arr(q.l,q.d), from=a[q.i], to=a[q.i+1], title=mode==="mix"?"MIX VŠECH LINEK":mode==="weak"?"SLABÁ MÍSTA":`LINKA ${q.l}`;
+ return `<div class="card">
+   <div class="label">${title}</div>
+   <div class="tiny">Směr: ${a[0]} → ${a.at(-1)}</div>
+   <div class="q">Co následuje po zastávce<br><b>„${from}“</b>?</div>
+   ${reveal?`<div class="answer">${to}</div>
+   <div class="row" style="margin-top:12px"><button class="bad" onclick="grade(false)">NEVĚDĚL</button><button class="good" onclick="grade(true)">VĚDĚL</button></div>`:
+   `<button class="primary full" onclick="reveal=true;render()">UKÁZAT ODPOVĚĎ</button>`}
+   ${drillTotal?`<div class="scoreline"><span>zbývá ${drillLeft}</span><span>správně ${drillOK}</span></div>`:""}
+ </div>
+ <button class="ghost full" onclick="drillTotal=0;screen='home';render()">← Konec tréninku</button>`;
+}
+function routeView(){
+ let a=arr(), done=routeStep>=a.length-1;
+ return topControls()+`<div class="card">
+  <div class="label">Celá trasa zpaměti</div>
+  <div class="route-title">${a[0]} → ${a.at(-1)}</div>
+  <div class="route-sub">Řekni další zastávku nahlas nebo v duchu a pak ji odkryj.</div>
+  <div style="margin-top:10px">${a.slice(0,routeStep+1).map((x,i)=>`<div class="stop"><span class="n">${i+1}.</span><span>${x}</span></div>`).join("")}</div>
+  <button class="primary full" style="margin-top:12px" onclick="${done?"routeStep=0":"routeStep++"};render()">${done?"ZNOVU OD ZAČÁTKU":"ODKRÝT DALŠÍ"}</button>
+ </div>
+ <button class="ghost full" onclick="screen='learn';render()">← Zpět k lince</button>`;
+}
+
+function allStops(){
+  return [...new Set(Object.values(ROUTES).flat())];
+}
+function makeChoices(question){
+  let a=arr(question.l,question.d), correct=a[question.i+1];
+  let candidates=allStops().filter(x=>x!==correct && x!==a[question.i]);
+  // Prefer plausible distractors: stops from the same line first.
+  let same=[...new Set(ROUTES[question.l])].filter(x=>x!==correct && x!==a[question.i]);
+  same.sort(()=>Math.random()-.5);
+  candidates.sort(()=>Math.random()-.5);
+  let picks=[];
+  for(let x of [...same,...candidates]) if(!picks.includes(x) && picks.length<4) picks.push(x);
+  let choices=[correct,...picks].sort(()=>Math.random()-.5);
+  return {correct,choices};
+}
+let choiceData=null, choicePicked=null;
+function startChoice(){
+  screen="choice"; q=weightedQuestion("line"); choiceData=makeChoices(q); choicePicked=null; render();
+}
+function nextChoice(){
+  q=weightedQuestion("line"); choiceData=makeChoices(q); choicePicked=null; render();
+}
+function pickChoiceIndex(idx){
+  if(choicePicked!==null)return;
+  let x=choiceData.choices[idx];
+  choicePicked=x;
+  let ok=x===choiceData.correct;
+  let k=edgeKey(q.l,q.d,q.i),old=S.scores[k]||0;
+  S.scores[k]=ok?Math.min(5,old+1):Math.max(0,old-2);
+  S[ok?"ok":"bad"]++; save(); render();
+}
+function choiceView(){
+  let a=arr(q.l,q.d), from=a[q.i], correct=choiceData.correct;
+  return `<div class="card">
+    <div class="label">KVÍZ · 5 ODPOVĚDÍ</div>
+    <div class="tiny">Linka ${q.l} · směr ${a.at(-1)}</div>
+    <div class="q">Co následuje po zastávce<br><b>„${from}“</b>?</div>
+    <div style="display:grid;gap:9px">
+      ${choiceData.choices.map((x,idx)=>{
+        let cls="";
+        if(choicePicked!==null){
+          if(x===correct) cls="good";
+          else if(x===choicePicked) cls="bad";
+        }
+        return `<button class="${cls}" onclick="pickChoiceIndex(${idx})">${x}</button>`;
+      }).join("")}
+    </div>
+    ${choicePicked!==null?`<button class="primary full" style="margin-top:14px" onclick="nextChoice()">DALŠÍ OTÁZKA</button>`:""}
+    <div class="scoreline"><span>✓ ${S.ok} věděl</span><span>× ${S.bad} nevěděl</span></div>
+  </div>
+  <button class="ghost full" onclick="screen='learn';render()">← Zpět k lince</button>`;
+}
+function startDrill(n){drillTotal=n;drillLeft=n;drillOK=0;screen="mix";q=weightedQuestion("all");reveal=false;render()}
+function startWeak(){drillTotal=0;screen="weak";q=weakQuestion();reveal=false;render()}
+function drillDone(){
+ let pct=drillTotal?Math.round(drillOK/drillTotal*100):0;
+ return `<div class="card center"><div class="label">Hotovo</div><div class="bigstat">${drillOK}/${drillTotal}</div><div class="sub">${pct} % správně</div>
+ <button class="primary full" onclick="startDrill(20)">JEŠTĚ 20</button><button class="ghost full" style="margin-top:8px" onclick="drillTotal=0;screen='home';render()">PŘEHLED</button></div>`;
+}
+function render(){
+ let out="";
+ if(screen==="home") out=home();
+ else if(screen==="learn") out=learn();
+ else if(screen==="cards") out=cardView("cards");
+ else if(screen==="mix") out=cardView("mix");
+ else if(screen==="weak") out=cardView("weak");
+ else if(screen==="route") out=routeView();
+ else if(screen==="choice") out=choiceView();
+ else if(screen==="drilldone") out=drillDone();
+ document.getElementById("app").innerHTML=out;
+}
+render();
+</script>
+</body></html>
