@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>Kde to kurva mám?</title>
+  <style>
+    :root {
+      --bg: #f3f3f3;
+      --card: #ffffff;
+      --text: #111111;
+      --muted: #6b6b6b;
+      --line: #dddddd;
+      --accent: #111111;
+      --danger: #b42318;
+      --radius: 18px;
+      --shadow: 0 4px 18px rgba(0,0,0,.06);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 22px 16px 100px;
+    }
+
+    h1 {
+      margin: 4px 0 18px;
+      font-size: clamp(28px, 7vw, 46px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .search-wrap {
+      flex: 1;
+      position: relative;
+    }
+
+    input, textarea, button {
+      font: inherit;
+    }
+
+    input[type="search"],
+    input[type="text"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px 15px;
+      outline: none;
+      font-size: 17px;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #888;
+      box-shadow: 0 0 0 3px rgba(0,0,0,.06);
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 16px;
+      cursor: pointer;
+      background: #e7e7e7;
+      color: #111;
+      font-weight: 700;
+    }
+
+    .btn.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn.danger {
+      background: #fff0ee;
+      color: var(--danger);
+    }
+
+    .btn.icon {
+      min-width: 52px;
+      font-size: 24px;
+      padding: 8px 14px;
+    }
+
+    .status {
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 14px;
+      margin: 2px 2px 10px;
+    }
+
+    .panel {
+      display: none;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .panel.open { display: block; }
+
+    .field {
+      margin-bottom: 13px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 800;
+      margin: 0 0 6px 2px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .results {
+      display: grid;
+      gap: 12px;
+    }
+
+    .item {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid transparent;
+    }
+
+    .item:hover {
+      border-color: #d3d3d3;
+    }
+
+    .item-title {
+      font-size: 21px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 7px;
+      word-break: break-word;
+    }
+
+    .item-place {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      word-break: break-word;
+    }
+
+    .item-note {
+      color: var(--muted);
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 13px;
+      justify-content: flex-end;
+    }
+
+    .small {
+      padding: 9px 12px;
+      font-size: 14px;
+      border-radius: 11px;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 44px 18px;
+      background: rgba(255,255,255,.6);
+      border-radius: var(--radius);
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0 2px 10px;
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        padding-top: 16px;
+      }
+
+      .topbar {
+        align-items: stretch;
+      }
+
+      .btn.icon {
+        min-width: 54px;
+      }
+
+      .item-actions .btn {
+        flex: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Kde to kurva mám?</h1>
+
+    <div class="topbar">
+      <div class="search-wrap">
+        <input
+          id="search"
+          type="search"
+          placeholder="Hledat věc, místo, poznámku…"
+          autocomplete="off"
+          autocapitalize="sentences"
+        >
+      </div>
+      <button id="addBtn" class="btn primary icon" type="button" aria-label="Přidat">+</button>
+    </div>
+
+    <div id="status" class="status">Načítám…</div>
+
+    <section id="formPanel" class="panel">
+      <input id="editId" type="hidden">
+
+      <div class="field">
+        <label for="vec">Věc</label>
+        <input id="vec" type="text" placeholder="Např. náhradní řemínek Casio" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label for="kde">Kde</label>
+        <input id="kde" type="text" placeholder="Např. pracovna, horní šuplík" list="mista" autocomplete="off">
+        <datalist id="mista"></datalist>
+      </div>
+
+      <div class="field">
+        <label for="poznamka">Poznámka</label>
+        <textarea id="poznamka" placeholder="Volitelné — třeba v malé černé krabičce"></textarea>
+      </div>
+
+      <div class="actions">
+        <button id="cancelBtn" class="btn" type="button">Zrušit</button>
+        <button id="saveBtn" class="btn primary" type="button">Uložit</button>
+      </div>
+    </section>
+
+    <div id="count" class="count"></div>
+    <section id="results" class="results"></section>
+  </main>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec';
+
+    let items = [];
+    let filteredItems = [];
+
+    const search = document.getElementById('search');
+    const addBtn = document.getElementById('addBtn');
+    const formPanel = document.getElementById('formPanel');
+    const editId = document.getElementById('editId');
+    const vec = document.getElementById('vec');
+    const kde = document.getElementById('kde');
+    const poznamka = document.getElementById('poznamka');
+    const mista = document.getElementById('mista');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const results = document.getElementById('results');
+    const status = document.getElementById('status');
+    const count = document.getElementById('count');
+
+    function normalize(text) {
+      return String(text || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function newId() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+
+    async function apiPost(payload) {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+
+      return response.text();
+    }
+
+    async function loadItems() {
+      status.textContent = 'Načítám…';
+
+      try {
+        const response = await fetch(API_URL + '?mode=kdetomam&_=' + Date.now(), {
+          cache: 'no-store'
+        });
+
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const data = await response.json();
+        items = Array.isArray(data) ? data : [];
+
+        refreshPlaces();
+        applyFilter();
+
+        status.textContent = items.length
+          ? ''
+          : 'Zatím tu nic není. Přidej první věc.';
+      } catch (err) {
+        console.error(err);
+        status.textContent = 'Nepodařilo se načíst data. Zkontroluj nasazení Google Apps Scriptu.';
+      }
+    }
+
+    function refreshPlaces() {
+      const uniquePlaces = [...new Set(
+        items
+          .map(item => String(item.kde || '').trim())
+          .filter(Boolean)
+      )].sort((a, b) => a.localeCompare(b, 'cs'));
+
+      mista.innerHTML = uniquePlaces
+        .map(place => `<option value="${escapeHtml(place)}"></option>`)
+        .join('');
+    }
+
+    function applyFilter() {
+      const q = normalize(search.value);
+
+      if (!q) {
+        filteredItems = [...items];
+      } else {
+        filteredItems = items.filter(item => {
+          const haystack = normalize([
+            item.vec,
+            item.kde,
+            item.poznamka
+          ].join(' '));
+
+          return haystack.includes(q);
+        });
+      }
+
+      filteredItems.sort((a, b) =>
+        String(a.vec || '').localeCompare(String(b.vec || ''), 'cs')
+      );
+
+      renderItems();
+    }
+
+    function renderItems() {
+      count.textContent = filteredItems.length
+        ? `${filteredItems.length} ${filteredItems.length === 1 ? 'položka' : (filteredItems.length >= 2 && filteredItems.length <= 4 ? 'položky' : 'položek')}`
+        : '';
+
+      if (!filteredItems.length) {
+        results.innerHTML = `
+          <div class="empty">
+            ${items.length ? 'Nic jsem nenašel.' : 'Zatím tu nic není.'}
+          </div>
+        `;
+        return;
+      }
+
+      results.innerHTML = filteredItems.map(item => `
+        <article class="item">
+          <div class="item-title">${escapeHtml(item.vec)}</div>
+          <div class="item-place">📍 ${escapeHtml(item.kde)}</div>
+          ${item.poznamka ? `<div class="item-note">${escapeHtml(item.poznamka)}</div>` : ''}
+          <div class="item-actions">
+            <button class="btn small" type="button" data-edit="${escapeHtml(item.id)}">Upravit</button>
+            <button class="btn danger small" type="button" data-delete="${escapeHtml(item.id)}">Smazat</button>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    function openAddForm() {
+      editId.value = '';
+      vec.value = '';
+      kde.value = '';
+      poznamka.value = '';
+      saveBtn.textContent = 'Uložit';
+      formPanel.classList.add('open');
+      setTimeout(() => vec.focus(), 0);
+    }
+
+    function openEditForm(id) {
+      const item = items.find(x => String(x.id) === String(id));
+      if (!item) return;
+
+      editId.value = item.id;
+      vec.value = item.vec || '';
+      kde.value = item.kde || '';
+      poznamka.value = item.poznamka || '';
+      saveBtn.textContent = 'Uložit změny';
+      formPanel.classList.add('open');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => vec.focus(), 0);
+    }
+
+    function closeForm() {
+      formPanel.classList.remove('open');
+      editId.value = '';
+      vec.value = '';
+      kde.value = '';
+      poznamka.value = '';
+    }
+
+    async function saveItem() {
+      const vecValue = vec.value.trim();
+      const kdeValue = kde.value.trim();
+      const poznamkaValue = poznamka.value.trim();
+
+      if (!vecValue) {
+        alert('Napiš, co to je.');
+        vec.focus();
+        return;
+      }
+
+      if (!kdeValue) {
+        alert('Napiš, kde to je.');
+        kde.focus();
+        return;
+      }
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Ukládám…';
+
+      const existingId = editId.value.trim();
+      const item = {
+        id: existingId || newId(),
+        vec: vecValue,
+        kde: kdeValue,
+        poznamka: poznamkaValue
+      };
+
+      try {
+        await apiPost({
+          type: existingId ? 'kdetomam_update' : 'kdetomam_add',
+          item
+        });
+
+        closeForm();
+        await loadItems();
+        status.textContent = 'Uloženo.';
+        setTimeout(() => {
+          if (status.textContent === 'Uloženo.') status.textContent = '';
+        }, 1600);
+      } catch (err) {
+        console.error(err);
+        alert('Uložení se nepovedlo.');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = existingId ? 'Uložit změny' : 'Uložit';
+      }
+    }
+
+    async function deleteItem(id) {
+      const item = items.find(x => String(x.id) === String(id));
+      if (!item) return;
+
+      if (!confirm(`Opravdu smazat „${item.vec}“?`)) return;
+
+      try {
+        await apiPost({
+          type: 'kdetomam_delete',
+          id
+        });
+
+        await loadItems();
+        status.textContent = 'Smazáno.';
+        setTimeout(() => {
+          if (status.textContent === 'Smazáno.') status.textContent = '';
+        }, 1600);
+      } catch (err) {
+        console.error(err);
+        alert('Smazání se nepovedlo.');
+      }
+    }
+
+    addBtn.addEventListener('click', openAddForm);
+    cancelBtn.addEventListener('click', closeForm);
+    saveBtn.addEventListener('click', saveItem);
+    search.addEventListener('input', applyFilter);
+
+    results.addEventListener('click', event => {
+      const editButton = event.target.closest('[data-edit]');
+      const deleteButton = event.target.closest('[data-delete]');
+
+      if (editButton) {
+        openEditForm(editButton.dataset.edit);
+      }
+
+      if (deleteButton) {
+        deleteItem(deleteButton.dataset.delete);
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && formPanel.classList.contains('open')) {
+        saveItem();
+      }
+
+      if (event.key === 'Escape' && formPanel.classList.contains('open')) {
+        closeForm();
+      }
+    });
+
+    loadItems();
+  </script>
+</body>
+</html>
