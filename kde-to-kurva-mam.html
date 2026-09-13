@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#111111">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📦</text></svg>">
   <title>Kde to kurva mám?</title>
   <style>
     :root {
@@ -104,11 +105,43 @@
       padding: 8px 14px;
     }
 
-    .status {
+    .status-row {
       min-height: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 2px 2px 10px;
+    }
+
+    .sync-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d33;
+      box-shadow: 0 0 0 2px rgba(211, 51, 51, .12);
+      flex: 0 0 auto;
+      transition: background .2s ease, box-shadow .2s ease;
+    }
+
+    .sync-dot.ok {
+      background: #2e9d50;
+      box-shadow: 0 0 0 2px rgba(46, 157, 80, .12);
+    }
+
+    .sync-dot.busy {
+      background: #d79b18;
+      box-shadow: 0 0 0 2px rgba(215, 155, 24, .12);
+      animation: pulse 1s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: .55; }
+      50% { opacity: 1; }
+    }
+
+    .status {
       color: var(--muted);
       font-size: 14px;
-      margin: 2px 2px 10px;
     }
 
     .panel {
@@ -246,7 +279,7 @@
       <button id="addBtn" class="btn primary icon" type="button" aria-label="Přidat">+</button>
     </div>
 
-    <div id="status" class="status">Načítám…</div>
+    <div class="status-row"><span id="syncDot" class="sync-dot busy" title="Synchronizace"></span><span id="status" class="status">Načítám…</span></div>
 
     <section id="formPanel" class="panel">
       <input id="editId" type="hidden">
@@ -295,6 +328,7 @@
     const cancelBtn = document.getElementById('cancelBtn');
     const results = document.getElementById('results');
     const status = document.getElementById('status');
+    const syncDot = document.getElementById('syncDot');
     const count = document.getElementById('count');
 
     function normalize(text) {
@@ -319,6 +353,11 @@
       return Date.now().toString(36) + Math.random().toString(36).slice(2);
     }
 
+    function setSyncState(state, text = '') {
+      syncDot.className = 'sync-dot' + (state ? ' ' + state : '');
+      status.textContent = text;
+    }
+
     async function apiPost(payload) {
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -333,7 +372,7 @@
     }
 
     async function loadItems() {
-      status.textContent = 'Načítám…';
+      setSyncState('busy', 'Načítám…');
 
       try {
         const response = await fetch(API_URL + '?mode=kdetomam&_=' + Date.now(), {
@@ -348,12 +387,12 @@
         refreshPlaces();
         applyFilter();
 
-        status.textContent = items.length
-          ? ''
-          : 'Zatím tu nic není. Přidej první věc.';
+        setSyncState('ok', items.length
+          ? 'Synchronizováno'
+          : 'Zatím tu nic není. Přidej první věc.');
       } catch (err) {
         console.error(err);
-        status.textContent = 'Nepodařilo se načíst data. Zkontroluj nasazení Google Apps Scriptu.';
+        setSyncState('', 'Nepodařilo se načíst data.');
       }
     }
 
@@ -469,9 +508,6 @@
         return;
       }
 
-      saveBtn.disabled = true;
-      saveBtn.textContent = 'Ukládám…';
-
       const existingId = editId.value.trim();
       const item = {
         id: existingId || newId(),
@@ -480,24 +516,32 @@
         poznamka: poznamkaValue
       };
 
+      const previousItems = items.map(x => ({...x}));
+
+      if (existingId) {
+        items = items.map(x => String(x.id) === String(existingId) ? item : x);
+      } else {
+        items.push(item);
+      }
+
+      closeForm();
+      refreshPlaces();
+      applyFilter();
+      setSyncState('busy', 'Ukládám…');
+
       try {
         await apiPost({
           type: existingId ? 'kdetomam_update' : 'kdetomam_add',
           item
         });
-
-        closeForm();
-        await loadItems();
-        status.textContent = 'Uloženo.';
-        setTimeout(() => {
-          if (status.textContent === 'Uloženo.') status.textContent = '';
-        }, 1600);
+        setSyncState('ok', 'Synchronizováno');
       } catch (err) {
         console.error(err);
+        items = previousItems;
+        refreshPlaces();
+        applyFilter();
+        setSyncState('', 'Uložení se nepovedlo');
         alert('Uložení se nepovedlo.');
-      } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = existingId ? 'Uložit změny' : 'Uložit';
       }
     }
 
@@ -507,19 +551,25 @@
 
       if (!confirm(`Opravdu smazat „${item.vec}“?`)) return;
 
+      const previousItems = items.map(x => ({...x}));
+      items = items.filter(x => String(x.id) !== String(id));
+
+      refreshPlaces();
+      applyFilter();
+      setSyncState('busy', 'Mažu…');
+
       try {
         await apiPost({
           type: 'kdetomam_delete',
           id
         });
-
-        await loadItems();
-        status.textContent = 'Smazáno.';
-        setTimeout(() => {
-          if (status.textContent === 'Smazáno.') status.textContent = '';
-        }, 1600);
+        setSyncState('ok', 'Synchronizováno');
       } catch (err) {
         console.error(err);
+        items = previousItems;
+        refreshPlaces();
+        applyFilter();
+        setSyncState('', 'Smazání se nepovedlo');
         alert('Smazání se nepovedlo.');
       }
     }
