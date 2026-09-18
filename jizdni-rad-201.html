@@ -72,7 +72,7 @@ function render(){
  const d=data[route][day], box=document.getElementById("times"); box.innerHTML="";
  const now=new Date(), todayWork=now.getDay()>=1&&now.getDay()<=5;
  let next=null;
- Object.entries(d).forEach(([h,mins])=>{
+ Object.entries(d).sort(([a],[b])=>Number(a)-Number(b)).forEach(([h,mins])=>{
   const row=document.createElement("div"); row.className="row";
   row.innerHTML=`<div class="hour">${h}</div><div class="mins"></div>`;
   mins.forEach(m=>{
