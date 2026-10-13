@@ -1,32 +1,32 @@
-const CACHE_NAME = 'technika-bus-v1';
-const ASSETS = [
-  './technika-pwa.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
-
+// Technika Bus D: offline podpora a aktualizace obsahu, verze 2026-10-13.
+// Zachovava localStorage (Leitnerovy hromadky): nikdy nemaze uzivatelska data.
+const CACHE = 'technika-bus-d-v2026-10-13';
+const HOME = new URL('./index.html', self.registration.scope).href;
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
-  self.skipWaiting();
+  event.waitUntil(caches.open(CACHE).then(cache => cache.add(new Request(HOME, {cache:'reload'}))).then(() => self.skipWaiting()));
 });
-
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-    ))
-  );
-  self.clients.claim();
+  event.waitUntil(self.clients.claim());
 });
-
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-      const copy = response.clone();
-      caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-      return response;
-    }).catch(() => caches.match('./technika-pwa.html')))
-  );
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin || !url.href.startsWith(self.registration.scope)) return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    try {
+      const fresh = await fetch(req);
+      if (fresh.ok) await cache.put(req, fresh.clone());
+      return fresh;
+    } catch (err) {
+      const cached = await cache.match(req);
+      if (cached) return cached;
+      if (req.mode === 'navigate') {
+        const home = await cache.match(HOME);
+        if (home) return home;
+      }
+      throw err;
+    }
+  })());
 });

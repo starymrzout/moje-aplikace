@@ -240,6 +240,18 @@
             white-space: pre-wrap;
         }
 
+
+        /* Obrázkový přehled kontrolek – pouze otázka 40, plně offline */
+        .symbols-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(125px,1fr)); gap:9px; }
+        .symbol-group { margin-top:12px; margin-bottom:8px; font-weight:700; font-size:.82rem; }
+        .symbol-group:first-child { margin-top:0; }
+        .symbol-card { background:#f8f7f3; border:1px solid #dfddd6; border-radius:8px; padding:10px 7px; text-align:center; min-height:112px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; }
+        .symbol-icon { width:76px; height:49px; display:flex; justify-content:center; align-items:center; }
+        .symbol-icon svg { width:72px; height:47px; overflow:visible; }
+        .symbol-caption { font-size:.79rem; font-weight:650; line-height:1.2; }
+        .symbol-note { font-size:.76rem; line-height:1.4; margin-top:10px; color:#535353; }
+        @media(max-width:520px) { .symbols-grid {grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px;} .symbol-card{min-height:100px;} }
+
         .hidden { display: none !important; }
 
         .reveal-btn {
@@ -378,6 +390,13 @@
                 <ul class="key-points-list" id="q-points"></ul>
             </div>
 
+            <!-- Názorné kontrolky přístupné u otázky 40; nemění pořadí ani hromádky -->
+            <div class="section-box hidden" id="box-symbols">
+                <div class="section-header">Přehled symbolů kontrolek a ovladačů</div>
+                <div id="symbols-content"></div>
+                <p class="symbol-note">Schematické typické značky pro učení, nikoli přesné fotografie přístrojové desky. Vzhled a barva se mohou u různých autobusů lišit; rozhoduje návod ke konkrétnímu vozidlu.</p>
+            </div>
+
             <!-- Tlačítko a box pro podrobnosti -->
             <button class="reveal-btn" id="btn-detail" onclick="toggleDetail()">Zobrazit podrobný výklad</button>
             <div class="section-box hidden" id="box-detail">
@@ -416,8 +435,8 @@
             {
                 id: 2,
                 title: "2. Popište kontrolu tlaku vzduchu v pneumatikách a hloubku drážek dezénu pneumatiky",
-                points: [ "Tlak měříme tlakoměrem VÝHRADNĚ za studena (vozidlo zajištěno)", "Rezervní kolo tlakujeme na nejvyšší povolený technický tlak pláště", "Zimní dofukování: v chladu připočítat cca +0,2 baru k letní hodnotě", "Minimální dezén: letní min. 1,6 mm (bezpečná hranice pro těžká vozidla je 3 mm)", "Zimní pneumatiky (nad 3,5 t): povinně min. 6 mm na hnané nápravě (6 kol = 6 mm)" ],
-                detail: "Kontrola tlaku vzduchu:\nProvádí se při studených pneumatikách před jízdou. Vozidlo musí být zajištěno proti pohybu. Sejmeme čepičku ventilku, nasadíme kalibrovaný tlakoměr a hodnotu porovnáme s údaji výrobce (štítek u nápravy nebo v manuálu). Tlak se kontroluje minimálně jednou měsíčně. Údaje výrobce platí pro letní teploty; v zimě za mrazu je vhodné připočíst cca 0,2 baru. Rezervní kolo foukáme na nejvyšší dovolený tlak udaný výrobcem pneu.\n\nHloubka dezénu:\n• Letní provoz: Zákonné minimum je 1,6 mm (kontrola hloubkoměrem nebo dle můstků TWI). Pro těžká vozidla a autobusy by však z bezpečnostních důvodů neměla klesnout pod 3 mm.\n• Zimní provoz (§ 40a zákona č. 361/2000 Sb.): Vozidla nad 3,5 t (včetně autobusů) musí mít v zimním období na všech kolech hnacích náprav zimní pneumatiky (M+S) s hloubkou dezénu minimálně 6 mm (pomůcka: bus má 6 kol = 6 mm na zadku)."
+                points: [ "Tlak: měříme tlakoměrem na studených pneumatikách, vozidlo zajistíme proti pohybu", "Naměřený tlak porovnáme s předpisem výrobce pro nápravu a zatížení vozidla", "Pneumatiky včetně rezervy zkontrolujeme a podle potřeby dohustíme", "Běžná minimální hloubka hlavních drážek dezénu: 1,6 mm; u těžkých vozidel je vhodná vyšší rezerva (např. 3 mm)", "Zimní pneumatiky nad 3,5 t za zákonných podmínek: min. 6 mm na kolech trvale hnacích náprav" ],
+                detail: "Tlak vzduchu měříme tlakoměrem na studených pneumatikách, na zajištěném vozidle. Sejmeme krytku ventilku, změříme tlak a porovnáme jej s údajem výrobce podle typu pneumatiky, nápravy a zatížení. Podle potřeby pneumatiku dohustíme, nezapomeneme na rezervní kolo.\n\nHloubku hlavních drážek dezénu kontrolujeme hloubkoměrem nebo značkami TWI. Obecné minimum je 1,6 mm, pro těžká vozidla se doporučuje větší bezpečnostní rezerva. V zimních podmínkách vymezených zákonem musí mít vozidlo nad 3,5 t zimní pneumatiky alespoň na kolech trvale hnacích náprav s hloubkou nejméně 6 mm."
             },
             {
                 id: 3,
@@ -434,7 +453,7 @@
             {
                 id: 5,
                 title: "5. Popište postup při výměně kola",
-                points: [ "Zajištění a bezpečnost: zastavit u kraje, výstražné 4 blinkry, vesta, cestující ven do bezpečí", "Výstražný trojúhelník: obec min. 50 m (dle situace), dálnice min. 100 m", "Parkovací brzda + zakládací klíny na nápravu, která se NEzvedá", "Postup: povolit matice na zemi, hever pod určené místo nápravy, zvednout, vyměnit", "Dotažení matic do kříže, po spuštění dotáhnout předepsaným momentem, po 50 km kontrola" ],
+                points: [ "Bezpečně zastavit; parkovací brzda, výstražná světla, výstražná vesta, cestující do bezpečí", "Výstražný trojúhelník: zpravidla alespoň 50 m za vozidlem, na dálnici alespoň 100 m; v obci dle situace i méně", "Zajistit vozidlo klíny proti pohybu; zvedák jen pod určený bod na pevném podkladu", "Povolit matice na zemi, zvednout, vyměnit kolo a nasadit matice", "Spustit vozidlo, dotáhnout předepsaným momentem, kontrolovat tlak rezervy a dotažení asi po 50 km" ],
                 detail: "Postup výměny kola krok za krokem:\n1. Zastavit na pevném a rovném podkladu u kraje vozovky, zajistit parkovací brzdou.\n2. Zapnout výstražná světla, obléknout reflexní vestu a bezpečně evakuovat cestující z autobusu mimo komunikaci (za svodidla).\n3. Umístit výstražný trojúhelník (mimo obec min. 50 m, na dálnici min. 100 m).\n4. Založit zakládací klíny pod kola nápravy, která zůstává na zemi.\n5. Připravit klíč na kola, zvedák a rezervní kolo. Povolit kolové matice poškozeného kola ještě na zemi (pozor: některá starší vozidla měla levé závity na levé straně!).\n6. Umístit hever přesně pod zvedací bod nápravy u poškozeného kola a nápravu přizvednout.\n7. Vyšroubovat matice, pomocí montážní páky kolo sejmout a nasadit rezervu.\n8. Našroubovat matice, utáhnout je lehce do kříže, spustit nápravu dolů a dotáhnout momentovým klíčem.\n9. Uklidit poškozené kolo, nářadí, klíny i trojúhelník. Po ujetí cca 50 km provést kontrolní dotažení."
             },
             {
@@ -452,7 +471,7 @@
             {
                 id: 8,
                 title: "8. Kontrola a ošetřování kapalinové chladicí soustavy, regulace provozní teploty",
-                points: [ "Kontrola: množství kapaliny v expanzce (mezi ryskami), těsnost hadic, čistota chladiče", "Kontrola řemenů: drážkový řemen lze rukou otočit o 90°, klínový promáčknout o 1–1,5 cm", "Při použití dvou řemenů se vždy mění OBA současně!", "Regulace: termostat zavřený = malý okruh (rychlý ohřev); při 80–90 °C otevírá velký okruh do chladiče", "Chladicí kapalina se mění cca po 2–3 letech, před zimou kontrola mrazuvzdornosti refraktometrem" ],
+                points: [ "Kontrolujeme hladinu chladicí kapaliny, těsnost hadic a chladiče a čistotu jeho lamel", "Kontrolujeme ventilátor a pohon čerpadla, pokud je poháněno řemenem, i stav a napnutí řemenu", "Množství a typ kapaliny, interval výměny i případné doplňování určuje výrobce", "Termostat: za studena malý okruh; při zahřátí přibližně na 80–90 °C otevře velký okruh", "Před zimou kontrolujeme mrazuvzdornost chladicí kapaliny" ],
                 detail: "Kontrola a ošetřování:\nPřed jízdou kontrolujeme těsnost spojů, neporušenost hadic a hladinu chladicí kapaliny v expanzní nádobce (mezi ryskami). Kontrolujeme čistotu lamel chladiče od hmyzu a nečistot. Dále kontrolujeme napnutí řemene vodního čerpadla: drážkový řemen v nejdelší části musí jít rukou pootočit maximálně o 90°, klasický klínový řemen musí mít průhyb cca 1 až 1,5 cm při zatlačení palcem. Jsou-li použity dva řemeny, mění se vždy oba najednou! Kapalina se mění po cca 2–3 letech a před zimou měříme refraktometrem její bod tuhnutí.\n\nRegulace provozní teploty:\nZajišťuje ji termostat. U studeného motoru je zavřený, kapalina koluje pouze v bloku motoru a přes topení (malý okruh), aby se motor rychle zahřál. Po dosažení provozní teploty cca 80–90 °C termostat otevře velký okruh do hlavního chladiče. Chlazení je podporováno náporem vzduchu a ventilátorem spínaným viskózní nebo elektromagnetickou spojkou."
             },
             {
@@ -482,8 +501,8 @@
             {
                 id: 13,
                 title: "13. Popište postup při odvzdušnění palivové soustavy vznětového motoru",
-                points: [ "1. Zjištění a odstranění příčiny (doplnění nafty, oprava netěsnosti, výměna filtru)", "2. Povolit madlo ručního podávacího čerpadla a odvzdušňovací šroubek na filtru", "3. Pumpovat ručně, dokud z filtru nevychází čistá nafta bez vzduchových bublin, a utáhnout", "4. Obdobně odvzdušnit vstřikovací čerpadlo přes jeho odvzdušňovací šroubek", "5. Vysokotlaká část: povolit převlečné matice u vstřikovačů, protočit startérem, utáhnout" ],
-                detail: "Kompletní postup odvzdušnění palivového systému:\n1. Zjistíme a odstraníme příčinu zavzdušnění (dolijeme naftu, vyměníme těsnění, vyčistíme skleničku).\n2. Povolíme madlo ruční pumpičky na podávacím čerpadle a povolíme odvzdušňovací šroub na vršku jemného čističe paliva.\n3. Ruční pumpičkou pumpujeme naftu ze soustavy tak dlouho, dokud přes povolený šroub nevychází čistá nafta bez pěny a vzduchových bublinek. Za stálého pumpování šroub pevně dotáhneme.\n4. Pokud má vstřikovací čerpadlo odvzdušňovací šroub, zopakujeme postup i na něm.\n5. Odvzdušnění vysokotlaké části: Ruční pumpou nafta do vysokotlakých trubek nedojde (vstřikovací čerpadlo se musí točit). Abychom netočili motorem nasucho a neničili vstřikovače, povolíme převlečné matice trubek přímo u vstřikovačů na hlavě válců. Krátce protočíme motor startérem, dokud kolem závitů nezačne stříkat nafta. Matice dotáhneme, motor očistíme od nafty a nastartujeme."
+                points: [ "Nejprve odstranit příčinu zavzdušnění: doplnit naftu, opravit netěsnost", "U starších systémů povolit odvzdušňovací šroub na filtru a použít ruční podávací pumpičku", "Odvzdušňovat ve směru toku paliva, až vytéká nafta bez bublinek; šrouby dotáhnout", "Podle konstrukce odvzdušnit také vstřikovací čerpadlo, pokud nemá automatické odvzdušnění", "Nakonec kontrola těsnosti; u Common Railu vysokotlaké spoje nepovolovat, postup dle výrobce" ],
+                detail: "1. Zjistíme a odstraníme příčinu zavzdušnění (doplníme palivo, opravíme netěsnost nebo výměnu filtru).\n2. U klasického staršího systému povolíme odvzdušňovací šroub na čističi paliva a ruční podávací pumpičkou čerpáme, dokud nevytéká nafta bez vzduchových bublinek. Filtry odvzdušňujeme ve směru toku paliva, poté šrouby dotáhneme.\n3. Má-li vstřikovací čerpadlo samostatné odvzdušnění, postupujeme podle návodu a odvzdušníme i je.\n4. Zkontrolujeme těsnost spojů a nastartování.\n\nPozor: U moderního Common Railu se nesmí pro odvzdušnění povolovat vysokotlaké trubky u vstřikovačů. U těchto vozidel se řídíme postupem výrobce nebo použijeme servis."
             },
             {
                 id: 14,
@@ -494,7 +513,7 @@
             {
                 id: 15,
                 title: "15. Funkce regulátoru otáček vstřikovacího čerpadla a funkce omezovače rychlosti",
-                points: [ "Regulátor otáček: udržuje motor ve stabilním volnoběhu a chrání před přetočením na maximu", "Při dosažení max. otáček regulátor automaticky sníží/zastaví přívod nafty do válců", "Omezovač rychlosti: zákonné omezení maximální rychlosti (pro autobusy povinně 100 km/h)", "Pracuje elektronicky: při 100 km/h odpojí vstřikování bez ohledu na plyn", "DŮLEŽITÉ: omezovač nebrzdí vozidlo z kopce! Vlivem hmotnosti bus zrychluje, řidič musí brzdit sám" ],
+                points: [ "Regulátor otáček: udržuje volnoběh a při dosažení maxima omezuje dodávku paliva", "Je mechanický nebo elektronický a chrání motor před přetočením způsobeným dodávkou paliva", "Omezovač rychlosti: hlídá stanovenou nejvyšší rychlost autobusu (běžně 100 km/h)", "Po dosažení nastavené rychlosti omezuje přívod paliva / výkon motoru", "Omezovač sám vozidlo z kopce nebrzdí; regulátor neochrání motor před chybným podřazením" ],
                 detail: "Regulátor otáček vstřikovacího čerpadla:\nMechanické nebo elektronické zařízení řídící dodávku nafty. Výrobce nastaví minimální a maximální otáčky. Při nastartování automaticky dodá přesné množství nafty pro udržení volnoběhu. Při zatížení (např. sepnutí kompresoru či serva) přidá palivo, aby motor nezhasl. Při dosažení maximálních povolených otáček naopak dodávku nafty omezí nebo zcela vypne, takže řidič nemůže motor přetočit ani plným sešlápnutím plynu.\n\nOmezovač rychlosti:\nZajišťuje, aby vozidlo nepřekročilo nejvyšší zákonem povolenou rychlost. U autobusů je ze zákona nastaven přesně na 100 km/h (u nákladních vozů na 90 km/h). Funguje elektronicky: porovnává signál z tachografu s otáčkami motoru. Jakmile vozidlo dosáhne 100 km/h, omezí dodávku paliva.\nVarování pro řidiče: Omezovač rychlosti nereguluje brzdový systém! Při jízdě z prudkého svahu může autobus vlastní vahou snadno překročit 100 km/h – řidič musí rychlost aktivně hlídat a brzdit retardérem či provozní brzdou."
             },
             {
@@ -518,7 +537,7 @@
             {
                 id: 19,
                 title: "19. Ošetřování čističe vzduchu (suchý, mokrý) a údržba plnicího systému motoru",
-                points: [ "Suchý čistič (papírová vložka): profouknout stlačeným vzduchem PROTI směru sání, při zanesení vyměnit", "Mokrý čistič (olejová lázeň): drátěnou vložku vyprat v naftě/benzínu a vyměnit olej po rysku", "Plnicí systém: potrubí a hadice od filtru přes turbo a mezichladič až do sání hlavy motoru", "Údržba plnicího systému: kontrola těsnosti všech hadic a dotažení stahovacích pásků", "Nasátí nečistot přes prasklou hadici za filtrem znamená okamžité zničení lopatek turba a motoru" ],
+                points: [ "Suchý čistič: papírová filtrační vložka, kontrola znečištění a výměna podle výrobce", "Čištění vložky stlačeným vzduchem jen tehdy, pokud ho připouští výrobce", "Mokrý čistič: nečistoty se zachycují v oleji; při údržbě vyčistit vložku a vyměnit olej", "Plnicí systém: potrubí a hadice od čističe přes turbo/mezichladič k motoru", "Kontrolujeme těsnost, upevnění, čistotu a stav všech částí sání" ],
                 detail: "Čistič vzduchu zbavuje nasávaný vzduch prachu a nečistot:\n• Suchý čistič: Obsahuje skládanou vložku ze speciálního filtračního papíru. Běžná údržba spočívá ve vyfoukání stlačeným vzduchem v opačném směru, než proudí nasávaný vzduch. Při silném znečištění nebo poškození se vložka vymění za novou.\n• Mokrý čistič: Drátěná vložka ponořená v motorovém oleji na dně nádoby. Při údržbě se použitý znečištěný olej vylije, nádoba se vymyje technickým benzínem nebo naftou, drátěnka se vypere, vyfouká a nalije se čerstvý motorový olej přesně po stanovenou rysku.\n\nPlnicí systém motoru:\nZahrnuje veškeré potrubí od filtru vzduchu, přes dmychadlo turba, mezichladič až po sací kanály motoru. Údržba spočívá v kontrole absolutní těsnosti a upevnění spojů. Netěsnost mezi filtrem a turbem způsobí nasátí písku a prachu přímo na lopatky turba rotující rychlostí 200 000 ot/min, což vede k jejich okamžitému obroušení a zničení motoru."
             },
             {
@@ -602,7 +621,7 @@
             {
                 id: 33,
                 title: "33. Rozdíl mezi kotoučovou a bubnovou brzdou, jejich výhody a nevýhody",
-                points: [ "Kotoučová: brzdící účinek vyvolán přitlačováním destiček na boky brzdového kotouče", "Výhody kotoučové: kratší brzdná dráha, skvělý odvod tepla, stálý účinek bez vadnutí (fadingu)", "Bubnová: čelisti přitlačovány zevnitř na rotující buben (uzavřená konstrukce)", "Nevýhody bubnové: náchylnost k vadnutí brzd při zahřátí, pracnější kontrola a seřizování", "POZOR: Mokré nebo znečištěné brzdy nebrzdí! Po mytí či vodě je nutno je za jízdy vysušit" ],
+                points: [ "Kotoučová brzda: destičky tlačí na obě strany kotouče", "Výhody kotoučové: dobrý odvod tepla, menší sklon k vadnutí a snadnější kontrola", "Bubnová brzda: čelisti se přitlačují k vnitřní ploše brzdového bubnu", "Nevýhody bubnové: horší odvod tepla, větší sklon k vadnutí a složitější kontrola", "Při dlouhém klesání využíváme motorovou brzdu či retardér; mokré brzdy mají nižší účinek" ],
                 detail: "Kotoučová brzda:\nPísty v třmenu přitlačují brzdové destičky na otevřený rotující kotouč.\n• Výhody: Vynikající chlazení a odvod tepla proudícím vzduchem, vysoká účinnost, netrpí tepelným slábnutím (vadnutím – fadingem), snadná vizuální kontrola tloušťky obložení, konstrukční jednoduchost.\n• Nevýhody: Větší opotřebení obložení, možnost prasknutí kotouče při prudkém ochlazení (např. vjetí do hluboké vody s rozpálenými kotouči).\n\nBubnová brzda:\nRozpěrný klíč roztahuje čelisti s obložením proti vnitřní ploše rotujícího bubnu.\n• Výhody: Mechanická ochrana před blátem a kamením (vhodné do těžkého terénu a na stavby).\n• Nevýhody: Špatný odvod tepla z uzavřeného prostoru, při dlouhém brzdění se buben teplem roztáhne a obložení ztrácí tření (nebezpečné vadnutí brzd), pracná výměna a seřizování obložení.\nPOZOR: Mokré brzdy po průjezdu vodou ztrácejí účinek – je nutné je vysušit opakovaným lehkým přibrzděním za pomalé jízdy."
             },
             {
@@ -632,26 +651,26 @@
             {
                 id: 38,
                 title: "38. Popište funkci pojistek v elektrické soustavě vozidla a jejich umístění",
-                points: [ "Úkol pojistek: chránit elektrický obvod při poruchách, zkratech či přetížení před požárem", "Funkce: při stoupnutí proudu nad stanovenou mez se drátek pojistky teplem přepálí", "Pravidlo výměny: přepálenou pojistku nahrazujeme pojistkou o stejné hodnotě (nebo menší)", "PŘÍSNÝ ZÁKAZ: nikdy nepoužívat silnější pojistku ani ji nepropojovat drátkem", "Umístění: v centrální skříňce elektrické instalace (v kabině vozidla)" ],
+                points: [ "Pojistky chrání elektrické obvody před nadměrným proudem při zkratu či přetížení", "Při překročení proudové hodnoty se tavný prvek přepálí a přeruší obvod", "Vadnou pojistku nahrazujeme stejným typem a stejnou předepsanou proudovou hodnotou", "Nikdy nenahrazujeme pojistku silnější ani drátkem", "Pojistky jsou zpravidla v pojistkové skříňce / centrále elektrické instalace" ],
                 detail: "Pojistky slouží k ochraně elektrického vedení a spotřebičů před poškozením nadměrným proudem, přetížením nebo zkratem. Zabraňují roztavení izolace vodičů a vzniku požáru vozidla.\n\nFunkce a výměna:\nPojistka obsahuje kalibrovaný tavný pásek. Překročí-li proud protékající obvodem stanovenou hodnotu (např. 10 A, 15 A), pásek se teplem roztaví a obvod bezpečně přeruší.\nPři výměně je nutné nejprve zjistit a odstranit příčinu zkratu a poté nahradit vadnou pojistku novou o přesně stejné proudové hodnotě (odlišené barevným značením). Je přísně zakázáno používat pojistky s vyšší hodnotou nebo přepálené pojistky 'nahrazovat' dráty či mincemi!\nPojistky jsou soustředěny v přehledně označených pojistkových skříňkách (obvykle v kabině na straně řidiče)."
             },
             {
                 id: 39,
                 title: "39. Jakým způsobem se provádí výměna žárovek vnějšího osvětlení vozidla",
-                points: [ "Všechna světelná zařízení musí být funkční, čistá a světlomety správně seřízené", "Povinnost vozit náhradní žárovky: od každého použitého druhu po jednom kuse", "ZÁSADNÍ PRAVIDLO pro halogeny: nesmíme rukou uchopit její skleněnou část (tuk ji zničí)", "U dvouvláknových žárovek: nutno dodržet jejich správnou polohu v objímce", "Dodržovat předepsaný výkon žárovky (Watty) a napětí (u autobusu zásadně 24 V!)" ],
+                points: [ "Zkontrolujeme funkčnost a čistotu vnějšího osvětlení", "Před výměnou vypneme příslušné osvětlení, postupujeme podle návodu výrobce", "Použijeme žárovku předepsaného typu, výkonu a napětí", "Halogenové žárovky se nedotýkáme na skleněné části", "Po montáži zkontrolujeme správné usazení a funkci světla; náhradní žárovky nejsou obecně povinnou výbavou" ],
                 detail: "Pravidla pro výměnu žárovek vnějšího osvětlení:\n• Všechna světla na vozidle musí být čistá, nepoškozená a funkční. Vozidlo musí být vybaveno náhradními žárovkami po jedné od každého použitého druhu.\n• Výměnu provádíme vždy při vypnutých světlech (aby nedošlo ke zkratu).\n• Zásadní pravidlo pro halogenové žárovky (např. H7, H4): Nikdy se nedotýkáme skleněné baňky holými prsty! Mastnota a pot z kůže se při vysoké teplotě baňky zapečou do křemenného skla, způsobí lokální přehřátí a prasknutí žárovky. Žárovku držíme za kovovou patici nebo přes čistý hadřík.\n• Je nutné použít žárovku s odpovídajícím napětím (pozor: u autobusu 24 V, nikoli 12 V!) a předepsaným příkonem ve wattech.\n• Žárovku usadíme do správné polohy v parabole dle vodicích výstupků, zajistíme pružnou sponou a pečlivě nasadíme pryžový kryt proti vniknutí vlhkosti. U zadních svítilen se k žárovkám přistupuje po odšroubování krytu svítilny."
             },
             {
                 id: 40,
                 title: "40. Vysvětlete symboly kontrolek a ovladačů na přístrojové desce (volantu) vozidla",
-                points: [ "Červené kontrolky: kritické – mazání, dobíjení, teplota motoru, parkovací brzda, závada brzd", "Oranžové / Žluté: výstražné – ABS, ASR, opotřebení brzd, žhavení, filtr pevných částic, palivo", "Zelené / Modré: informační – směrová světla, potkávací světla, dálková světla (modrá)", "U autobusů: kontrolky otevření dveří pro cestující, zastávkové brzdy a kneeling (poklek)", "Ovladače: páčky pod volantem (směrovky, stěrače, retardér), spínače dveří a osvětlení" ],
-                detail: "Kontrolky na přístrojovém štítu jsou barevně unifikovány dle závažnosti:\n• Červené kontrolky (Nebezpečí / zákaz pokračování v jízdě):\nSignalizují kritické závady. Vyžadují okamžité zastavení vozidla a vypnutí motoru. Patří sem: nízký tlak mazání motoru (olejnička), přehřátí chladicí kapaliny (teploměr ve vlnách), pokles tlaku stlačeného vzduchu pod bezpečnou mez (symbol budíku/brzd), zatažená parkovací brzda vykřičník v závorce (P), otevření dveří pro cestující.\n• Žluté / oranžové kontrolky (Výstraha / závada nesystémového charakteru):\nUpozorňují na závadu některého pomocného systému nebo dosažení rezervy. Lze pokračovat v jízdě se zvýšenou opatrností. Patří sem: porucha systému ABS/ASR, regenerace DPF filtru, žhavení vznětového motoru, minimální hladina paliva v nádrži, uzávěrka diferenciálu.\n• Zelené a modré kontrolky (Informační):\nSignalizují zapnutí příslušného zařízení: zelené šipky (směrová světla), zelený symbol (obrysová/potkávací světla), modrá kontrolka (dálková světla)."
+                points: [ "Červené: důležité varování nebo stav – mazání, teplota motoru, závada brzd, parkovací brzda", "Žluté/oranžové: upozornění – ABS, ASR, žhavení, DPF, rezerva paliva", "Zelené/modré: informační – směrová, obrysová/potkávací a dálková světla", "U autobusů také otevřené dveře, zastávková brzda a poklek", "Význam kontrolky i postup při závadě ověřujeme podle návodu konkrétního autobusu" ],
+                detail: "Kontrolky rozpoznáváme podle barvy a symbolu. Červená zpravidla označuje vážné varování nebo důležitý stav (např. tlak mazání, přehřátí, závada brzd, ale také zapnutá parkovací brzda). Žlutá/oranžová upozorňuje na závadu nebo činnost zařízení (ABS, ASR, žhavení, DPF, palivo). Zelená signalizuje zapnuté směrovky či světla, modrá obvykle dálková světla.\n\nU autobusů sledujeme navíc stav dveří, zastávkovou brzdu a poklek. Ovladače zahrnují směrovky, stěrače, světla, dveře a pomocnou brzdu. U konkrétního vozidla se řídíme popisy a návodem výrobce: ne každá červená kontrolka automaticky znamená vypnout motor."
             },
             {
                 id: 41,
                 title: "41. Postup při připojení tažného lana a tažné tyče a možnosti jejich použití",
                 points: [ "Rychlost vlečení nejvýše 60 km/h; řidiči si předem dohodnou způsob dorozumívání", "ZVLÁŠTNÍ USTANOVENÍ: AUTOBUS SE SMÍ VLÉCI POUZE BEZ PŘEPRAVOVANÝCH OSOB!", "Tažné lano: délka 2,5–6 m + červený praporek 300×300 mm (funkční řízení i účinné brzdy)", "Tažná tyč: délka 1–6 m s červeno-bílými pruhy 75 mm (POVINNÁ při neúčinných brzdách)", "Při neúčinných brzdách nesmí hmotnost vlečeného vozu převýšit hmotnost vlečného vozu" ],
-                detail: "Vlečení motorových vozidel dle § 34 zákona č. 361/2000 Sb.:\n• Rychlost vlečení je maximálně 60 km/h. Vlečné vozidlo svítí potkávacími světly, vlečené vozidlo má vzadu za sklem umístěn výstražný trojúhelník a rozsvícená obrysová světla. Řidiči si předem domluví způsob dorozumívání.\n• ZÁKONNÉ OMEZENÍ: Autobus se smí vléci výhradně bez přepravovaných osob!\n• Tažné lano: Vzdálenost 2,5 až 6 m, opatřeno červeným praporkem (300×300 mm). Lze použít pouze v případě, že tažené vozidlo má zcela v pořádku řízení i obě brzdové soustavy. U autobusů a nákladních vozů je lano nevhodné.\n• Tažná tyč: Vzdálenost 1 až 6 m, označena červeno-bílými pruhy (75 mm). Musí se použít VŽDY, pokud má tažené vozidlo vadné brzdy (řízení musí být funkční). Nemá-li vlečené vozidlo účinné brzdy, jeho okamžitá hmotnost nesmí být vyšší než hmotnost vlečného vozu!\n\nTechnický postup:\nTyč se zajistí čepy s pojistkami do závěsů. U vzduchových brzd se propojí plnicí větev pro napájení brzd taženého vozu. Je nutné mechanicky odbrzdit pružinové brzdové válce (šrouby na válcích) a demontovat kardan, jinak se nepromazávaná převodovka vlečením zadře!"
+                detail: "Při vlečení vozidla je dovolena nejvýše rychlost 60 km/h. Vlečné vozidlo musí mít obrysová a potkávací světla, vlečené vozidlo zezadu výstražný trojúhelník. Řidiči si domluví komunikaci. Autobus se vleče bez cestujících.\n\nNa laně lze vléci jen vozidlo s funkčním řízením a účinnými brzdami, spojnice 2,5–6 m, označená červeným praporkem. Na tyči musí být funkční řízení, spojnice 1–6 m, červeno-bílé pruhy. Bez účinných brzd smí mít vlečené vozidlo nejvýše stejnou okamžitou hmotnost jako vlečné.\n\nTažné spojení musí být správně zajištěné. U autobusu se vzduchovými brzdami řešíme odbrzdění a případné propojení soustav podle výrobce. Demontáž spojovací hřídele či jiné zásahy se provádějí pouze tehdy, pokud je pro dané vozidlo výrobce vyžaduje."
             },
             {
                 id: 42,
@@ -662,8 +681,8 @@
             {
                 id: 43,
                 title: "43. Základní funkce tachografu a v čem spočívá jeho obsluha",
-                points: [ "Tachograf ukazuje a zaznamenává: ujetou vzdálenost, rychlost jízdy a časové režimy činnosti", "Režimy činnosti: doba řízení (volant), jiná práce (kladívka), pohotovost (čtverec), odpočinek (postýlka)", "Digitální tachograf: obsluha čipovou kartou řidiče zasunutou do slotu 1 (čipem nahoru)", "Začátek a konec směny: zadání symbolu výchozí země (CZ) a cílové země (CZ)", "Povinnost výtisku denních činností z tiskárny na vyžádání kontrolního orgánu" ],
-                detail: "Tachograf je státem ověřené kontrolní záznamové zařízení sloužící ke kontrole dodržování dob řízení, bezpečnostních přestávek a odpočinku řidiče (dle Nařízení ES 561/2006).\n\nFunkce tachografu:\nZaznamenává rychlost jízdy, ujetou vzdálenost a časové režimy činnosti řidiče (řízení – zaznamenáváno automaticky za jízdy, jiná práce – symbol kladívek, pracovní pohotovost – symbol přeškrtnutého čtverce, odpočinek/pauza – symbol postýlky).\n\nObsluha digitálního tachografu:\n• Vložení karty řidiče do slotu 1 před započetím směny (čipem nahoru a dopředu).\n• Potvrzení manuálních záznamů (doplnění odpočinku od vyjmutí karty).\n• Zadání výchozí země (např. CZ) na začátku směny a cílové země na konci směny.\n• Přepínání skupin činností při zastavení vozidla (např. ruční přepnutí na práci při nakládce či obhlídce).\n• Vyjmutí karty na konci směny po zastavení vozidla.\n• Výměna papírové pásky v tiskárně a provedení denního výtisku na vyžádání kontrolního orgánu (povinnost vozit náhradní ruličky papíru)."
+                points: [ "Tachograf zaznamenává rychlost, ujetou vzdálenost a doby činností řidiče", "Režimy: řízení, jiná práce, pohotovost, přestávka/odpočinek", "Digitální tachograf: karta řidiče, případně ruční doplnění předchozích činností", "Na začátku a konci pracovní doby zadání země, pokud to přístroj neprovede automaticky", "Řidič umí přepínat režimy a provést výtisk, když je potřeba; neprovádí se povinně po každé jízdě" ],
+                detail: "Tachograf ukazuje a zaznamenává zejména rychlost vozidla, ujetou vzdálenost a režimy činnosti řidiče: řízení, jiná práce, pohotovost a přestávka či odpočinek.\n\nU digitálního tachografu řidič vloží kartu, podle potřeby doplní předchozí činnosti a zadá zemi začátku a konce pracovní doby, pokud ji daný přístroj nezaznamená automaticky. Přepíná odpovídající režimy. Umí vyvolat výtisk při kontrole či v předepsaných situacích; každodenní automatický výtisk při ukončení jízdy není obecnou povinností. U analogového tachografu se používá záznamový kotouč."
             },
             {
                 id: 44,
@@ -674,8 +693,8 @@
             {
                 id: 45,
                 title: "45. Vyjmenujte povinné vybavení vozidla (se zaměřením na autobus)",
-                points: [ "Hasicí přístroje: u autobusu hasicí přístroj s celkovou náplní min. 6 kg (platná roční revize!)", "Autolékárnička pro hromadnou přepravu: velikost II (do 80 osob) nebo velikost III (nad 80 osob)", "Kladívka pro nouzový únik: umístěná v dosahu označených nouzových oken", "Výstražný trojúhelník, reflexní vesta pro řidiče, min. 2 zakládací klíny", "Náhradní žárovky a pojistky po 1 ks od druhu, příruční zvedák a klíč na kola (pokud není asistence)" ],
-                detail: "Povinná výbava autobusu (kategorie M2 a M3):\n\n1. Hasicí přístroje:\nAutobusy musí být vybaveny hasicími přístroji s celkovou náplní minimálně 6 kg (hasicí schopnost min. 21 A nebo 113 B). V praxi bývá jeden práškový hasicí přístroj 6 kg u sedadla řidiče a u velkých autobusů další v prostoru pro cestující. Hasicí přístroje musí mít platnou periodickou revizní kontrolu (lhůta 1 rok) vyznačenou kontrolním štítkem!\n\n2. Autolékárnička pro hromadnou přepravu osob:\n• Velikost II – pro autobusy s obsaditelností do 80 cestujících.\n• Velikost III – pro autobusy s obsaditelností nad 80 cestujících (kloubové a patrové autobusy).\n\n3. Kladívka pro nouzový únik:\nAutobusy musí být vybaveny bezpečnostními únikovými kladívky umístěnými v dosahu označených nouzových oken pro rozbití skla v případě havárie.\n\n4. Všeobecná povinná výbava těžkých vozidel:\n• Přenosný výstražný trojúhelník schváleného typu.\n• Reflexní výstražná vesta pro řidiče.\n• Zakládací klíny: Nejméně 2 kusy zakládacích klínů odpovídající velikosti pro zajištění náprav autobusu.\n• Náhradní elektrické pojistky (od každého použitého druhu po jednom kuse).\n• Náhradní žárovky pro vnější osvětlení (od každého použitého druhu po jednom kuse) a nářadí k jejich výměně.\n• Příruční zvedák odpovídající nosnosti nápravy a klíč na matice kol (nemusí být ve výbavě, pokud má dopravce zajištěnu nepřetržitou asistenční službu pro výměnu poškozeného kola po celé ČR).\n\nRozměrové limity autobusů pro kontrolu komisařem:\n• Největší povolená šířka: 2,55 m.\n• Největší povolená výška: 4,00 m.\n• Maximální délky: dvounápravový autobus 13,50 m, se třemi a více nápravami 15,00 m, kloubový dvoučlánkový autobus 18,75 m."
+                points: [ "Výstražný trojúhelník, výstražná vesta pro řidiče, zakládací klíny podle typu vozidla", "Autolékárnička: 9–80 cestujících velikost II; nad 80 velikost III nebo dvě II (městská doprava má výjimku)", "Hasicí přístroj podle počtu míst a předepsané hasicí schopnosti, přístupně upevněný", "Nouzová kladívka a další bezpečnostní výbava podle konstrukce a schválení autobusu", "Náhradní kolo / zařízení k opravě nebo zajištěná servisní pomoc podle předpisů; žárovky a pojistky nejsou obecně povinné" ],
+                detail: "Povinnou výbavu autobusu kontrolujeme podle kategorie a konstrukce vozidla.\n\n• Výstražný trojúhelník a výstražná vesta pro řidiče. Zakládací klíny v počtu odpovídajícím vozidlu.\n• Autolékárnička: pro 9–80 cestujících velikost II; pro více než 80 cestujících velikost III nebo dvě velikosti II; u městského autobusu nad 80 cestujících postačí jedna velikosti II.\n• Hasicí přístroj předepsané hasicí schopnosti: do 22 míst pro cestující nejméně 21 A nebo 113 B; větší autobus nejméně 43 A nebo 183 B, popřípadě jiná povolená varianta podle schválení autobusu. Jeden přístroj je dostupný blízko řidiče.\n• Nouzová kladívka a vybavení podle konstrukce a schválení autobusu.\n• Náhradní kolo a pomůcky pro výměnu podle předpisů, s příslušnými výjimkami (například smluvně zajištěná nepřetržitá oprava).\n\nPozor: Náhradní žárovky a pojistky nejsou dnes obecně zákonem požadovanou povinnou výbavou. Starší učební materiály je ještě uvádějí. Rozměry autobusu nejsou součástí otázky na povinnou výbavu."
             }
         ];
 
@@ -756,6 +775,70 @@
             });
         }
 
+
+        // Jednoduché vektorové nákresy vytvořené přímo v souboru: fungují bez internetu.
+        const symbolGroups = [
+            {name:"Červené – důležité varování / stav", color:"#c73136", items:[
+                ["oil","Tlak mazání"],["battery","Dobíjení"],["temp","Teplota motoru"],
+                ["parking","Parkovací brzda"],["brakes","Brzdová soustava"],["air","Nízký tlak vzduchu"]
+            ]},
+            {name:"Žluté / oranžové – upozornění a závady",color:"#d88a07",items:[
+                ["abs","ABS"],["asr","ASR / prokluz"],["glow","Žhavení"],
+                ["dpf","Filtr pevných částic"],["fuel","Rezerva paliva"],
+                ["wear","Opotřebení brzd"],["diff","Uzávěrka diferenciálu"]
+            ]},
+            {name:"Zelené / modré – světla a signalizace",color:"#15864b",items:[
+                ["turn","Směrová světla"],["side","Obrysová světla"],
+                ["low","Potkávací světla"],["high","Dálková světla"],
+                ["fogfront","Přední mlhovky"],["fogrear","Zadní mlhovka"]
+            ]},
+            {name:"Typické autobusové funkce",color:"#2677a3",items:[
+                ["doors","Dveře cestujících"],["kneel","Poklek autobusu"],
+                ["stop","Znamení STOP"],["hold","Zastávková brzda"]
+            ]}
+        ];
+        function shapeForSymbol(k) {
+            const outlines = {
+              oil:'<path d="M13 26 H43 L52 17 H61 V28 L53 35 H17 Z"/><path d="M18 25 V16 H39 L45 25"/><path d="M35 16 V11 H46"/><path d="M58 36 Q54 43 58 46 Q62 42 58 36Z"/>',
+              battery:'<rect x="12" y="16" width="51" height="29" rx="3"/><path d="M23 16 V11 H32 V16 M44 16 V11 H53 V16"/><path d="M20 30 H34 M27 23 V37 M43 30 H56"/>',
+              temp:'<path d="M31 14 A6 6 0 0 1 43 14 V34 A11 11 0 1 1 31 34 Z"/><path d="M37 20 V43"/><path d="M13 52 Q20 46 27 52 T41 52 T55 52 T69 52"/>',
+              parking:'<circle cx="38" cy="29" r="17"/><path d="M15 11 Q5 29 15 47 M61 11 Q71 29 61 47"/><text x="38" y="37" text-anchor="middle" font-size="24" font-weight="bold" fill="currentColor" stroke="none">P</text>',
+              brakes:'<circle cx="38" cy="29" r="17"/><path d="M15 11 Q5 29 15 47 M61 11 Q71 29 61 47"/><path d="M38 18 V32 M38 39 V41" stroke-width="5"/>',
+              air:'<circle cx="38" cy="29" r="22"/><path d="M20 29 H56 M38 29 L51 16"/><path d="M18 42 H58"/><text x="38" y="11" text-anchor="middle" font-size="10" stroke="none" fill="currentColor">AIR</text>',
+              abs:'<circle cx="38" cy="29" r="22" stroke-dasharray="4 5"/><text x="38" y="36" text-anchor="middle" font-size="23" font-weight="bold" fill="currentColor" stroke="none">ABS</text>',
+              asr:'<path d="M14 35 L18 23 H57 L63 35 Z"/><circle cx="25" cy="39" r="5"/><circle cx="54" cy="39" r="5"/><path d="M8 49 Q19 43 31 49 T55 49 M8 55 Q19 49 31 55 T55 55"/>',
+              glow:'<path d="M8 29 C8 13 22 13 22 29 C22 45 36 45 36 29 C36 13 50 13 50 29 C50 45 64 45 64 29" stroke-width="4"/>',
+              dpf:'<rect x="12" y="16" width="50" height="27" rx="3"/><path d="M27 16 V43 M47 16 V43"/><circle cx="20" cy="25" r="2" fill="currentColor"/><circle cx="38" cy="25" r="2" fill="currentColor"/><circle cx="55" cy="25" r="2" fill="currentColor"/><circle cx="20" cy="35" r="2" fill="currentColor"/><circle cx="38" cy="35" r="2" fill="currentColor"/><circle cx="55" cy="35" r="2" fill="currentColor"/>',
+              fuel:'<path d="M19 46 V12 H45 V46 M19 19 H45 M15 46 H49"/><path d="M45 18 L56 29 V42 Q56 48 62 44 V28 L56 22"/><path d="M25 24 H38"/>',
+              wear:'<circle cx="38" cy="29" r="18"/><path d="M14 10 Q6 29 14 48 M62 10 Q70 29 62 48"/><path d="M25 19 L50 39 M50 19 L25 39"/>',
+              diff:'<circle cx="38" cy="29" r="13"/><path d="M8 29 H25 M51 29 H68 M38 16 V42 M28 20 L48 38 M48 20 L28 38"/>',
+              turn:'<path d="M8 28 L31 10 V21 H45 V35 H31 V46 Z" fill="currentColor" stroke="none"/><path d="M68 28 L45 10 V21 H40 V35 H45 V46 Z" fill="currentColor" stroke="none"/>',
+              side:'<path d="M28 18 Q15 28 28 40 L40 40 V18 Z"/><path d="M15 18 V40 M10 22 V36 M5 26 V32"/>',
+              low:'<path d="M42 15 Q24 15 24 29 Q24 43 42 43 Z"/><path d="M18 23 L3 32 M18 31 L3 40 M18 39 L7 46" stroke-width="3.3"/>',
+              high:'<path d="M42 15 Q24 15 24 29 Q24 43 42 43 Z"/><path d="M18 19 H3 M18 28 H3 M18 37 H3 M18 46 H3" stroke-width="3.3"/>',
+              fogfront:'<path d="M44 15 Q25 15 25 29 Q25 43 44 43 Z"/><path d="M20 20 L3 28 M20 29 L3 37 M20 38 L3 46"/><path d="M13 12 V48" stroke-width="2.5"/>',
+              fogrear:'<path d="M31 15 Q50 15 50 29 Q50 43 31 43 Z"/><path d="M56 20 L73 28 M56 29 L73 37 M56 38 L73 46"/><path d="M63 12 V48" stroke-width="2.5"/>',
+              doors:'<rect x="11" y="10" width="53" height="40" rx="5"/><path d="M19 15 H35 V45 H19 Z M39 15 H56 V45 H39 Z"/><path d="M32 31 L24 31 M43 31 L51 31"/>',
+              kneel:'<path d="M9 17 H61 V41 H9 Z M16 17 V26 H53 V17 M19 42 V48 M51 42 V48"/><path d="M69 15 V48 M64 22 L69 16 L74 22 M64 41 L69 47 L74 41"/>',
+              stop:'<path d="M26 9 H50 L67 26 V38 L50 53 H26 L9 38 V26 Z"/><text x="38" y="37" text-anchor="middle" font-size="17" font-weight="bold" stroke="none" fill="currentColor">STOP</text>',
+              hold:'<circle cx="38" cy="29" r="19"/><text x="38" y="35" text-anchor="middle" font-size="18" font-weight="bold" fill="currentColor" stroke="none">HOLD</text>'
+            };
+            return outlines[k] || '';
+        }
+        function renderSymbols() {
+            const parent = document.getElementById('symbols-content');
+            parent.innerHTML = symbolGroups.map(g => {
+                const cards = g.items.map(([kind,name]) => {
+                    const color = kind === 'high' ? '#2663d6' : g.color;
+                    return `<div class="symbol-card">
+                      <div class="symbol-icon" style="color:${color}" aria-hidden="true">
+                        <svg viewBox="0 0 76 60" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">${shapeForSymbol(kind)}</svg>
+                      </div><div class="symbol-caption">${name}</div></div>`;
+                }).join('');
+                return `<div class="symbol-group" style="color:${g.color}">${g.name}</div><div class="symbols-grid">${cards}</div>`;
+            }).join('');
+        }
+
         function loadQuestion() {
             const q = questions.find(item => item.id === currentId);
             if (!q) return;
@@ -782,6 +865,8 @@
             pointsEl.innerHTML = q.points.map(p => `<li>${p}</li>`).join('');
             
             document.getElementById('q-detail').innerText = q.detail;
+            document.getElementById('box-symbols').classList.toggle('hidden', q.id !== 40);
+            if (q.id === 40) renderSymbols();
 
             document.getElementById('box-detail').classList.add('hidden');
             document.getElementById('btn-detail').innerText = "Zobrazit podrobný výklad";
@@ -824,9 +909,9 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => {
-                    console.log('Service worker registration failed:', err);
-                });
+                navigator.serviceWorker.register('./sw.js', {updateViaCache:'none'})
+                  .then(reg => reg.update())
+                  .catch(err => console.warn('Aktualizace offline aplikace:', err));
             });
         }
     </script>
