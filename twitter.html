@@ -13,58 +13,44 @@
             display: flex; justify-content: center; padding: 30px 20px; min-height: 100vh;
         }
         .container { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px; }
-
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2d32; padding-bottom: 15px; }
         h1 { font-size: 1.3rem; font-weight: 400; color: #f0f0f0; display: flex; align-items: center; gap: 10px; }
         .sync-status { width: 10px; height: 10px; border-radius: 50%; background-color: #8a8d92; }
         .sync-status.syncing { background-color: #ffb74d; }
         .sync-status.online { background-color: #4caf50; }
         .sync-status.error { background-color: #cf6679; }
-
-        .compose {
-            background-color: #121314; border: 1px solid #2a2d32;
-            border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px;
-        }
-        .compose textarea {
-            width: 100%; background: transparent; border: none; color: #f0f0f0;
-            font-size: 1.1rem; line-height: 1.6; resize: none; outline: none;
-            font-family: inherit; min-height: 120px; overflow: hidden;
-        }
+        .compose { background-color: #121314; border: 1px solid #2a2d32; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .compose.editing { border-color: #1d9bf0; }
+        .compose textarea { width: 100%; background: transparent; border: none; color: #f0f0f0; font-size: 1.1rem; line-height: 1.6; resize: none; outline: none; font-family: inherit; min-height: 120px; overflow: hidden; }
         .compose textarea::placeholder { color: #4a4d52; }
-        .compose-footer { display: flex; justify-content: space-between; align-items: center; }
+        .compose-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .char-count { font-size: 0.85rem; color: #8a8d92; }
         .char-count.warning { color: #ffb74d; }
         .char-count.danger { color: #cf6679; font-weight: bold; }
-        .post-btn {
-            background-color: #1d9bf0; color: white; border: none;
-            padding: 8px 20px; border-radius: 20px; font-size: 0.95rem; font-weight: bold;
-            cursor: pointer; transition: background 0.2s;
-        }
+        .compose-buttons { display: flex; gap: 8px; }
+        .post-btn { background-color: #1d9bf0; color: white; border: none; padding: 8px 20px; border-radius: 20px; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         .post-btn:hover { background-color: #1a8cd8; }
         .post-btn:disabled { background-color: #2a2d32; color: #4a4d52; cursor: not-allowed; }
-
+        .cancel-btn { background: transparent; color: #aeb3b8; border: 1px solid #3a3f45; padding: 8px 13px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; }
+        .cancel-btn:hover { border-color: #8a8d92; color: #e2e2e2; }
         .feed { display: flex; flex-direction: column; gap: 2px; }
-        .tweet {
-            background-color: #121314; border: 1px solid #2a2d32;
-            padding: 16px; border-radius: 12px;
-            display: flex; flex-direction: column; gap: 10px;
-            transition: border-color 0.2s;
-        }
+        .tweet { background-color: #121314; border: 1px solid #2a2d32; padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.2s; }
         .tweet:hover { border-color: #3a3f45; }
         .tweet-text { font-size: 1.05rem; line-height: 1.6; color: #e2e2e2; white-space: pre-wrap; word-break: break-word; }
-        .tweet-footer { display: flex; justify-content: space-between; align-items: center; }
+        .tweet-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .tweet-meta { font-size: 0.8rem; color: #8a8d92; }
-        .tweet-actions { display: flex; gap: 8px; }
-        .action-btn {
-            background: transparent; border: 1px solid #2a2d32; color: #8a8d92;
-            padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer;
-            transition: all 0.2s;
-        }
+        .tweet-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .action-btn { background: transparent; border: 1px solid #2a2d32; color: #8a8d92; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
         .action-btn.copy:hover { border-color: #1d9bf0; color: #1d9bf0; }
         .action-btn.copy.success { border-color: #4caf50; color: #4caf50; }
+        .action-btn.edit:hover { border-color: #1d9bf0; color: #1d9bf0; }
         .action-btn.del:hover { border-color: #cf6679; color: #cf6679; }
-
         .empty { color: #4a4d52; font-style: italic; text-align: center; padding: 40px 0; font-size: 0.95rem; }
+        @media (max-width: 480px) {
+            body { padding: 16px 12px; }
+            .tweet-footer { align-items: flex-start; flex-direction: column; }
+            .tweet-actions { width: 100%; justify-content: flex-start; }
+        }
     </style>
 </head>
 <body>
@@ -73,49 +59,53 @@
             <h1>🐦 Můj Twitter</h1>
             <div class="sync-status" id="sync-status"></div>
         </div>
-
-        <div class="compose">
+        <div class="compose" id="compose">
             <textarea id="tweet-input" placeholder="Co se děje?"></textarea>
             <div class="compose-footer">
-                <span class="char-count" id="char-count">280</span>
-                <button class="post-btn" id="post-btn" onclick="postTweet()" disabled>Odeslat</button>
+                <span class="char-count" id="char-count">0 / 280</span>
+                <div class="compose-buttons">
+                    <button class="cancel-btn" id="cancel-btn" type="button" onclick="cancelEdit()" hidden>Zrušit</button>
+                    <button class="post-btn" id="post-btn" onclick="postTweet()" disabled>Odeslat</button>
+                </div>
             </div>
         </div>
-
         <div class="feed" id="feed"></div>
     </div>
-
     <script>
-        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR-1-7EaQVemUZetnr4pU02O0g/exec";
         let tweets = [];
+        let editingId = null;
         const input = document.getElementById('tweet-input');
         const charCount = document.getElementById('char-count');
         const postBtn = document.getElementById('post-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const compose = document.getElementById('compose');
         const feed = document.getElementById('feed');
         const syncStatus = document.getElementById('sync-status');
 
         function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
-
-        input.addEventListener('input', () => {
-            input.style.height = 'auto';
-            input.style.height = input.scrollHeight + 'px';
+        function updateComposerState() {
             const len = input.value.length;
             const remaining = 280 - len;
             if (remaining >= 50) {
-                charCount.innerText = len + ' / 280';
-                charCount.className = 'char-count';
+                charCount.innerText = len + ' / 280'; charCount.className = 'char-count';
             } else if (remaining >= 0) {
-                charCount.innerText = 'zbývá ' + remaining + ' znaků';
-                charCount.className = 'char-count warning';
+                charCount.innerText = 'zbývá ' + remaining + ' znaků'; charCount.className = 'char-count warning';
             } else {
-                charCount.innerText = 'přesah o ' + Math.abs(remaining) + ' znaků';
-                charCount.className = 'char-count danger';
+                charCount.innerText = 'přesah o ' + Math.abs(remaining) + ' znaků'; charCount.className = 'char-count danger';
             }
             postBtn.disabled = input.value.trim().length === 0;
+            postBtn.innerText = editingId ? 'Uložit změny' : 'Odeslat';
+            cancelBtn.hidden = !editingId;
+            compose.classList.toggle('editing', Boolean(editingId));
+        }
+        input.addEventListener('input', () => {
+            input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px';
+            updateComposerState();
         });
-
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) postTweet();
+            if (e.key === 'Escape' && editingId) cancelEdit();
         });
 
         async function loadData() {
@@ -137,28 +127,71 @@
         async function postTweet() {
             const text = input.value.trim();
             if (!text) return;
+            postBtn.disabled = true;
+            setStatus('syncing');
+
+            if (editingId) {
+                const id = editingId;
+                const tweet = tweets.find(t => String(t.id) === String(id));
+                if (!tweet) { cancelEdit(); setStatus('error'); return; }
+                const oldText = tweet.text;
+                tweet.text = text;
+                localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+                render();
+                try {
+                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'twitter_update', id: id, text: text }) });
+                    setStatus('online');
+                    finishEdit();
+                } catch(err) {
+                    tweet.text = oldText;
+                    localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+                    render();
+                    setStatus('error');
+                    alert('Změnu se nepodařilo odeslat. Zkus to prosím znovu.');
+                    updateComposerState();
+                }
+                return;
+            }
+
             const now = new Date();
-            const tweet = {
-                id: Date.now().toString(),
-                text: text,
-                date: now.toISOString()
-            };
+            const tweet = { id: Date.now().toString(), text: text, date: now.toISOString() };
             tweets.unshift(tweet);
             input.value = '';
-            charCount.innerText = '280';
-            charCount.className = 'char-count';
-            postBtn.disabled = true;
+            input.style.height = 'auto';
+            updateComposerState();
             localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
             render();
             try {
-                setStatus('syncing');
                 await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'twitter_add', item: tweet }) });
                 setStatus('online');
             } catch(err) { setStatus('error'); }
         }
 
+        function editTweet(id) {
+            const tweet = tweets.find(t => String(t.id) === String(id));
+            if (!tweet) return;
+            editingId = id;
+            input.value = tweet.text;
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
+            updateComposerState();
+            input.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function finishEdit() {
+            editingId = null;
+            input.value = '';
+            input.style.height = 'auto';
+            updateComposerState();
+            render();
+        }
+
+        function cancelEdit() { finishEdit(); }
+
         async function deleteTweet(id) {
-            tweets = tweets.filter(t => t.id !== id);
+            if (editingId && String(editingId) === String(id)) cancelEdit();
+            tweets = tweets.filter(t => String(t.id) !== String(id));
             localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
             render();
             try {
@@ -169,40 +202,36 @@
         }
 
         function copyTweet(id, btn) {
-            const tweet = tweets.find(t => t.id === id);
+            const tweet = tweets.find(t => String(t.id) === String(id));
             if (!tweet) return;
             navigator.clipboard.writeText(tweet.text).then(() => {
-                btn.innerText = 'Zkopírováno!';
-                btn.classList.add('success');
+                btn.innerText = 'Zkopírováno!'; btn.classList.add('success');
                 setTimeout(() => { btn.innerText = 'Kopírovat'; btn.classList.remove('success'); }, 1500);
             });
         }
 
         function render() {
             feed.innerHTML = '';
-            if (tweets.length === 0) {
-                feed.innerHTML = '<div class="empty">Zatím žádné příspěvky...</div>';
-                return;
-            }
+            if (tweets.length === 0) { feed.innerHTML = '<div class="empty">Zatím žádné příspěvky...</div>'; return; }
             tweets.forEach(tweet => {
                 const d = new Date(tweet.date);
-                const dateStr = d.toLocaleDateString('cs-CZ') + ' ' + d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+                const dateStr = isNaN(d.getTime()) ? '' : d.toLocaleDateString('cs-CZ') + ' ' + d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
                 const el = document.createElement('div');
                 el.className = 'tweet';
-                el.innerHTML = `
-                    <div class="tweet-text">${tweet.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-                    <div class="tweet-footer">
-                        <div class="tweet-meta">${dateStr}</div>
-                        <div class="tweet-actions">
-                            <button class="action-btn copy" onclick="copyTweet('${tweet.id}', this)">Kopírovat</button>
-                            <button class="action-btn del" onclick="deleteTweet('${tweet.id}')">Smazat</button>
-                        </div>
-                    </div>
-                `;
-                feed.appendChild(el);
+                const textEl = document.createElement('div');
+                textEl.className = 'tweet-text';
+                textEl.textContent = tweet.text;
+                const footer = document.createElement('div'); footer.className = 'tweet-footer';
+                const meta = document.createElement('div'); meta.className = 'tweet-meta'; meta.textContent = dateStr;
+                const actions = document.createElement('div'); actions.className = 'tweet-actions';
+                const copy = document.createElement('button'); copy.className = 'action-btn copy'; copy.textContent = 'Kopírovat'; copy.onclick = () => copyTweet(tweet.id, copy);
+                const edit = document.createElement('button'); edit.className = 'action-btn edit'; edit.textContent = 'Upravit'; edit.onclick = () => editTweet(tweet.id);
+                const del = document.createElement('button'); del.className = 'action-btn del'; del.textContent = 'Smazat'; del.onclick = () => deleteTweet(tweet.id);
+                actions.append(copy, edit, del); footer.append(meta, actions); el.append(textEl, footer); feed.appendChild(el);
             });
         }
 
+        updateComposerState();
         loadData();
     </script>
 </body>
