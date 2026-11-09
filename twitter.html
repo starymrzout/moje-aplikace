@@ -72,7 +72,7 @@
         <div class="feed" id="feed"></div>
     </div>
     <script>
-        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR-1-7EaQVemUZetnr4pU02O0g/exec";
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxw7BhZnRdPXYT-XxUmWvbq-Lagy_fhKODrcGfu0Iz3rQR1-7EaQVemUZetnr4pU02O0g/exec";
         let tweets = [];
         let editingId = null;
         const input = document.getElementById('tweet-input');
@@ -108,19 +108,36 @@
             if (e.key === 'Escape' && editingId) cancelEdit();
         });
 
+        async function fetchCloudTweets() {
+            const response = await fetch(`${CLOUD_URL}?mode=twitter&_=${Date.now()}`, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const cloud = await response.json();
+            if (!Array.isArray(cloud)) throw new Error('Server nevrátil seznam příspěvků.');
+            return cloud;
+        }
+
+        // POST používá text/plain, aby šel odeslat jako jednoduchý cross-origin požadavek.
+        // Protože no-cors neumožňuje přečíst odpověď POSTu, úspěch ověřujeme následným GETem.
+        async function sendAndVerify(payload, check) {
+            await fetch(CLOUD_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+                body: JSON.stringify(payload)
+            });
+            const cloud = await fetchCloudTweets();
+            if (!check(cloud)) throw new Error('Změna se nepotvrdila v tabulce.');
+            return cloud;
+        }
+
         async function loadData() {
             setStatus('syncing');
             const local = localStorage.getItem('mytwitter_data');
             if (local) { try { tweets = JSON.parse(local); render(); } catch(e) { tweets = []; } }
             try {
-                const response = await fetch(`${CLOUD_URL}?mode=twitter&_=${Date.now()}`, { cache: 'no-store' });
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                const cloud = await response.json();
-                if (Array.isArray(cloud)) {
-                    tweets = cloud;
-                    localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
-                    render();
-                }
+                tweets = await fetchCloudTweets();
+                localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+                render();
                 setStatus('online');
             } catch(err) { setStatus('error'); }
         }
@@ -140,7 +157,11 @@
                 localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
                 render();
                 try {
-                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ type: 'twitter_update', id: id, text: text }) });
+                    tweets = await sendAndVerify(
+                        { type: 'twitter_update', id: id, text: text },
+                        cloud => cloud.some(t => String(t.id) === String(id) && t.text === text)
+                    );
+                    localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
                     setStatus('online');
                     finishEdit();
                 } catch(err) {
@@ -163,9 +184,17 @@
             localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
             render();
             try {
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ type: 'twitter_add', item: tweet }) });
+                tweets = await sendAndVerify(
+                    { type: 'twitter_add', item: tweet },
+                    cloud => cloud.some(t => String(t.id) === String(tweet.id) && t.text === tweet.text)
+                );
+                localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+                render();
                 setStatus('online');
-            } catch(err) { setStatus('error'); }
+            } catch(err) {
+                setStatus('error');
+                alert('Příspěvek se nepodařilo potvrdit v tabulce. Zkontroluj připojení a obnov aplikaci.');
+            }
         }
 
         function editTweet(id) {
@@ -197,9 +226,22 @@
             render();
             try {
                 setStatus('syncing');
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ type: 'twitter_delete', id: id }) });
+                tweets = await sendAndVerify(
+                    { type: 'twitter_delete', id: id },
+                    cloud => !cloud.some(t => String(t.id) === String(id))
+                );
+                localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+                render();
                 setStatus('online');
-            } catch(err) { setStatus('error'); }
+            } catch(err) {
+                try {
+                    tweets = await fetchCloudTweets();
+                    localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
+                    render();
+                } catch (_) {}
+                setStatus('error');
+                alert('Smazání se nepodařilo potvrdit v tabulce.');
+            }
         }
 
         function copyTweet(id, btn) {
