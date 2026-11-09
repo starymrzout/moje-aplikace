@@ -87,6 +87,17 @@
         .history-vals span { color: #009688; font-weight: bold; }
         .del-btn { background: transparent; border: none; color: #4a4d52; cursor: pointer; font-size: 0.9rem; }
         .del-btn:hover { color: #cf6679; }
+
+        .today-progress { display: flex; flex-direction: column; gap: 9px; padding-top: 4px; }
+        .goal-row { display: flex; flex-direction: column; gap: 5px; }
+        .goal-meta { display: flex; justify-content: space-between; gap: 10px; font-size: 0.78rem; color: #aeb2b8; }
+        .goal-track { height: 7px; background: #2a2d32; border-radius: 99px; overflow: hidden; }
+        .goal-fill { height: 100%; background: #009688; border-radius: 99px; transition: width .2s; }
+        .goal-heading { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; color: #8a8d92; font-weight: bold; text-transform: uppercase; }
+        .cal-day.partial { background-color: #704b16; color: #ffca70; }
+        .cal-day.missed { background-color: #572a32; color: #ff8a9a; }
+        .cal-day.today-partial { background-color: #b7791f; color: white; }
+        .cal-day.today-missed { background-color: #a33a4b; color: white; }
     </style>
 </head>
 <body>
@@ -116,7 +127,8 @@
                     <input type="number" id="input-kroky" class="input-field" placeholder="0" inputmode="numeric">
                 </div>
             </div>
-            <button class="save-btn" onclick="saveDay()">PŘIČÍST</button>
+            <button class="save-btn" onclick="saveDay()">ULOŽIT ZÁZNAM</button>
+            <div class="today-progress" id="today-progress"></div>
         </div>
 
         <div class="week-box">
@@ -157,7 +169,11 @@
         function setStatus(s) { syncStatus.className = 'sync-status ' + s; }
 
         function dateKey(date) {
-            return date.toISOString().split('T')[0]; // YYYY-MM-DD
+            // Použij místní datum, aby se záznam kolem půlnoci neposunul do jiného dne.
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
         }
 
         function todayKey() { return dateKey(new Date()); }
@@ -183,40 +199,43 @@
             const drepy = parseInt(document.getElementById('input-drepy').value) || 0;
             const cinka = parseInt(document.getElementById('input-cinka').value) || 0;
             const kroky = parseInt(document.getElementById('input-kroky').value) || 0;
+
+            // Prázdný záznam neukládej.
             if (!kliky && !drepy && !cinka && !kroky) return;
 
-            const today = todayKey();
-            const existing = records.findIndex(r => r.date === today);
+            // Každé uložení je samostatný záznam, i když už dnes nějaký existuje.
+            const record = {
+                id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                date: todayKey(),
+                kliky,
+                drepy,
+                cinka,
+                kroky
+            };
 
-            let record;
-            if (existing >= 0) {
-                // Přičti k dnešnímu součtu
-                record = {
-                    id: records[existing].id,
-                    date: today,
-                    kliky: (records[existing].kliky || 0) + kliky,
-                    drepy: (records[existing].drepy || 0) + drepy,
-                    cinka: (records[existing].cinka || 0) + cinka,
-                    kroky: (records[existing].kroky || 0) + kroky
-                };
-                records[existing] = record;
-            } else {
-                record = { id: Date.now().toString(), date: today, kliky, drepy, cinka, kroky };
-                records.unshift(record);
-            }
+            records.unshift(record);
 
+            // Po uložení vyčisti formulář pro další samostatný zápis.
             document.getElementById('input-kliky').value = '';
             document.getElementById('input-drepy').value = '';
             document.getElementById('input-cinka').value = '';
             document.getElementById('input-kroky').value = '';
+
             localStorage.setItem('cviceni_data', JSON.stringify(records));
             render();
 
             try {
                 setStatus('syncing');
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'cviceni_save', item: record }) });
+                await fetch(CLOUD_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'cviceni_save', item: record })
+                });
                 setStatus('online');
-            } catch(err) { setStatus('error'); }
+            } catch(err) {
+                setStatus('error');
+            }
         }
 
         async function deleteRecord(id) {
@@ -228,6 +247,67 @@
                 await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'cviceni_delete', id }) });
                 setStatus('online');
             } catch(err) { setStatus('error'); }
+        }
+
+        // První týden začíná v pondělí 9. 11. 2026.
+        // Cíle se zvyšují každé pondělí; po dosažení 50/100/100 se drží.
+        const PLAN_START = '2026-11-09';
+
+        function getTargets(dateString) {
+            const [y, m, d] = dateString.split('-').map(Number);
+            const date = new Date(y, m - 1, d);
+            const [sy, sm, sd] = PLAN_START.split('-').map(Number);
+            const start = new Date(sy, sm - 1, sd);
+            const days = Math.floor((date - start) / 86400000);
+            const week = Math.max(0, Math.floor(days / 7));
+            return {
+                kliky: Math.min(25 + week * 5, 50),
+                cinka: Math.min(50 + week * 10, 100),
+                drepy: Math.min(50 + week * 10, 100),
+                kroky: 9000
+            };
+        }
+
+        function getDailyTotals(dateString) {
+            const totals = { kliky: 0, drepy: 0, cinka: 0, kroky: 0 };
+            records.filter(r => r.date === dateString).forEach(r => {
+                totals.kliky += Number(r.kliky) || 0;
+                totals.drepy += Number(r.drepy) || 0;
+                totals.cinka += Number(r.cinka) || 0;
+                totals.kroky += Number(r.kroky) || 0;
+            });
+            return totals;
+        }
+
+        function getDayStatus(dateString) {
+            const totals = getDailyTotals(dateString);
+            const targets = getTargets(dateString);
+            const anyActivity = totals.kliky + totals.drepy + totals.cinka + totals.kroky > 0;
+            const complete = Object.keys(targets).every(key => totals[key] >= targets[key]);
+            return complete ? 'done' : (anyActivity ? 'partial' : 'missed');
+        }
+
+        function renderTodayProgress() {
+            const el = document.getElementById('today-progress');
+            if (!el) return;
+            const totals = getDailyTotals(todayKey());
+            const targets = getTargets(todayKey());
+            const items = [
+                ['Kliky', 'kliky'],
+                ['Guma', 'cinka'],
+                ['Dřepy', 'drepy'],
+                ['Kroky', 'kroky']
+            ];
+            el.innerHTML = '<div class="goal-heading"><span>Dnešní postup</span><span>cíl se zvyšuje každé pondělí</span></div>' +
+                items.map(([label, key]) => {
+                    const value = totals[key];
+                    const target = targets[key];
+                    const pct = Math.min(100, target ? value / target * 100 : 0);
+                    return `<div class="goal-row">
+                        <div class="goal-meta"><span>${label}</span><span>${value.toLocaleString('cs-CZ')} / ${target.toLocaleString('cs-CZ')}</span></div>
+                        <div class="goal-track"><div class="goal-fill" style="width:${pct}%"></div></div>
+                    </div>`;
+                }).join('');
         }
 
         function render() {
@@ -256,6 +336,7 @@
             document.getElementById('w-drepy').innerText = wDrepy;
             document.getElementById('w-cinka').innerText = wCinka;
             document.getElementById('w-kroky').innerText = wKroky > 999 ? Math.round(wKroky/1000) + 'k' : wKroky;
+            renderTodayProgress();
 
             // Kalendář — posledních 35 dní
             const cal = document.getElementById('calendar');
@@ -269,7 +350,7 @@
             });
 
             const recordMap = {};
-            records.forEach(r => { recordMap[r.date] = r; });
+            records.forEach(r => { recordMap[r.date] = true; });
 
             // Začni od pondělí 5 týdnů zpět
             const start = new Date(now);
@@ -284,20 +365,24 @@
                 const isToday = key === today;
                 const isFuture = d > now;
                 const hasRecord = !!recordMap[key];
+                const status = getDayStatus(key);
 
                 const el = document.createElement('div');
-                el.title = key;
+                el.title = key + (status === 'done' ? ' · splněno' : status === 'partial' ? ' · částečně splněno' : ' · nesplněno');
                 if (isFuture) {
                     el.className = 'cal-day future';
                     el.innerText = d.getDate();
                 } else if (isToday) {
-                    el.className = 'cal-day ' + (hasRecord ? 'today-done' : 'today-rest');
+                    el.className = 'cal-day ' + (status === 'done' ? 'today-done' : status === 'partial' ? 'today-partial' : 'today-missed');
                     el.innerText = d.getDate();
-                } else if (hasRecord) {
+                } else if (status === 'done') {
                     el.className = 'cal-day done';
                     el.innerText = d.getDate();
+                } else if (status === 'partial') {
+                    el.className = 'cal-day partial';
+                    el.innerText = d.getDate();
                 } else {
-                    el.className = 'cal-day rest';
+                    el.className = 'cal-day missed';
                     el.innerText = d.getDate();
                 }
                 cal.appendChild(el);
