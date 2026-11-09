@@ -113,7 +113,8 @@
             const local = localStorage.getItem('mytwitter_data');
             if (local) { try { tweets = JSON.parse(local); render(); } catch(e) { tweets = []; } }
             try {
-                const response = await fetch(`${CLOUD_URL}?mode=twitter`);
+                const response = await fetch(`${CLOUD_URL}?mode=twitter&_=${Date.now()}`, { cache: 'no-store' });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const cloud = await response.json();
                 if (Array.isArray(cloud)) {
                     tweets = cloud;
@@ -139,7 +140,7 @@
                 localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
                 render();
                 try {
-                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'twitter_update', id: id, text: text }) });
+                    await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ type: 'twitter_update', id: id, text: text }) });
                     setStatus('online');
                     finishEdit();
                 } catch(err) {
@@ -162,7 +163,7 @@
             localStorage.setItem('mytwitter_data', JSON.stringify(tweets));
             render();
             try {
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'twitter_add', item: tweet }) });
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ type: 'twitter_add', item: tweet }) });
                 setStatus('online');
             } catch(err) { setStatus('error'); }
         }
@@ -196,7 +197,7 @@
             render();
             try {
                 setStatus('syncing');
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'twitter_delete', id: id }) });
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=UTF-8' }, body: JSON.stringify({ type: 'twitter_delete', id: id }) });
                 setStatus('online');
             } catch(err) { setStatus('error'); }
         }
