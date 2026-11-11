@@ -390,11 +390,9 @@
                 if (key) recordMap[key] = true;
             });
 
-            // Začni od pondělí 5 týdnů zpět
-            const start = new Date(now);
-            start.setDate(now.getDate() - 34);
-            const dayOfWeek = (start.getDay() + 6) % 7; // 0=Po
-            start.setDate(start.getDate() - dayOfWeek);
+            // 5 týdnů (pondělí až neděle), poslední je vždy aktuální týden.
+            const start = new Date(monday);
+            start.setDate(monday.getDate() - 28);
 
             for (let i = 0; i < 35; i++) {
                 const d = new Date(start);
