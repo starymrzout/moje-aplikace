@@ -192,7 +192,7 @@
             if (cz) return `${cz[3]}-${String(cz[2]).padStart(2, '0')}-${String(cz[1]).padStart(2, '0')}`;
 
             // Číselné datum z Google Sheets (počet dní od 30. 12. 1899).
-            if (/^\d+(\.\d+)?$/.test(s)) {
+            if (/^\\d+(\\.\\d+)?$/.test(s)) {
                 const serial = Number(s);
                 const date = new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 86400000);
                 return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
