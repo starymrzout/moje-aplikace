@@ -184,15 +184,22 @@
             if (value instanceof Date && !isNaN(value)) return dateKey(value);
 
             const s = String(value).trim();
-            const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-            if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+            // Čisté datum bez času se použije beze změny.
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+            // Datum s časem (např. 2026-11-10T23:00:00.000Z z Google Sheets) je v UTC.
+            // Převedeme ho na místní den, jinak by se záznam posunul o den zpět.
+            if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
+                const dt = new Date(s);
+                if (!isNaN(dt)) return dateKey(dt);
+            }
 
             // Český zápis data, např. 9. 11. 2026.
             const cz = s.match(/^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\.?$/);
             if (cz) return `${cz[3]}-${String(cz[2]).padStart(2, '0')}-${String(cz[1]).padStart(2, '0')}`;
 
             // Číselné datum z Google Sheets (počet dní od 30. 12. 1899).
-            if (/^\\d+(\\.\\d+)?$/.test(s)) {
+            if (/^\d+(\.\d+)?$/.test(s)) {
                 const serial = Number(s);
                 const date = new Date(Date.UTC(1899, 11, 30) + Math.floor(serial) * 86400000);
                 return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
@@ -305,6 +312,8 @@
         }
 
         function getDayStatus(dateString) {
+            // Před začátkem plánu (PLAN_START) se nic nevyhodnocuje.
+            if (dateString < PLAN_START) return 'pre';
             const totals = getDailyTotals(dateString);
             const targets = getTargets(dateString);
             const anyActivity = totals.kliky + totals.drepy + totals.cinka + totals.kroky > 0;
@@ -397,22 +406,19 @@
                 const status = getDayStatus(key);
 
                 const el = document.createElement('div');
-                el.title = key + (status === 'done' ? ' · splněno' : status === 'partial' ? ' · částečně splněno' : ' · nesplněno');
+                const popis = { done: 'splněno', partial: 'částečně splněno', missed: 'nic nezaznamenáno', pre: 'před začátkem plánu' };
+                el.title = key + ' · ' + (isFuture ? 'budoucnost' : popis[status]);
+                el.innerText = d.getDate();
+
                 if (isFuture) {
                     el.className = 'cal-day future';
-                    el.innerText = d.getDate();
+                } else if (status === 'pre') {
+                    el.className = 'cal-day ' + (isToday ? 'today-rest' : 'rest');
                 } else if (isToday) {
-                    el.className = 'cal-day ' + (status === 'done' ? 'today-done' : status === 'partial' ? 'today-partial' : 'today-missed');
-                    el.innerText = d.getDate();
-                } else if (status === 'done') {
-                    el.className = 'cal-day done';
-                    el.innerText = d.getDate();
-                } else if (status === 'partial') {
-                    el.className = 'cal-day partial';
-                    el.innerText = d.getDate();
+                    // Dnešek bez záznamu ještě není "propadlý", den neskončil.
+                    el.className = 'cal-day ' + (status === 'done' ? 'today-done' : status === 'partial' ? 'today-partial' : 'today-rest');
                 } else {
-                    el.className = 'cal-day missed';
-                    el.innerText = d.getDate();
+                    el.className = 'cal-day ' + status; // done = zelená, partial = oranžová, missed = červená
                 }
                 cal.appendChild(el);
             }
@@ -424,7 +430,7 @@
                 historyList.innerHTML = '<div style="color:#4a4d52;font-style:italic;text-align:center;padding:20px">Zatím žádné záznamy...</div>';
                 return;
             }
-            const sorted = [...records].sort((a,b) => b.date.localeCompare(a.date));
+            const sorted = [...records].sort((a,b) => normalizeRecordDate(b.date).localeCompare(normalizeRecordDate(a.date)));
             sorted.forEach(r => {
                 const normalizedDate = normalizeRecordDate(r.date);
                 const d = normalizedDate ? new Date(normalizedDate + 'T00:00:00') : new Date(NaN);
